@@ -1,7 +1,10 @@
 # animation
 2025.12.24
 
-* bubble_sort.html
+* https://github.com/fkhafizov/ --- T
+* https://github.com/fkhafizov/animation/index.html
+* https://github.com/fkhafizov/animation/
+  * bubble_sort.html
 
 
 ```
