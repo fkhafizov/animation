@@ -1,6 +1,7 @@
 # animation
 2025.12.24
 
+* https://fkhafizov.github.io/animation
 * https://github.com/fkhafizov/ --- T
 * https://github.com/fkhafizov/animation/index.html
 * https://github.com/fkhafizov/animation/
