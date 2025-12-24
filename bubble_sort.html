@@ -6,22 +6,29 @@
     <title>P5.js Bubble Sort Visualizer</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <style>
-        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #222; color: white; font-family: sans-serif; overflow: hidden; }
-        canvas { border: 2px solid #444; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .controls { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 8px; }
-        .controls label { display: block; margin: 8px 0 4px; font-size: 14px; }
-        .controls input[type="number"] { width: 80px; padding: 5px; border-radius: 4px; border: none; }
-        .controls button { margin-top: 10px; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; margin-right: 5px; }
+        body { margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; background-color: #222; color: white; font-family: sans-serif; box-sizing: border-box; }
+        
+        .main-container { display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        
+        .controls { background: rgba(0,0,0,0.7); padding: 15px 25px; border-radius: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 20px; }
+        .controls h3 { margin: 0; margin-right: 10px; }
+        .control-group { display: flex; align-items: center; gap: 8px; }
+        .control-group label { font-size: 14px; white-space: nowrap; }
+        .controls input[type="number"] { width: 60px; padding: 5px; border-radius: 4px; border: none; }
+        .controls button { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
         .controls button:hover { opacity: 0.9; }
         #runPauseBtn { background: #2ECC40; color: white; }
         #runPauseBtn.running { background: #FF4136; }
         #stepBtn { background: #FF851B; color: white; }
         #resetBtn { background: #0074D9; color: white; }
         
+        .legend { display: flex; gap: 15px; font-size: 13px; }
+        
         /* Bright speed slider */
         #speedSlider { 
             -webkit-appearance: none; 
             appearance: none; 
+            width: 100px;
             height: 8px; 
             background: linear-gradient(to right, #FF4136, #FFD700, #2ECC40); 
             border-radius: 4px; 
@@ -29,16 +36,16 @@
         }
         #speedSlider::-webkit-slider-thumb { 
             -webkit-appearance: none; 
-            width: 20px; 
-            height: 20px; 
+            width: 18px; 
+            height: 18px; 
             background: #fff; 
             border-radius: 50%; 
             cursor: pointer; 
             box-shadow: 0 2px 6px rgba(0,0,0,0.4);
         }
         #speedSlider::-moz-range-thumb { 
-            width: 20px; 
-            height: 20px; 
+            width: 18px; 
+            height: 18px; 
             background: #fff; 
             border-radius: 50%; 
             cursor: pointer; 
@@ -46,7 +53,11 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.4);
         }
         
-        .step-log { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.85); padding: 15px 20px; border-radius: 8px; width: 380px; max-height: 80vh; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.5; }
+        .content-row { display: flex; gap: 20px; align-items: flex-start; }
+        
+        canvas { border: 2px solid #444; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
+        .step-log { background: rgba(0,0,0,0.85); padding: 15px 20px; border-radius: 8px; width: 400px; max-height: 400px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.5; }
         .step-log h4 { margin: 0 0 10px; color: #FFD700; }
         .step-entry { margin: 8px 0; padding: 8px 10px; border-radius: 4px; background: rgba(255,255,255,0.05); }
         .step-entry.compare { border-left: 3px solid #FFD700; }
@@ -61,30 +72,47 @@
 </head>
 <body>
 
-<div class="controls">
-    <h3>Bubble Sort Visualizer</h3>
-    <p><span style="color: #FFD700;">Yellow: Being compared</span><br><span style="color: #FF4136;">Red: Swapping</span><br><span style="color: #2ECC40;">Green: Sorted</span></p>
-    
-    <label for="arraySize">Array Size (N):</label>
-    <input type="number" id="arraySize" value="5" min="2" max="200">
-    
-    <label for="speedSlider">Speed:</label>
-    <input type="range" id="speedSlider" min="1" max="60" value="1" style="width: 100%;">
-    
-    <label for="stepsToShow">Steps to Show (K):</label>
-    <input type="number" id="stepsToShow" value="100" min="1" max="500">
-    
-    <div style="margin-top: 12px;">
-        <button id="runPauseBtn" onclick="toggleRunning()">Run</button>
-        <button id="stepBtn" onclick="stepOnce()">Step</button>
-        <button id="resetBtn" onclick="resetArray()">Reset</button>
+<div class="main-container">
+    <div class="controls">
+        <h3>Bubble Sort</h3>
+        
+        <div class="legend">
+            <span style="color: #FFD700;">● Comparing</span>
+            <span style="color: #FF4136;">● Swapping</span>
+            <span style="color: #2ECC40;">● Sorted</span>
+        </div>
+        
+        <div class="control-group">
+            <label for="arraySize">N:</label>
+            <input type="number" id="arraySize" value="5" min="2" max="200">
+        </div>
+        
+        <div class="control-group">
+            <label for="speedSlider">Speed:</label>
+            <input type="range" id="speedSlider" min="1" max="60" value="1">
+        </div>
+        
+        <div class="control-group">
+            <label for="stepsToShow">K:</label>
+            <input type="number" id="stepsToShow" value="100" min="1" max="500">
+        </div>
+        
+        <div class="control-group">
+            <button id="runPauseBtn" onclick="toggleRunning()">Run</button>
+            <button id="stepBtn" onclick="stepOnce()">Step</button>
+            <button id="resetBtn" onclick="resetArray()">Reset</button>
+        </div>
     </div>
-</div>
-
-<div class="step-log" id="stepLog">
-    <h4>Algorithm Steps</h4>
-    <div id="stepEntries">
-        <div class="step-entry">Press Start to begin sorting...</div>
+    
+    <div class="content-row">
+        <div id="canvas-container"></div>
+        
+        <div class="step-log" id="stepLog">
+            <h4>Algorithm Steps</h4>
+            <div id="stepEntries">
+                <div class="step-entry">Press Step or Run to begin sorting...</div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -101,7 +129,8 @@ let passNumber = 1;
 let stepCounter = 0; // Global step counter
 
 function setup() {
-    createCanvas(800, 400);
+    let canvas = createCanvas(800, 400);
+    canvas.parent('canvas-container');
     resetArray();
     noLoop(); // Start paused
     
@@ -110,16 +139,16 @@ function setup() {
 }
 
 function updateSpeed() {
-    let speed = parseInt(document.getElementById('speedSlider').value) || 10;
+    let speed = parseInt(document.getElementById('speedSlider').value) || 1;
     frameRate(speed);
 }
 
 function getArraySize() {
-    return parseInt(document.getElementById('arraySize').value) || 10;
+    return parseInt(document.getElementById('arraySize').value) || 5;
 }
 
 function getStepsToShow() {
-    return parseInt(document.getElementById('stepsToShow').value) || 3;
+    return parseInt(document.getElementById('stepsToShow').value) || 100;
 }
 
 function resetArray() {
@@ -140,7 +169,7 @@ function resetArray() {
     stepHistory = [];
     updateButton();
     updateStepLog();
-    document.getElementById('stepEntries').innerHTML = '<div class="step-entry">Press Start to begin sorting...</div>';
+    document.getElementById('stepEntries').innerHTML = '<div class="step-entry">Press Step or Run to begin sorting...</div>';
     redraw(); // Draw once to show the new array
 }
 
@@ -248,13 +277,17 @@ function logStep(type, message) {
 function updateStepLog() {
     let container = document.getElementById('stepEntries');
     if (stepHistory.length === 0) {
-        container.innerHTML = '<div class="step-entry">Press Start to begin sorting...</div>';
+        container.innerHTML = '<div class="step-entry">Press Step or Run to begin sorting...</div>';
         return;
     }
     
     container.innerHTML = stepHistory.map(step => 
         `<div class="step-entry ${step.type}"><span class="step-num">STEP ${step.stepNum}:</span>${step.message}</div>`
     ).join('');
+    
+    // Auto-scroll to bottom
+    let logContainer = document.getElementById('stepLog');
+    logContainer.scrollTop = logContainer.scrollHeight;
 }
 
 function draw() {
