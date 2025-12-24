@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P5.js Bubble Sort Visualizer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #222; color: white; font-family: sans-serif; overflow: hidden; }
+        canvas { border: 2px solid #444; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .controls { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 8px; }
+        .controls label { display: block; margin: 8px 0 4px; font-size: 14px; }
+        .controls input[type="number"] { width: 80px; padding: 5px; border-radius: 4px; border: none; }
+        .controls button { margin-top: 10px; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; margin-right: 5px; }
+        .controls button:hover { opacity: 0.9; }
+        #runPauseBtn { background: #2ECC40; color: white; }
+        #runPauseBtn.running { background: #FF4136; }
+        #stepBtn { background: #FF851B; color: white; }
+        #resetBtn { background: #0074D9; color: white; }
+        
+        /* Bright speed slider */
+        #speedSlider { 
+            -webkit-appearance: none; 
+            appearance: none; 
+            height: 8px; 
+            background: linear-gradient(to right, #FF4136, #FFD700, #2ECC40); 
+            border-radius: 4px; 
+            outline: none;
+        }
+        #speedSlider::-webkit-slider-thumb { 
+            -webkit-appearance: none; 
+            width: 20px; 
+            height: 20px; 
+            background: #fff; 
+            border-radius: 50%; 
+            cursor: pointer; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+        #speedSlider::-moz-range-thumb { 
+            width: 20px; 
+            height: 20px; 
+            background: #fff; 
+            border-radius: 50%; 
+            cursor: pointer; 
+            border: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+        
+        .step-log { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.85); padding: 15px 20px; border-radius: 8px; width: 380px; max-height: 80vh; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.5; }
+        .step-log h4 { margin: 0 0 10px; color: #FFD700; }
+        .step-entry { margin: 8px 0; padding: 8px 10px; border-radius: 4px; background: rgba(255,255,255,0.05); }
+        .step-entry.compare { border-left: 3px solid #FFD700; }
+        .step-entry.swap { border-left: 3px solid #FF4136; }
+        .step-entry.pass { border-left: 3px solid #2ECC40; font-size: 14px; font-weight: bold; background: rgba(46, 204, 64, 0.15); color: #2ECC40; }
+        .step-entry.pass .step-num { color: #2ECC40; }
+        .step-entry .step-num { color: #FF851B; font-weight: bold; display: block; margin-bottom: 4px; }
+        .step-entry .index { color: #0074D9; }
+        .step-entry .value { color: #2ECC40; }
+        .step-entry .action { color: #FFD700; }
+    </style>
+</head>
+<body>
+
+<div class="controls">
+    <h3>Bubble Sort Visualizer</h3>
+    <p><span style="color: #FFD700;">Yellow: Being compared</span><br><span style="color: #FF4136;">Red: Swapping</span><br><span style="color: #2ECC40;">Green: Sorted</span></p>
+    
+    <label for="arraySize">Array Size (N):</label>
+    <input type="number" id="arraySize" value="5" min="2" max="200">
+    
+    <label for="speedSlider">Speed:</label>
+    <input type="range" id="speedSlider" min="1" max="60" value="1" style="width: 100%;">
+    
+    <label for="stepsToShow">Steps to Show (K):</label>
+    <input type="number" id="stepsToShow" value="100" min="1" max="500">
+    
+    <div style="margin-top: 12px;">
+        <button id="runPauseBtn" onclick="toggleRunning()">Run</button>
+        <button id="stepBtn" onclick="stepOnce()">Step</button>
+        <button id="resetBtn" onclick="resetArray()">Reset</button>
+    </div>
+</div>
+
+<div class="step-log" id="stepLog">
+    <h4>Algorithm Steps</h4>
+    <div id="stepEntries">
+        <div class="step-entry">Press Start to begin sorting...</div>
+    </div>
+</div>
+
+<script>
+let values = [];
+let i = 0;
+let j = 0;
+let barWidth = 8;
+let states = []; // To track colors: -1 (normal), 0 (comparing), 1 (swapped)
+let isRunning = false;
+let isSorted = false;
+let stepHistory = []; // Store last K steps
+let passNumber = 1;
+let stepCounter = 0; // Global step counter
+
+function setup() {
+    createCanvas(800, 400);
+    resetArray();
+    noLoop(); // Start paused
+    
+    // Update frame rate when speed slider changes
+    document.getElementById('speedSlider').addEventListener('input', updateSpeed);
+}
+
+function updateSpeed() {
+    let speed = parseInt(document.getElementById('speedSlider').value) || 10;
+    frameRate(speed);
+}
+
+function getArraySize() {
+    return parseInt(document.getElementById('arraySize').value) || 10;
+}
+
+function getStepsToShow() {
+    return parseInt(document.getElementById('stepsToShow').value) || 3;
+}
+
+function resetArray() {
+    let n = getArraySize();
+    barWidth = width / n;
+    values = new Array(n);
+    states = new Array(n);
+    for (let k = 0; k < values.length; k++) {
+        values[k] = random(height * 0.1, height * 0.95);
+        states[k] = -1;
+    }
+    i = 0;
+    j = 0;
+    passNumber = 1;
+    stepCounter = 0;
+    isRunning = false;
+    isSorted = false;
+    stepHistory = [];
+    updateButton();
+    updateStepLog();
+    document.getElementById('stepEntries').innerHTML = '<div class="step-entry">Press Start to begin sorting...</div>';
+    redraw(); // Draw once to show the new array
+}
+
+function toggleRunning() {
+    if (isSorted) {
+        resetArray();
+        return;
+    }
+    isRunning = !isRunning;
+    updateButton();
+    if (isRunning) {
+        updateSpeed();
+        loop();
+    } else {
+        noLoop();
+    }
+}
+
+function updateButton() {
+    let btn = document.getElementById('runPauseBtn');
+    if (isSorted) {
+        btn.textContent = 'Run';
+        btn.classList.remove('running');
+    } else if (isRunning) {
+        btn.textContent = 'Pause';
+        btn.classList.add('running');
+    } else {
+        btn.textContent = 'Run';
+        btn.classList.remove('running');
+    }
+}
+
+// Step through one iteration manually
+function stepOnce() {
+    if (isSorted) {
+        resetArray();
+        return;
+    }
+    // Make sure we're paused
+    isRunning = false;
+    updateButton();
+    noLoop();
+    
+    // Perform one step
+    performOneStep();
+    redraw();
+}
+
+// Extract the sorting step logic
+function performOneStep() {
+    if (i >= values.length) {
+        if (!isSorted) {
+            logStep('pass', `<span class="action">✓ Sorting complete!</span> All ${values.length} elements are now in ascending order.`);
+            isSorted = true;
+            updateButton();
+        }
+        return;
+    }
+    
+    let a = values[j];
+    let b = values[j + 1];
+    let aVal = Math.round(a);
+    let bVal = Math.round(b);
+    
+    // Highlight current comparison
+    states[j] = 0; 
+    states[j+1] = 0;
+
+    // Log comparison step
+    logStep('compare', 
+        `<span class="action">Compare</span> index <span class="index">[${j}]</span>=<span class="value">${aVal}</span> with <span class="index">[${j+1}]</span>=<span class="value">${bVal}</span> → ${a > b ? 'Left is bigger, need to swap!' : 'Already in order, no swap needed.'}`
+    );
+
+    if (a > b) {
+        swap(values, j, j + 1);
+        states[j] = 1; // Mark as swapping
+        logStep('swap', 
+            `<span class="action">Swap!</span> Moved <span class="value">${aVal}</span> right and <span class="value">${bVal}</span> left. Larger values "bubble up" to the right.`
+        );
+    }
+
+    j++;
+    if (j >= values.length - i - 1) {
+        // Completed a pass
+        logStep('pass', 
+            `<span class="action">Pass ${passNumber} complete!</span> The ${i + 1} largest element(s) are now in their final position (shown in green).`
+        );
+        passNumber++;
+        j = 0;
+        i++;
+    }
+}
+
+// Log a step with explanation
+function logStep(type, message) {
+    stepCounter++;
+    let k = getStepsToShow();
+    stepHistory.push({ type, message, stepNum: stepCounter });
+    if (stepHistory.length > k) {
+        stepHistory.shift(); // Keep only last K steps
+    }
+    updateStepLog();
+}
+
+function updateStepLog() {
+    let container = document.getElementById('stepEntries');
+    if (stepHistory.length === 0) {
+        container.innerHTML = '<div class="step-entry">Press Start to begin sorting...</div>';
+        return;
+    }
+    
+    container.innerHTML = stepHistory.map(step => 
+        `<div class="step-entry ${step.type}"><span class="step-num">STEP ${step.stepNum}:</span>${step.message}</div>`
+    ).join('');
+}
+
+function draw() {
+    background(34);
+
+    // Perform one step of the bubble sort (only if running and not finished)
+    if (isRunning && i < values.length) {
+        performOneStep();
+    } else if (isRunning && i >= values.length && !isSorted) {
+        logStep('pass', `<span class="action">✓ Sorting complete!</span> All ${values.length} elements are now in ascending order.`);
+        isRunning = false;
+        isSorted = true;
+        updateButton();
+        noLoop();
+    }
+
+    // Render the bars
+    for (let k = 0; k < values.length; k++) {
+        stroke(0);
+        
+        if (states[k] === 0) {
+            fill('#FFD700'); // Comparing (Yellow)
+        } else if (states[k] === 1) {
+            fill('#FF4136'); // Swapping (Red)
+        } else if (k > values.length - i - 1) {
+            fill('#2ECC40'); // Sorted (Green)
+        } else {
+            fill(200);       // Default
+        }
+        
+        rect(k * barWidth, height - values[k], barWidth, values[k]);
+        
+        // Draw value inside the bar (bold black text)
+        fill(0); // Black color
+        noStroke();
+        textAlign(CENTER, CENTER);
+        textStyle(BOLD);
+        
+        // Adjust font size based on bar width
+        let fontSize = min(barWidth * 0.4, 20);
+        textSize(fontSize);
+        
+        let val = Math.round(values[k]);
+        let xPos = k * barWidth + barWidth / 2;
+        let yPos = height - values[k] / 2;
+        
+        text(val, xPos, yPos);
+        
+        // Reset state after drawing for next frame
+        if (states[k] !== -1) states[k] = -1;
+    }
+}
+
+function swap(arr, a, b) {
+    let temp = arr[a];
+    arr[a] = arr[b];
+    arr[b] = temp;
+}
+</script>
+
+</body>
+</html>
