@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C-graph.html</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body { margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; background-color: #222; color: white; font-family: sans-serif; box-sizing: border-box; }
+        
+        .main-container { display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        
+        .controls { background: rgba(0,0,0,0.7); padding: 15px 25px; border-radius: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 20px; }
+        .controls h3 { margin: 0; margin-right: 10px; }
+        .control-group { display: flex; align-items: center; gap: 8px; }
+        .control-group label { font-size: 14px; white-space: nowrap; }
+        .controls input[type="number"] { width: 60px; padding: 5px; border-radius: 4px; border: none; }
+        .controls button { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .controls button:hover { opacity: 0.9; }
+        #runPauseBtn { background: #2ECC40; color: white; }
+        #runPauseBtn.running { background: #FF4136; }
+        #stepBtn { background: #FF851B; color: white; }
+        #resetBtn { background: #0074D9; color: white; }
+        
+        .legend { display: flex; gap: 15px; font-size: 13px; }
+        
+        /* Bright speed slider */
+        #speedSlider { 
+            -webkit-appearance: none; 
+            appearance: none; 
+            width: 100px;
+            height: 8px; 
+            background: linear-gradient(to right, #FF4136, #FFD700, #2ECC40); 
+            border-radius: 4px; 
+            outline: none;
+        }
+        #speedSlider::-webkit-slider-thumb { 
+            -webkit-appearance: none; 
+            width: 18px; 
+            height: 18px; 
+            background: #fff; 
+            border-radius: 50%; 
+            cursor: pointer; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+        #speedSlider::-moz-range-thumb { 
+            width: 18px; 
+            height: 18px; 
+            background: #fff; 
+            border-radius: 50%; 
+            cursor: pointer; 
+            border: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+        
+        .content-row { display: flex; gap: 20px; align-items: flex-start; }
+        
+        canvas { border: 2px solid #444; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
+        .step-log { background: rgba(0,0,0,0.85); padding: 15px 20px; border-radius: 8px; width: 400px; max-height: 400px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.5; }
+        .step-log h4 { margin: 0 0 10px; color: #FFD700; }
+        .step-entry { margin: 8px 0; padding: 8px 10px; border-radius: 4px; background: rgba(255,255,255,0.05); }
+        .step-entry.compare { border-left: 3px solid #FFD700; }
+        .step-entry.swap { border-left: 3px solid #FF4136; }
+        .step-entry.pass { border-left: 3px solid #2ECC40; font-size: 14px; font-weight: bold; background: rgba(46, 204, 64, 0.15); color: #2ECC40; }
+        .step-entry.pass .step-num { color: #2ECC40; }
+        .step-entry .step-num { color: #FF851B; font-weight: bold; display: block; margin-bottom: 4px; }
+        .step-entry .index { color: #0074D9; }
+        .step-entry .value { color: #2ECC40; }
+        .step-entry .action { color: #FFD700; }
+        
+        /* Permutations section */
+        .permutations-section { 
+            display: flex; 
+            gap: 30px; 
+            margin-top: 20px; 
+            justify-content: center;
+        }
+        .perm-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        .perm-btn { 
+            padding: 12px 24px; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            font-size: 14px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .perm-btn:hover { transform: scale(1.02); }
+        #showPermBtn { background: #9B59B6; }
+        #showPermBtn:hover { background: #8E44AD; }
+        #showBubblePermBtn { background: #E67E22; }
+        #showBubblePermBtn:hover { background: #D35400; }
+        
+        .permutations-list { 
+            background: rgba(0,0,0,0.85); 
+            padding: 20px; 
+            border-radius: 8px; 
+            font-family: 'Courier New', monospace; 
+            font-size: 14px; 
+            max-height: 400px; 
+            overflow-y: auto;
+            min-width: 300px;
+        }
+        .permutations-list h4 { margin: 0 0 15px; color: #9B59B6; text-align: center; }
+        .perm-entry { 
+            padding: 6px 12px; 
+            margin: 4px 0; 
+            border-radius: 4px; 
+            display: flex;
+            gap: 10px;
+        }
+        .perm-entry .perm-num { 
+            color: #888; 
+            min-width: 40px;
+        }
+        .perm-entry .perm-values { 
+            color: #ddd; 
+            letter-spacing: 2px;
+        }
+        .perm-entry.original { 
+            background: rgba(255, 133, 27, 0.25); 
+            border-left: 3px solid #FF851B;
+        }
+        .perm-entry.original .perm-values { color: #FF851B; font-weight: bold; }
+        .perm-entry.sorted { 
+            background: rgba(46, 204, 64, 0.25); 
+            border-left: 3px solid #2ECC40;
+        }
+        .perm-entry.sorted .perm-values { color: #2ECC40; font-weight: bold; }
+        .perm-legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+        
+        /* Bubble sort permutations */
+        .perm-entry .transposition {
+            color: #E67E22;
+            font-weight: bold;
+            min-width: 60px;
+        }
+        .perm-entry.start {
+            background: rgba(155, 89, 182, 0.25);
+            border-left: 3px solid #9B59B6;
+        }
+        .perm-entry.start .perm-values { color: #9B59B6; font-weight: bold; }
+        
+        /* Graph section */
+        .bottom-section {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+            align-items: flex-start;
+        }
+        .graph-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        #showGraphBtn { background: #1ABC9C; }
+        #showGraphBtn:hover { background: #16A085; }
+        .graph-container {
+            background: rgba(0,0,0,0.85);
+            border-radius: 8px;
+            padding: 10px;
+        }
+        .graph-container canvas {
+            border: none !important;
+            box-shadow: none !important;
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <div class="controls">
+        <h3>Bubble Sort</h3>
+        
+        <div class="legend">
+            <span style="color: #FFD700;">● Comparing</span>
+            <span style="color: #FF4136;">● Swapping</span>
+            <span style="color: #2ECC40;">● Sorted</span>
+        </div>
+        
+        <div class="control-group">
+            <label for="arraySize">N:</label>
+            <input type="number" id="arraySize" value="3" min="2" max="6">
+        </div>
+        
+        <div class="control-group">
+            <label for="speedSlider">Speed:</label>
+            <input type="range" id="speedSlider" min="1" max="60" value="1">
+        </div>
+        
+        <div class="control-group">
+            <label for="stepsToShow">K:</label>
+            <input type="number" id="stepsToShow" value="100" min="1" max="500">
+        </div>
+        
+        <div class="control-group">
+            <button id="runPauseBtn" onclick="toggleRunning()">Run</button>
+            <button id="stepBtn" onclick="stepOnce()">Step</button>
+            <button id="resetBtn" onclick="resetArray()">Reset</button>
+        </div>
+    </div>
+    
+    <div class="content-row">
+        <div id="canvas-container"></div>
+        
+        <div class="step-log" id="stepLog">
+            <h4>Algorithm Steps</h4>
+            <div id="stepEntries">
+                <div class="step-entry">Press Step or Run to begin sorting...</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bottom-section">
+        <div class="permutations-section">
+            <div class="perm-column">
+                <button id="showPermBtn" class="perm-btn" onclick="showPermutations()">SHOW PERMUTATIONS in Random Order</button>
+                <div id="permutationsContainer"></div>
+            </div>
+            <div class="perm-column">
+                <button id="showBubblePermBtn" class="perm-btn" onclick="showBubbleSortPermutations()">SHOW BUBBLE SORTED PERMUTATIONS</button>
+                <div id="bubblePermutationsContainer"></div>
+            </div>
+        </div>
+        <div class="graph-column">
+            <button id="showGraphBtn" class="perm-btn" onclick="showCayleyGraph()">GRAPH</button>
+            <div class="graph-container" id="graphContainer"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+let values = [];
+let i = 0;
+let j = 0;
+let barWidth = 8;
+let states = []; // To track colors: -1 (normal), 0 (comparing), 1 (swapped)
+let isRunning = false;
+let isSorted = false;
+let stepHistory = []; // Store last K steps
+let passNumber = 1;
+let stepCounter = 0; // Global step counter
+
+function setup() {
+    let canvas = createCanvas(800, 400);
+    canvas.parent('canvas-container');
+    resetArray();
+    noLoop(); // Start paused
+    
+    // Update frame rate when speed slider changes
+    document.getElementById('speedSlider').addEventListener('input', updateSpeed);
+}
+
+function updateSpeed() {
+    let speed = parseInt(document.getElementById('speedSlider').value) || 1;
+    frameRate(speed);
+}
+
+function getArraySize() {
+    return parseInt(document.getElementById('arraySize').value) || 3;
+}
+
+function getStepsToShow() {
+    return parseInt(document.getElementById('stepsToShow').value) || 100;
+}
+
+function resetArray() {
+    let n = getArraySize();
+    barWidth = width / n;
+    values = new Array(n);
+    states = new Array(n);
+    for (let k = 0; k < values.length; k++) {
+        values[k] = random(height * 0.1, height * 0.95);
+        states[k] = -1;
+    }
+    // Store the original order when array is created
+    originalOrder = values.map(v => Math.round(v));
+    
+    i = 0;
+    j = 0;
+    passNumber = 1;
+    stepCounter = 0;
+    isRunning = false;
+    isSorted = false;
+    stepHistory = [];
+    updateButton();
+    updateStepLog();
+    document.getElementById('stepEntries').innerHTML = '<div class="step-entry">Press Step or Run to begin sorting...</div>';
+    // Clear permutations display on reset
+    document.getElementById('permutationsContainer').innerHTML = '';
+    document.getElementById('bubblePermutationsContainer').innerHTML = '';
+    document.getElementById('graphContainer').innerHTML = '';
+    redraw(); // Draw once to show the new array
+}
+
+function toggleRunning() {
+    if (isSorted) {
+        resetArray();
+        return;
+    }
+    isRunning = !isRunning;
+    updateButton();
+    if (isRunning) {
+        updateSpeed();
+        loop();
+    } else {
+        noLoop();
+    }
+}
+
+function updateButton() {
+    let btn = document.getElementById('runPauseBtn');
+    if (isSorted) {
+        btn.textContent = 'Run';
+        btn.classList.remove('running');
+    } else if (isRunning) {
+        btn.textContent = 'Pause';
+        btn.classList.add('running');
+    } else {
+        btn.textContent = 'Run';
+        btn.classList.remove('running');
+    }
+}
+
+// Step through one iteration manually
+function stepOnce() {
+    if (isSorted) {
+        resetArray();
+        return;
+    }
+    // Make sure we're paused
+    isRunning = false;
+    updateButton();
+    noLoop();
+    
+    // Perform one step
+    performOneStep();
+    redraw();
+}
+
+// Extract the sorting step logic
+function performOneStep() {
+    if (i >= values.length) {
+        if (!isSorted) {
+            logStep('pass', `<span class="action">✓ Sorting complete!</span> All ${values.length} elements are now in ascending order.`);
+            isSorted = true;
+            updateButton();
+        }
+        return;
+    }
+    
+    let a = values[j];
+    let b = values[j + 1];
+    let aVal = Math.round(a);
+    let bVal = Math.round(b);
+    
+    // Highlight current comparison
+    states[j] = 0; 
+    states[j+1] = 0;
+
+    // Log comparison step
+    logStep('compare', 
+        `<span class="action">Compare</span> index <span class="index">[${j}]</span>=<span class="value">${aVal}</span> with <span class="index">[${j+1}]</span>=<span class="value">${bVal}</span> → ${a > b ? 'Left is bigger, need to swap!' : 'Already in order, no swap needed.'}`
+    );
+
+    if (a > b) {
+        swap(values, j, j + 1);
+        states[j] = 1; // Mark as swapping
+        logStep('swap', 
+            `<span class="action">Swap!</span> Moved <span class="value">${aVal}</span> right and <span class="value">${bVal}</span> left. Larger values "bubble up" to the right.`
+        );
+    }
+
+    j++;
+    if (j >= values.length - i - 1) {
+        // Completed a pass
+        logStep('pass', 
+            `<span class="action">Pass ${passNumber} complete!</span> The ${i + 1} largest element(s) are now in their final position (shown in green).`
+        );
+        passNumber++;
+        j = 0;
+        i++;
+    }
+}
+
+// Log a step with explanation
+function logStep(type, message) {
+    stepCounter++;
+    let k = getStepsToShow();
+    stepHistory.push({ type, message, stepNum: stepCounter });
+    if (stepHistory.length > k) {
+        stepHistory.shift(); // Keep only last K steps
+    }
+    updateStepLog();
+}
+
+function updateStepLog() {
+    let container = document.getElementById('stepEntries');
+    if (stepHistory.length === 0) {
+        container.innerHTML = '<div class="step-entry">Press Step or Run to begin sorting...</div>';
+        return;
+    }
+    
+    container.innerHTML = stepHistory.map(step => 
+        `<div class="step-entry ${step.type}"><span class="step-num">STEP ${step.stepNum}:</span>${step.message}</div>`
+    ).join('');
+    
+    // Auto-scroll to bottom
+    let logContainer = document.getElementById('stepLog');
+    logContainer.scrollTop = logContainer.scrollHeight;
+}
+
+function draw() {
+    background(34);
+
+    // Perform one step of the bubble sort (only if running and not finished)
+    if (isRunning && i < values.length) {
+        performOneStep();
+    } else if (isRunning && i >= values.length && !isSorted) {
+        logStep('pass', `<span class="action">✓ Sorting complete!</span> All ${values.length} elements are now in ascending order.`);
+        isRunning = false;
+        isSorted = true;
+        updateButton();
+        noLoop();
+    }
+
+    // Render the bars
+    for (let k = 0; k < values.length; k++) {
+        stroke(0);
+        
+        if (states[k] === 0) {
+            fill('#FFD700'); // Comparing (Yellow)
+        } else if (states[k] === 1) {
+            fill('#FF4136'); // Swapping (Red)
+        } else if (k > values.length - i - 1) {
+            fill('#2ECC40'); // Sorted (Green)
+        } else {
+            fill(200);       // Default
+        }
+        
+        rect(k * barWidth, height - values[k], barWidth, values[k]);
+        
+        // Draw value inside the bar (bold black text)
+        fill(0); // Black color
+        noStroke();
+        textAlign(CENTER, CENTER);
+        textStyle(BOLD);
+        
+        // Adjust font size based on bar width
+        let fontSize = min(barWidth * 0.4, 20);
+        textSize(fontSize);
+        
+        let val = Math.round(values[k]);
+        let xPos = k * barWidth + barWidth / 2;
+        let yPos = height - values[k] / 2;
+        
+        text(val, xPos, yPos);
+        
+        // Reset state after drawing for next frame
+        if (states[k] !== -1) states[k] = -1;
+    }
+}
+
+function swap(arr, a, b) {
+    let temp = arr[a];
+    arr[a] = arr[b];
+    arr[b] = temp;
+}
+
+// Store original array order when created
+let originalOrder = [];
+
+// Generate all permutations of an array
+function generatePermutations(arr) {
+    let result = [];
+    
+    function permute(current, remaining) {
+        if (remaining.length === 0) {
+            result.push(current.slice());
+            return;
+        }
+        for (let i = 0; i < remaining.length; i++) {
+            current.push(remaining[i]);
+            let newRemaining = remaining.slice(0, i).concat(remaining.slice(i + 1));
+            permute(current, newRemaining);
+            current.pop();
+        }
+    }
+    
+    permute([], arr);
+    return result;
+}
+
+// Check if two arrays are equal
+function arraysEqual(a, b) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
+}
+
+// Check if array is sorted in ascending order
+function isSortedAscending(arr) {
+    for (let i = 0; i < arr.length - 1; i++) {
+        if (arr[i] > arr[i + 1]) return false;
+    }
+    return true;
+}
+
+// Show all permutations
+function showPermutations() {
+    // Get rounded values for display
+    let roundedValues = values.map(v => Math.round(v));
+    
+    // Store as original order if not already stored
+    if (originalOrder.length === 0 || originalOrder.length !== roundedValues.length) {
+        originalOrder = roundedValues.slice();
+    }
+    
+    // Generate all permutations
+    let allPerms = generatePermutations(roundedValues);
+    
+    // Create the sorted version for comparison
+    let sortedVersion = roundedValues.slice().sort((a, b) => a - b);
+    
+    // Build the HTML
+    let container = document.getElementById('permutationsContainer');
+    
+    let html = `
+        <div class="permutations-list">
+            <h4>All ${allPerms.length} Permutations (${roundedValues.length}! = ${allPerms.length})</h4>
+            <div class="perm-legend">
+                <span style="color: #FF851B;">■ Original Order</span>
+                <span style="color: #2ECC40;">■ Sorted Order</span>
+            </div>
+    `;
+    
+    for (let i = 0; i < allPerms.length; i++) {
+        let perm = allPerms[i];
+        let isOriginal = arraysEqual(perm, originalOrder);
+        let isSorted = isSortedAscending(perm);
+        
+        let classes = 'perm-entry';
+        if (isOriginal) classes += ' original';
+        if (isSorted) classes += ' sorted';
+        
+        let permStr = '[' + perm.join(', ') + ']';
+        
+        html += `<div class="${classes}">
+            <span class="perm-num">${i + 1}.</span>
+            <span class="perm-values">${permStr}</span>
+        </div>`;
+    }
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// Show bubble sort permutations with transpositions
+function showBubbleSortPermutations() {
+    // Get rounded values for display (use original order)
+    let arr = originalOrder.slice();
+    
+    if (arr.length === 0) {
+        arr = values.map(v => Math.round(v));
+        originalOrder = arr.slice();
+    }
+    
+    let n = arr.length;
+    let steps = [];
+    
+    // Add initial state
+    steps.push({
+        perm: arr.slice(),
+        transposition: null,
+        isStart: true
+    });
+    
+    // Simulate bubble sort and record each swap
+    let workArr = arr.slice();
+    for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n - i - 1; j++) {
+            if (workArr[j] > workArr[j + 1]) {
+                // Swap
+                let temp = workArr[j];
+                workArr[j] = workArr[j + 1];
+                workArr[j + 1] = temp;
+                
+                // Record this step
+                steps.push({
+                    perm: workArr.slice(),
+                    transposition: [j, j + 1],
+                    isStart: false
+                });
+            }
+        }
+    }
+    
+    // Build the HTML
+    let container = document.getElementById('bubblePermutationsContainer');
+    
+    let html = `
+        <div class="permutations-list">
+            <h4>Bubble Sort Steps (${steps.length} permutations)</h4>
+            <div class="perm-legend">
+                <span style="color: #9B59B6;">■ Start</span>
+                <span style="color: #2ECC40;">■ Sorted</span>
+            </div>
+    `;
+    
+    for (let i = 0; i < steps.length; i++) {
+        let step = steps[i];
+        let isSorted = isSortedAscending(step.perm);
+        
+        let classes = 'perm-entry';
+        if (step.isStart) classes += ' start';
+        if (isSorted) classes += ' sorted';
+        
+        let permStr = '[' + step.perm.join(', ') + ']';
+        let transStr = step.transposition 
+            ? `(${step.transposition[0]}, ${step.transposition[1]})` 
+            : '(start)';
+        
+        html += `<div class="${classes}">
+            <span class="perm-num">${i + 1}.</span>
+            <span class="transposition">${transStr}</span>
+            <span class="perm-values">${permStr}</span>
+        </div>`;
+    }
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// Cayley graph visualization
+let graphInstance = null;
+
+// Apply adjacent transposition to a permutation
+function applyTransposition(perm, k) {
+    let newPerm = perm.slice();
+    let temp = newPerm[k];
+    newPerm[k] = newPerm[k + 1];
+    newPerm[k + 1] = temp;
+    return newPerm;
+}
+
+function factorial(n) {
+    if (n <= 1) return 1;
+    return n * factorial(n - 1);
+}
+
+// Generate all unique permutations and order them using Steinhaus-Johnson-Trotter
+function generateOrderedPermutations(startPerm, n) {
+    let visited = new Set();
+    let orderedPerms = [];
+    let current = startPerm.slice();
+    
+    // Add starting permutation
+    orderedPerms.push(current.slice());
+    visited.add(current.join(','));
+    
+    // Steinhaus-Johnson-Trotter: generates permutations by single adjacent swaps
+    // Each permutation differs from the previous by exactly one adjacent transposition
+    // and no permutation is repeated
+    
+    // Direction array: -1 = pointing left, +1 = pointing right
+    let directions = new Array(n).fill(-1);
+    
+    // Find the largest mobile element
+    // An element is mobile if it points to a smaller adjacent element
+    function findLargestMobile() {
+        let mobileIdx = -1;
+        let mobileVal = -1;
+        
+        for (let i = 0; i < n; i++) {
+            let pointsTo = i + directions[i];
+            if (pointsTo >= 0 && pointsTo < n) {
+                // Element at i points to a valid position
+                if (current[i] > current[pointsTo] && current[i] > mobileVal) {
+                    mobileVal = current[i];
+                    mobileIdx = i;
+                }
+            }
+        }
+        return mobileIdx;
+    }
+    
+    // Generate all permutations
+    let numPerms = factorial(n);
+    
+    while (orderedPerms.length < numPerms) {
+        let mobileIdx = findLargestMobile();
+        
+        if (mobileIdx === -1) break; // No mobile element found
+        
+        let swapIdx = mobileIdx + directions[mobileIdx];
+        let mobileVal = current[mobileIdx];
+        
+        // Swap the mobile element with the element it points to
+        let temp = current[mobileIdx];
+        current[mobileIdx] = current[swapIdx];
+        current[swapIdx] = temp;
+        
+        // Also swap their directions
+        let tempDir = directions[mobileIdx];
+        directions[mobileIdx] = directions[swapIdx];
+        directions[swapIdx] = tempDir;
+        
+        // Reverse direction of all elements larger than the mobile element
+        for (let i = 0; i < n; i++) {
+            if (current[i] > mobileVal) {
+                directions[i] = -directions[i];
+            }
+        }
+        
+        // Check if this permutation is unique
+        let key = current.join(',');
+        if (!visited.has(key)) {
+            orderedPerms.push(current.slice());
+            visited.add(key);
+        }
+    }
+    
+    return orderedPerms;
+}
+
+// Build all edges of the Cayley graph (all adjacent transposition connections)
+function buildCayleyEdges(orderedPerms, n) {
+    // Create a map from permutation string to index
+    let permToIndex = {};
+    for (let i = 0; i < orderedPerms.length; i++) {
+        permToIndex[orderedPerms[i].join(',')] = i;
+    }
+    
+    let edges = [];
+    let edgeSet = new Set(); // To avoid duplicate edges
+    
+    for (let i = 0; i < orderedPerms.length; i++) {
+        let perm = orderedPerms[i];
+        
+        // Try each adjacent transposition
+        for (let k = 0; k < n - 1; k++) {
+            let neighbor = applyTransposition(perm, k);
+            let neighborKey = neighbor.join(',');
+            let j = permToIndex[neighborKey];
+            
+            if (j !== undefined) {
+                // Create a unique edge key (smaller index first)
+                let edgeKey = Math.min(i, j) + '-' + Math.max(i, j) + '-' + k;
+                
+                if (!edgeSet.has(edgeKey)) {
+                    edgeSet.add(edgeKey);
+                    edges.push({
+                        from: i,
+                        to: j,
+                        transposition: [k, k + 1]
+                    });
+                }
+            }
+        }
+    }
+    
+    return edges;
+}
+
+function showCayleyGraph() {
+    // Get the values to use for permutations
+    let arr = originalOrder.slice();
+    if (arr.length === 0) {
+        arr = values.map(v => Math.round(v));
+        originalOrder = arr.slice();
+    }
+    
+    let n = arr.length;
+    
+    // Get sorted version as starting point for nice layout
+    let sortedArr = arr.slice().sort((a, b) => a - b);
+    
+    // Generate all unique permutations in SJT order (for nice circular layout)
+    let orderedPerms = generateOrderedPermutations(sortedArr, n);
+    
+    // Build all edges of the Cayley graph
+    let edges = buildCayleyEdges(orderedPerms, n);
+    
+    // Clear previous graph
+    let container = document.getElementById('graphContainer');
+    container.innerHTML = '';
+    
+    // Calculate canvas size based on number of permutations
+    let numPerms = orderedPerms.length;
+    let canvasSize = Math.max(500, Math.min(800, numPerms * 50 + 200));
+    let radius = canvasSize * 0.38;
+    let centerX = canvasSize / 2;
+    let centerY = canvasSize / 2 - 20;
+    
+    // Create SVG
+    let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', canvasSize);
+    svg.setAttribute('height', canvasSize);
+    svg.style.background = 'transparent';
+    
+    // Calculate node positions in a regular polygon
+    let nodePositions = [];
+    for (let i = 0; i < numPerms; i++) {
+        let angle = (2 * Math.PI * i / numPerms) - Math.PI / 2;
+        nodePositions.push({
+            x: centerX + radius * Math.cos(angle),
+            y: centerY + radius * Math.sin(angle)
+        });
+    }
+    
+    // Define colors for different transpositions
+    let transColors = [
+        '#FF6B6B', // (0,1) - red
+        '#4ECDC4', // (1,2) - teal
+        '#FFE66D', // (2,3) - yellow
+        '#95E1D3', // (3,4) - mint
+        '#F38181', // (4,5) - coral
+    ];
+    
+    // Draw edges
+    // First, determine which edges are "adjacent" in the circular layout (polygon edges)
+    // vs which ones cross the interior (need to be curved)
+    for (let edge of edges) {
+        let p1 = nodePositions[edge.from];
+        let p2 = nodePositions[edge.to];
+        
+        let colorIndex = edge.transposition[0] % transColors.length;
+        let color = transColors[colorIndex];
+        
+        // Check if nodes are adjacent in the circular layout
+        let diff = Math.abs(edge.from - edge.to);
+        let isAdjacent = (diff === 1) || (diff === numPerms - 1);
+        
+        if (isAdjacent) {
+            // Draw straight line for adjacent nodes (polygon edge)
+            let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', p1.x);
+            line.setAttribute('y1', p1.y);
+            line.setAttribute('x2', p2.x);
+            line.setAttribute('y2', p2.y);
+            line.setAttribute('stroke', color);
+            line.setAttribute('stroke-width', '3');
+            line.setAttribute('opacity', '0.8');
+            svg.appendChild(line);
+            
+            // Draw transposition label at midpoint, offset outward
+            let midX = (p1.x + p2.x) / 2;
+            let midY = (p1.y + p2.y) / 2;
+            let dx = midX - centerX;
+            let dy = midY - centerY;
+            let dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > 0) {
+                midX += (dx / dist) * 28;
+                midY += (dy / dist) * 28;
+            }
+            
+            let label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            label.setAttribute('x', midX);
+            label.setAttribute('y', midY);
+            label.setAttribute('fill', color);
+            label.setAttribute('font-size', '11');
+            label.setAttribute('font-family', 'monospace');
+            label.setAttribute('font-weight', 'bold');
+            label.setAttribute('text-anchor', 'middle');
+            label.setAttribute('dominant-baseline', 'middle');
+            label.textContent = `(${edge.transposition[0]},${edge.transposition[1]})`;
+            svg.appendChild(label);
+        } else {
+            // Draw curved line for non-adjacent nodes (interior edge)
+            // Curve outward from center
+            let midX = (p1.x + p2.x) / 2;
+            let midY = (p1.y + p2.y) / 2;
+            
+            // Calculate control point - push it outward from center
+            let dx = midX - centerX;
+            let dy = midY - centerY;
+            let dist = Math.sqrt(dx * dx + dy * dy);
+            
+            // The further apart the nodes, the more we curve outward
+            let curveFactor = 0.3 + (diff / numPerms) * 0.4;
+            let ctrlX = midX + (dx / dist) * radius * curveFactor;
+            let ctrlY = midY + (dy / dist) * radius * curveFactor;
+            
+            let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            let d = `M ${p1.x} ${p1.y} Q ${ctrlX} ${ctrlY} ${p2.x} ${p2.y}`;
+            path.setAttribute('d', d);
+            path.setAttribute('stroke', color);
+            path.setAttribute('stroke-width', '2');
+            path.setAttribute('fill', 'none');
+            path.setAttribute('opacity', '0.6');
+            svg.appendChild(path);
+            
+            // Label on the curve
+            let labelX = ctrlX;
+            let labelY = ctrlY;
+            let ldx = labelX - centerX;
+            let ldy = labelY - centerY;
+            let ldist = Math.sqrt(ldx * ldx + ldy * ldy);
+            labelX += (ldx / ldist) * 15;
+            labelY += (ldy / ldist) * 15;
+            
+            let label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            label.setAttribute('x', labelX);
+            label.setAttribute('y', labelY);
+            label.setAttribute('fill', color);
+            label.setAttribute('font-size', '10');
+            label.setAttribute('font-family', 'monospace');
+            label.setAttribute('font-weight', 'bold');
+            label.setAttribute('text-anchor', 'middle');
+            label.setAttribute('dominant-baseline', 'middle');
+            label.textContent = `(${edge.transposition[0]},${edge.transposition[1]})`;
+            svg.appendChild(label);
+        }
+    }
+    
+    // Draw nodes
+    let nodeRadius = Math.max(30, Math.min(45, 280 / Math.sqrt(numPerms)));
+    
+    for (let i = 0; i < numPerms; i++) {
+        let pos = nodePositions[i];
+        let perm = orderedPerms[i];
+        
+        // Check if this is original or sorted
+        let isOriginal = arraysEqual(perm, originalOrder);
+        let isSorted = isSortedAscending(perm);
+        
+        // Draw glow effect for highlighted nodes
+        if (isOriginal || isSorted) {
+            let glow = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            glow.setAttribute('cx', pos.x);
+            glow.setAttribute('cy', pos.y);
+            glow.setAttribute('r', nodeRadius + 8);
+            if (isOriginal && isSorted) {
+                glow.setAttribute('fill', 'none');
+                glow.setAttribute('stroke', '#FFD700');
+                glow.setAttribute('stroke-width', '4');
+                glow.setAttribute('opacity', '0.8');
+            } else if (isOriginal) {
+                glow.setAttribute('fill', 'none');
+                glow.setAttribute('stroke', '#FF851B');
+                glow.setAttribute('stroke-width', '4');
+                glow.setAttribute('opacity', '0.6');
+            } else {
+                glow.setAttribute('fill', 'none');
+                glow.setAttribute('stroke', '#2ECC40');
+                glow.setAttribute('stroke-width', '4');
+                glow.setAttribute('opacity', '0.6');
+            }
+            svg.appendChild(glow);
+        }
+        
+        // Node circle
+        let circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', pos.x);
+        circle.setAttribute('cy', pos.y);
+        circle.setAttribute('r', nodeRadius);
+        
+        if (isOriginal && isSorted) {
+            circle.setAttribute('fill', '#2ECC40');
+            circle.setAttribute('stroke', '#FF851B');
+            circle.setAttribute('stroke-width', '5');
+        } else if (isOriginal) {
+            circle.setAttribute('fill', '#FF851B');
+            circle.setAttribute('stroke', '#FFD700');
+            circle.setAttribute('stroke-width', '4');
+        } else if (isSorted) {
+            circle.setAttribute('fill', '#2ECC40');
+            circle.setAttribute('stroke', '#90EE90');
+            circle.setAttribute('stroke-width', '4');
+        } else {
+            circle.setAttribute('fill', '#555');
+            circle.setAttribute('stroke', '#888');
+            circle.setAttribute('stroke-width', '2');
+        }
+        svg.appendChild(circle);
+        
+        // Permutation text inside node
+        let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', pos.x);
+        text.setAttribute('y', pos.y);
+        text.setAttribute('fill', '#fff');
+        text.setAttribute('font-size', Math.max(10, nodeRadius * 0.4));
+        text.setAttribute('font-family', 'monospace');
+        text.setAttribute('font-weight', 'bold');
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('dominant-baseline', 'middle');
+        text.textContent = '[' + perm.join(',') + ']';
+        svg.appendChild(text);
+    }
+    
+    // Add legend
+    let legendY = canvasSize - 35;
+    let legendGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    
+    // Original legend
+    let origCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    origCircle.setAttribute('cx', 50);
+    origCircle.setAttribute('cy', legendY);
+    origCircle.setAttribute('r', 10);
+    origCircle.setAttribute('fill', '#FF851B');
+    origCircle.setAttribute('stroke', '#FFD700');
+    origCircle.setAttribute('stroke-width', '2');
+    legendGroup.appendChild(origCircle);
+    
+    let origText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    origText.setAttribute('x', 68);
+    origText.setAttribute('y', legendY + 4);
+    origText.setAttribute('fill', '#FF851B');
+    origText.setAttribute('font-size', '12');
+    origText.setAttribute('font-weight', 'bold');
+    origText.textContent = 'Original';
+    legendGroup.appendChild(origText);
+    
+    // Sorted legend
+    let sortCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    sortCircle.setAttribute('cx', 145);
+    sortCircle.setAttribute('cy', legendY);
+    sortCircle.setAttribute('r', 10);
+    sortCircle.setAttribute('fill', '#2ECC40');
+    sortCircle.setAttribute('stroke', '#90EE90');
+    sortCircle.setAttribute('stroke-width', '2');
+    legendGroup.appendChild(sortCircle);
+    
+    let sortText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    sortText.setAttribute('x', 163);
+    sortText.setAttribute('y', legendY + 4);
+    sortText.setAttribute('fill', '#2ECC40');
+    sortText.setAttribute('font-size', '12');
+    sortText.setAttribute('font-weight', 'bold');
+    sortText.textContent = 'Sorted';
+    legendGroup.appendChild(sortText);
+    
+    // Edge color legend
+    let legendX = 230;
+    for (let k = 0; k < n - 1; k++) {
+        let lx = legendX + k * 75;
+        let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', lx);
+        line.setAttribute('y1', legendY);
+        line.setAttribute('x2', lx + 25);
+        line.setAttribute('y2', legendY);
+        line.setAttribute('stroke', transColors[k % transColors.length]);
+        line.setAttribute('stroke-width', '4');
+        legendGroup.appendChild(line);
+        
+        let edgeText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        edgeText.setAttribute('x', lx + 30);
+        edgeText.setAttribute('y', legendY + 4);
+        edgeText.setAttribute('fill', transColors[k % transColors.length]);
+        edgeText.setAttribute('font-size', '12');
+        edgeText.setAttribute('font-weight', 'bold');
+        edgeText.textContent = `(${k},${k+1})`;
+        legendGroup.appendChild(edgeText);
+    }
+    
+    svg.appendChild(legendGroup);
+    container.appendChild(svg);
+}
+</script>
+
+</body>
+</html>
