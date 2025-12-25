@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P5.js Bubble Sort Visualizer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body { margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; background-color: #222; color: white; font-family: sans-serif; box-sizing: border-box; }
+        
+        .main-container { display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        
+        .controls { background: rgba(0,0,0,0.7); padding: 15px 25px; border-radius: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 20px; }
+        .controls h3 { margin: 0; margin-right: 10px; }
+        .control-group { display: flex; align-items: center; gap: 8px; }
+        .control-group label { font-size: 14px; white-space: nowrap; }
+        .controls input[type="number"] { width: 60px; padding: 5px; border-radius: 4px; border: none; }
+        .controls button { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .controls button:hover { opacity: 0.9; }
+        #runPauseBtn { background: #2ECC40; color: white; }
+        #runPauseBtn.running { background: #FF4136; }
+        #stepBtn { background: #FF851B; color: white; }
+        #resetBtn { background: #0074D9; color: white; }
+        
+        .legend { display: flex; gap: 15px; font-size: 13px; }
+        
+        /* Bright speed slider */
+        #speedSlider { 
+            -webkit-appearance: none; 
+            appearance: none; 
+            width: 100px;
+            height: 8px; 
+            background: linear-gradient(to right, #FF4136, #FFD700, #2ECC40); 
+            border-radius: 4px; 
+            outline: none;
+        }
+        #speedSlider::-webkit-slider-thumb { 
+            -webkit-appearance: none; 
+            width: 18px; 
+            height: 18px; 
+            background: #fff; 
+            border-radius: 50%; 
+            cursor: pointer; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+        #speedSlider::-moz-range-thumb { 
+            width: 18px; 
+            height: 18px; 
+            background: #fff; 
+            border-radius: 50%; 
+            cursor: pointer; 
+            border: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+        
+        .content-row { display: flex; gap: 20px; align-items: flex-start; }
+        
+        canvas { border: 2px solid #444; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
+        .step-log { background: rgba(0,0,0,0.85); padding: 15px 20px; border-radius: 8px; width: 400px; max-height: 400px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.5; }
+        .step-log h4 { margin: 0 0 10px; color: #FFD700; }
+        .step-entry { margin: 8px 0; padding: 8px 10px; border-radius: 4px; background: rgba(255,255,255,0.05); }
+        .step-entry.compare { border-left: 3px solid #FFD700; }
+        .step-entry.swap { border-left: 3px solid #FF4136; }
+        .step-entry.pass { border-left: 3px solid #2ECC40; font-size: 14px; font-weight: bold; background: rgba(46, 204, 64, 0.15); color: #2ECC40; }
+        .step-entry.pass .step-num { color: #2ECC40; }
+        .step-entry .step-num { color: #FF851B; font-weight: bold; display: block; margin-bottom: 4px; }
+        .step-entry .index { color: #0074D9; }
+        .step-entry .value { color: #2ECC40; }
+        .step-entry .action { color: #FFD700; }
+        
+        /* Permutations section */
+        .permutations-section { 
+            display: flex; 
+            gap: 30px; 
+            margin-top: 20px; 
+            justify-content: center;
+        }
+        .perm-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        .perm-btn { 
+            padding: 12px 24px; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            font-size: 14px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .perm-btn:hover { transform: scale(1.02); }
+        #showPermBtn { background: #9B59B6; }
+        #showPermBtn:hover { background: #8E44AD; }
+        #showBubblePermBtn { background: #E67E22; }
+        #showBubblePermBtn:hover { background: #D35400; }
+        
+        .permutations-list { 
+            background: rgba(0,0,0,0.85); 
+            padding: 20px; 
+            border-radius: 8px; 
+            font-family: 'Courier New', monospace; 
+            font-size: 14px; 
+            max-height: 400px; 
+            overflow-y: auto;
+            min-width: 300px;
+        }
+        .permutations-list h4 { margin: 0 0 15px; color: #9B59B6; text-align: center; }
+        .perm-entry { 
+            padding: 6px 12px; 
+            margin: 4px 0; 
+            border-radius: 4px; 
+            display: flex;
+            gap: 10px;
+        }
+        .perm-entry .perm-num { 
+            color: #888; 
+            min-width: 40px;
+        }
+        .perm-entry .perm-values { 
+            color: #ddd; 
+            letter-spacing: 2px;
+        }
+        .perm-entry.original { 
+            background: rgba(255, 133, 27, 0.25); 
+            border-left: 3px solid #FF851B;
+        }
+        .perm-entry.original .perm-values { color: #FF851B; font-weight: bold; }
+        .perm-entry.sorted { 
+            background: rgba(46, 204, 64, 0.25); 
+            border-left: 3px solid #2ECC40;
+        }
+        .perm-entry.sorted .perm-values { color: #2ECC40; font-weight: bold; }
+        .perm-legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+        
+        /* Bubble sort permutations */
+        .perm-entry .transposition {
+            color: #E67E22;
+            font-weight: bold;
+            min-width: 60px;
+        }
+        .perm-entry.start {
+            background: rgba(155, 89, 182, 0.25);
+            border-left: 3px solid #9B59B6;
+        }
+        .perm-entry.start .perm-values { color: #9B59B6; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <div class="controls">
+        <h3>Bubble Sort</h3>
+        
+        <div class="legend">
+            <span style="color: #FFD700;">● Comparing</span>
+            <span style="color: #FF4136;">● Swapping</span>
+            <span style="color: #2ECC40;">● Sorted</span>
+        </div>
+        
+        <div class="control-group">
+            <label for="arraySize">N:</label>
+            <input type="number" id="arraySize" value="4" min="2" max="10">
+        </div>
+        
+        <div class="control-group">
+            <label for="speedSlider">Speed:</label>
+            <input type="range" id="speedSlider" min="1" max="60" value="1">
+        </div>
+        
+        <div class="control-group">
+            <label for="stepsToShow">K:</label>
+            <input type="number" id="stepsToShow" value="100" min="1" max="500">
+        </div>
+        
+        <div class="control-group">
+            <button id="runPauseBtn" onclick="toggleRunning()">Run</button>
+            <button id="stepBtn" onclick="stepOnce()">Step</button>
+            <button id="resetBtn" onclick="resetArray()">Reset</button>
+        </div>
+    </div>
+    
+    <div class="content-row">
+        <div id="canvas-container"></div>
+        
+        <div class="step-log" id="stepLog">
+            <h4>Algorithm Steps</h4>
+            <div id="stepEntries">
+                <div class="step-entry">Press Step or Run to begin sorting...</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="permutations-section">
+        <div class="perm-column">
+            <button id="showPermBtn" class="perm-btn" onclick="showPermutations()">SHOW PERMUTATIONS in Random Order</button>
+            <div id="permutationsContainer"></div>
+        </div>
+        <div class="perm-column">
+            <button id="showBubblePermBtn" class="perm-btn" onclick="showBubbleSortPermutations()">SHOW BUBBLE SORTED PERMUTATIONS</button>
+            <div id="bubblePermutationsContainer"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+let values = [];
+let i = 0;
+let j = 0;
+let barWidth = 8;
+let states = []; // To track colors: -1 (normal), 0 (comparing), 1 (swapped)
+let isRunning = false;
+let isSorted = false;
+let stepHistory = []; // Store last K steps
+let passNumber = 1;
+let stepCounter = 0; // Global step counter
+
+function setup() {
+    let canvas = createCanvas(800, 400);
+    canvas.parent('canvas-container');
+    resetArray();
+    noLoop(); // Start paused
+    
+    // Update frame rate when speed slider changes
+    document.getElementById('speedSlider').addEventListener('input', updateSpeed);
+}
+
+function updateSpeed() {
+    let speed = parseInt(document.getElementById('speedSlider').value) || 1;
+    frameRate(speed);
+}
+
+function getArraySize() {
+    return parseInt(document.getElementById('arraySize').value) || 4;
+}
+
+function getStepsToShow() {
+    return parseInt(document.getElementById('stepsToShow').value) || 100;
+}
+
+function resetArray() {
+    let n = getArraySize();
+    barWidth = width / n;
+    values = new Array(n);
+    states = new Array(n);
+    for (let k = 0; k < values.length; k++) {
+        values[k] = random(height * 0.1, height * 0.95);
+        states[k] = -1;
+    }
+    // Store the original order when array is created
+    originalOrder = values.map(v => Math.round(v));
+    
+    i = 0;
+    j = 0;
+    passNumber = 1;
+    stepCounter = 0;
+    isRunning = false;
+    isSorted = false;
+    stepHistory = [];
+    updateButton();
+    updateStepLog();
+    document.getElementById('stepEntries').innerHTML = '<div class="step-entry">Press Step or Run to begin sorting...</div>';
+    // Clear permutations display on reset
+    document.getElementById('permutationsContainer').innerHTML = '';
+    document.getElementById('bubblePermutationsContainer').innerHTML = '';
+    redraw(); // Draw once to show the new array
+}
+
+function toggleRunning() {
+    if (isSorted) {
+        resetArray();
+        return;
+    }
+    isRunning = !isRunning;
+    updateButton();
+    if (isRunning) {
+        updateSpeed();
+        loop();
+    } else {
+        noLoop();
+    }
+}
+
+function updateButton() {
+    let btn = document.getElementById('runPauseBtn');
+    if (isSorted) {
+        btn.textContent = 'Run';
+        btn.classList.remove('running');
+    } else if (isRunning) {
+        btn.textContent = 'Pause';
+        btn.classList.add('running');
+    } else {
+        btn.textContent = 'Run';
+        btn.classList.remove('running');
+    }
+}
+
+// Step through one iteration manually
+function stepOnce() {
+    if (isSorted) {
+        resetArray();
+        return;
+    }
+    // Make sure we're paused
+    isRunning = false;
+    updateButton();
+    noLoop();
+    
+    // Perform one step
+    performOneStep();
+    redraw();
+}
+
+// Extract the sorting step logic
+function performOneStep() {
+    if (i >= values.length) {
+        if (!isSorted) {
+            logStep('pass', `<span class="action">✓ Sorting complete!</span> All ${values.length} elements are now in ascending order.`);
+            isSorted = true;
+            updateButton();
+        }
+        return;
+    }
+    
+    let a = values[j];
+    let b = values[j + 1];
+    let aVal = Math.round(a);
+    let bVal = Math.round(b);
+    
+    // Highlight current comparison
+    states[j] = 0; 
+    states[j+1] = 0;
+
+    // Log comparison step
+    logStep('compare', 
+        `<span class="action">Compare</span> index <span class="index">[${j}]</span>=<span class="value">${aVal}</span> with <span class="index">[${j+1}]</span>=<span class="value">${bVal}</span> → ${a > b ? 'Left is bigger, need to swap!' : 'Already in order, no swap needed.'}`
+    );
+
+    if (a > b) {
+        swap(values, j, j + 1);
+        states[j] = 1; // Mark as swapping
+        logStep('swap', 
+            `<span class="action">Swap!</span> Moved <span class="value">${aVal}</span> right and <span class="value">${bVal}</span> left. Larger values "bubble up" to the right.`
+        );
+    }
+
+    j++;
+    if (j >= values.length - i - 1) {
+        // Completed a pass
+        logStep('pass', 
+            `<span class="action">Pass ${passNumber} complete!</span> The ${i + 1} largest element(s) are now in their final position (shown in green).`
+        );
+        passNumber++;
+        j = 0;
+        i++;
+    }
+}
+
+// Log a step with explanation
+function logStep(type, message) {
+    stepCounter++;
+    let k = getStepsToShow();
+    stepHistory.push({ type, message, stepNum: stepCounter });
+    if (stepHistory.length > k) {
+        stepHistory.shift(); // Keep only last K steps
+    }
+    updateStepLog();
+}
+
+function updateStepLog() {
+    let container = document.getElementById('stepEntries');
+    if (stepHistory.length === 0) {
+        container.innerHTML = '<div class="step-entry">Press Step or Run to begin sorting...</div>';
+        return;
+    }
+    
+    container.innerHTML = stepHistory.map(step => 
+        `<div class="step-entry ${step.type}"><span class="step-num">STEP ${step.stepNum}:</span>${step.message}</div>`
+    ).join('');
+    
+    // Auto-scroll to bottom
+    let logContainer = document.getElementById('stepLog');
+    logContainer.scrollTop = logContainer.scrollHeight;
+}
+
+function draw() {
+    background(34);
+
+    // Perform one step of the bubble sort (only if running and not finished)
+    if (isRunning && i < values.length) {
+        performOneStep();
+    } else if (isRunning && i >= values.length && !isSorted) {
+        logStep('pass', `<span class="action">✓ Sorting complete!</span> All ${values.length} elements are now in ascending order.`);
+        isRunning = false;
+        isSorted = true;
+        updateButton();
+        noLoop();
+    }
+
+    // Render the bars
+    for (let k = 0; k < values.length; k++) {
+        stroke(0);
+        
+        if (states[k] === 0) {
+            fill('#FFD700'); // Comparing (Yellow)
+        } else if (states[k] === 1) {
+            fill('#FF4136'); // Swapping (Red)
+        } else if (k > values.length - i - 1) {
+            fill('#2ECC40'); // Sorted (Green)
+        } else {
+            fill(200);       // Default
+        }
+        
+        rect(k * barWidth, height - values[k], barWidth, values[k]);
+        
+        // Draw value inside the bar (bold black text)
+        fill(0); // Black color
+        noStroke();
+        textAlign(CENTER, CENTER);
+        textStyle(BOLD);
+        
+        // Adjust font size based on bar width
+        let fontSize = min(barWidth * 0.4, 20);
+        textSize(fontSize);
+        
+        let val = Math.round(values[k]);
+        let xPos = k * barWidth + barWidth / 2;
+        let yPos = height - values[k] / 2;
+        
+        text(val, xPos, yPos);
+        
+        // Reset state after drawing for next frame
+        if (states[k] !== -1) states[k] = -1;
+    }
+}
+
+function swap(arr, a, b) {
+    let temp = arr[a];
+    arr[a] = arr[b];
+    arr[b] = temp;
+}
+
+// Store original array order when created
+let originalOrder = [];
+
+// Generate all permutations of an array
+function generatePermutations(arr) {
+    let result = [];
+    
+    function permute(current, remaining) {
+        if (remaining.length === 0) {
+            result.push(current.slice());
+            return;
+        }
+        for (let i = 0; i < remaining.length; i++) {
+            current.push(remaining[i]);
+            let newRemaining = remaining.slice(0, i).concat(remaining.slice(i + 1));
+            permute(current, newRemaining);
+            current.pop();
+        }
+    }
+    
+    permute([], arr);
+    return result;
+}
+
+// Check if two arrays are equal
+function arraysEqual(a, b) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
+}
+
+// Check if array is sorted in ascending order
+function isSortedAscending(arr) {
+    for (let i = 0; i < arr.length - 1; i++) {
+        if (arr[i] > arr[i + 1]) return false;
+    }
+    return true;
+}
+
+// Show all permutations
+function showPermutations() {
+    // Get rounded values for display
+    let roundedValues = values.map(v => Math.round(v));
+    
+    // Store as original order if not already stored
+    if (originalOrder.length === 0 || originalOrder.length !== roundedValues.length) {
+        originalOrder = roundedValues.slice();
+    }
+    
+    // Generate all permutations
+    let allPerms = generatePermutations(roundedValues);
+    
+    // Create the sorted version for comparison
+    let sortedVersion = roundedValues.slice().sort((a, b) => a - b);
+    
+    // Build the HTML
+    let container = document.getElementById('permutationsContainer');
+    
+    let html = `
+        <div class="permutations-list">
+            <h4>All ${allPerms.length} Permutations (${roundedValues.length}! = ${allPerms.length})</h4>
+            <div class="perm-legend">
+                <span style="color: #FF851B;">■ Original Order</span>
+                <span style="color: #2ECC40;">■ Sorted Order</span>
+            </div>
+    `;
+    
+    for (let i = 0; i < allPerms.length; i++) {
+        let perm = allPerms[i];
+        let isOriginal = arraysEqual(perm, originalOrder);
+        let isSorted = isSortedAscending(perm);
+        
+        let classes = 'perm-entry';
+        if (isOriginal) classes += ' original';
+        if (isSorted) classes += ' sorted';
+        
+        let permStr = '[' + perm.join(', ') + ']';
+        
+        html += `<div class="${classes}">
+            <span class="perm-num">${i + 1}.</span>
+            <span class="perm-values">${permStr}</span>
+        </div>`;
+    }
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// Show bubble sort permutations with transpositions
+function showBubbleSortPermutations() {
+    // Get rounded values for display (use original order)
+    let arr = originalOrder.slice();
+    
+    if (arr.length === 0) {
+        arr = values.map(v => Math.round(v));
+        originalOrder = arr.slice();
+    }
+    
+    let n = arr.length;
+    let steps = [];
+    
+    // Add initial state
+    steps.push({
+        perm: arr.slice(),
+        transposition: null,
+        isStart: true
+    });
+    
+    // Simulate bubble sort and record each swap
+    let workArr = arr.slice();
+    for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n - i - 1; j++) {
+            if (workArr[j] > workArr[j + 1]) {
+                // Swap
+                let temp = workArr[j];
+                workArr[j] = workArr[j + 1];
+                workArr[j + 1] = temp;
+                
+                // Record this step
+                steps.push({
+                    perm: workArr.slice(),
+                    transposition: [j, j + 1],
+                    isStart: false
+                });
+            }
+        }
+    }
+    
+    // Build the HTML
+    let container = document.getElementById('bubblePermutationsContainer');
+    
+    let html = `
+        <div class="permutations-list">
+            <h4>Bubble Sort Steps (${steps.length} permutations)</h4>
+            <div class="perm-legend">
+                <span style="color: #9B59B6;">■ Start</span>
+                <span style="color: #2ECC40;">■ Sorted</span>
+            </div>
+    `;
+    
+    for (let i = 0; i < steps.length; i++) {
+        let step = steps[i];
+        let isSorted = isSortedAscending(step.perm);
+        
+        let classes = 'perm-entry';
+        if (step.isStart) classes += ' start';
+        if (isSorted) classes += ' sorted';
+        
+        let permStr = '[' + step.perm.join(', ') + ']';
+        let transStr = step.transposition 
+            ? `(${step.transposition[0]}, ${step.transposition[1]})` 
+            : '(start)';
+        
+        html += `<div class="${classes}">
+            <span class="perm-num">${i + 1}.</span>
+            <span class="transposition">${transStr}</span>
+            <span class="perm-values">${permStr}</span>
+        </div>`;
+    }
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+</script>
+
+</body>
+</html>
