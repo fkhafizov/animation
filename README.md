@@ -10,6 +10,15 @@
 * [AUC ROC (площадь под кривой ошибок)](https://alexanderdyakonov.wordpress.com/2017/07/28/auc-roc-%d0%bf%d0%bb%d0%be%d1%89%d0%b0%d0%b4%d1%8c-%d0%bf%d0%be%d0%b4-%d0%ba%d1%80%d0%b8%d0%b2%d0%be%d0%b9-%d0%be%d1%88%d0%b8%d0%b1%d0%be%d0%ba/)
 * [The permutohedron-like Cayley graph of S4](https://en.wikipedia.org/wiki/Permutohedron)
 * Idea of AdS/CFT https://en.wikipedia.org/wiki/AdS/CFT_correspondence
+## roc_auc code
+* colab: https://colab.research.google.com/drive/1Se5i0RExo5BcJvK7ADKnOUTwSIHaqR_V#scrollTo=bODgohR2rfLy
+* local dir: /Users/paulpaul/iCloudDocs/code
+* [discussion 2 video -- 2025.12.25](https://web.telegram.org/k/#@Alexander_V_C)
+  * [тут Денис поясняет, можно еще чатгпт спрашивать по слову Lehmer code](https://web.telegram.org/k/#-3459573716)
+  * разобраться с примерами дьяконова, если это ещё актуально. Проверю код и кину в кагл
+  * Стартуем с гррфаа -- описывает дуальность. Наблюдаем свойство - Длина пути на графе --- площади над/под кривой - Чтоб был текст с картиной мира
+  * Посмотри плиз часть про роок аук - Там замысел понятно ли описание?
+  * после беглого прочтения не очень - гляну ещё - по-моему, не хватает примера на это всё в статье - где был бы и полигон, и пути на нём, и площадь под кривой -сейчас есть только последнее
 
 ---------
 # [A.V.Chervov papers](https://arxiv.org/search/?query=chervov&searchtype=author&source=header)
