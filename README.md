@@ -6,6 +6,9 @@
 * https://github.com/fkhafizov/animation/index.html
 * https://github.com/fkhafizov/animation/
   * bubble_sort.html
+  * file:///Users/paulpaul/Library/Mobile%20Documents/com~apple~CloudDocs/code/bubble_sort.html
+  * file:///Users/paulpaul/Library/Mobile%20Documents/com~apple~CloudDocs/code/graph.html
+  * file:///Users/paulpaul/Library/Mobile%20Documents/com~apple~CloudDocs/code/roc_auc.html
 --------------------------
 * [AUC ROC (площадь под кривой ошибок)](https://alexanderdyakonov.wordpress.com/2017/07/28/auc-roc-%d0%bf%d0%bb%d0%be%d1%89%d0%b0%d0%b4%d1%8c-%d0%bf%d0%be%d0%b4-%d0%ba%d1%80%d0%b8%d0%b2%d0%be%d0%b9-%d0%be%d1%88%d0%b8%d0%b1%d0%be%d0%ba/)
 * [The permutohedron-like Cayley graph of S4](https://en.wikipedia.org/wiki/Permutohedron)
@@ -20,6 +23,11 @@
   * Посмотри плиз часть про роок аук - Там замысел понятно ли описание?
   * после беглого прочтения не очень - гляну ещё - по-моему, не хватает примера на это всё в статье - где был бы и полигон, и пути на нём, и площадь под кривой -сейчас есть только последнее
 
+----------
+# paper to edit
+* https://www.overleaf.com/project/68ef5f14fe2871a55b8f1334
+* Ehrhart theory -
+  * [Ehrhart quasi-polynomial floor function](https://claude.ai/share/493c5051-5b50-4357-a713-2a15094fa722)
 ---------
 # [A.V.Chervov papers](https://arxiv.org/search/?query=chervov&searchtype=author&source=header)
 
