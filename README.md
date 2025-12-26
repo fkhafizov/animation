@@ -7,6 +7,8 @@
 * https://github.com/fkhafizov/animation/
   * bubble_sort.html
 
+* [The permutohedron-like Cayley graph of S4](https://en.wikipedia.org/wiki/Permutohedron)
+* Idea of AdS/CFT https://en.wikipedia.org/wiki/AdS/CFT_correspondence
 
 ---------
 # [A.V.Chervov papers](https://arxiv.org/search/?query=chervov&searchtype=author&source=header)
@@ -21,7 +23,8 @@
 
 -------------
 
-* Idea of AdS/CFT https://en.wikipedia.org/wiki/AdS/CFT_correspondence
+
+
 
 ```
 …or create a new repository on the command line
