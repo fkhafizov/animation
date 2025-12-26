@@ -1,6 +1,12 @@
 # animation
 2025.12.24
 
+## permutations
+* [Permutation Graph Analysis: Key Insights - claude.ai](https://claude.ai/public/artifacts/9116c13d-cca1-49c1-94f1-3d3fd2f3f5db)
+  * https://claude.ai/public/artifacts/9116c13d-cca1-49c1-94f1-3d3fd2f3f5db 
+* [permutations chatgpt](https://chatgpt.com/s/t_694e73326b00819189534519c0d16776)
+* 
+## animation
 * https://fkhafizov.github.io/animation
 * https://github.com/fkhafizov/ --- T
 * https://github.com/fkhafizov/animation/index.html
