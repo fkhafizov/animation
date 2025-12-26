@@ -11,7 +11,7 @@
 * [The permutohedron-like Cayley graph of S4](https://en.wikipedia.org/wiki/Permutohedron)
 * Idea of AdS/CFT https://en.wikipedia.org/wiki/AdS/CFT_correspondence
 ## roc_auc code
-* colab: https://colab.research.google.com/drive/1Se5i0RExo5BcJvK7ADKnOUTwSIHaqR_V#scrollTo=bODgohR2rfLy
+* [roc_auc.ipynb - colab](https://colab.research.google.com/drive/1Se5i0RExo5BcJvK7ADKnOUTwSIHaqR_V#scrollTo=bODgohR2rfLy)
 * local dir: /Users/paulpaul/iCloudDocs/code
 * [discussion 2 video -- 2025.12.25](https://web.telegram.org/k/#@Alexander_V_C)
   * [тут Денис поясняет, можно еще чатгпт спрашивать по слову Lehmer code](https://web.telegram.org/k/#-3459573716)
