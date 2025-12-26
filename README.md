@@ -6,7 +6,8 @@
 * https://github.com/fkhafizov/animation/index.html
 * https://github.com/fkhafizov/animation/
   * bubble_sort.html
-
+--------------------------
+* [AUC ROC (площадь под кривой ошибок)](https://alexanderdyakonov.wordpress.com/2017/07/28/auc-roc-%d0%bf%d0%bb%d0%be%d1%89%d0%b0%d0%b4%d1%8c-%d0%bf%d0%be%d0%b4-%d0%ba%d1%80%d0%b8%d0%b2%d0%be%d0%b9-%d0%be%d1%88%d0%b8%d0%b1%d0%be%d0%ba/)
 * [The permutohedron-like Cayley graph of S4](https://en.wikipedia.org/wiki/Permutohedron)
 * Idea of AdS/CFT https://en.wikipedia.org/wiki/AdS/CFT_correspondence
 
