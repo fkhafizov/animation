@@ -19,7 +19,9 @@
 * [Kaggle: CayleyPy RapaportM2 - solve math mystery from 1959](https://www.kaggle.com/competitions/cayleypy-rapapport-m2)
 * []()
 
+-------------
 
+* Idea of AdS/CFT https://en.wikipedia.org/wiki/AdS/CFT_correspondence
 
 ```
 …or create a new repository on the command line
