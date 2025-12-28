@@ -278,8 +278,15 @@ A clean theorem statement, matching your subsection:
 ---
 
 If you tell me your preferred step convention (e.g., “smaller letter = East, larger = North” or the reverse), I can write the exact lemma that “area equals $I_{b,a}$” so it matches your existing binary definitions verbatim.
-
+```
 * [1]: https://ncatlab.org/nlab/show/Kendall%2Btau%2Bdistance?utm_source=chatgpt.com "Kendall tau distance in nLab"
 * [2]: https://sites.math.washington.edu/~billey/classes/reflection.groups/references/EntireBook.pdf?utm_source=chatgpt.com "combinatorics of Coxeter groups"
 * [3]: https://www.combinatorics.org/ojs/index.php/eljc/article/download/v28i3p53/pdf/?utm_source=chatgpt.com "A Consecutive Lehmer Code for Parabolic Quotients of the ..."
+```
 
+
+# PROMPT-3
+```
+Give me  two examples for geometry arguments of finding the shortest path in the permutohedron with n=3
+and permutohedron with n=4. Make them visualizable in py code or visualize in our output.
+```
