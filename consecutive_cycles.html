@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>consecutive_cycles.html</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .description {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        .controls {
+            background: rgba(255,255,255,0.15);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        label {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        input[type="range"] {
+            width: 120px;
+            cursor: pointer;
+        }
+        .value-display {
+            background: rgba(255,255,255,0.9);
+            color: #667eea;
+            padding: 5px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            min-width: 30px;
+            text-align: center;
+        }
+        button {
+            background: rgba(255,255,255,0.9);
+            color: #667eea;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        #canvas-container {
+            display: flex;
+            justify-content: center;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .info {
+            background: rgba(255,255,255,0.15);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Consecutive k-Cycles Permutation Graphs</h1>
+        
+        <div class="description">
+            <strong>Consecutive k-cycles:</strong> Cyclic permutations (i, i+1, i+2, ..., i+k-1) for i=1,...,n-k+1.<br>
+            For k=2: neighbor transpositions (Coxeter generators of S<sub>n</sub>)<br>
+            For k=3: 3-cycles generating A<sub>n</sub> (alternating group)<br>
+            Even k generates S<sub>n</sub>, odd k generates A<sub>n</sub> (even permutations only)
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="n-slider">n (elements):</label>
+                <input type="range" id="n-slider" min="3" max="6" value="4" step="1">
+                <span class="value-display" id="n-value">4</span>
+            </div>
+            
+            <div class="control-group">
+                <label for="k-slider">k (cycle length):</label>
+                <input type="range" id="k-slider" min="2" max="4" value="2" step="1">
+                <span class="value-display" id="k-value">2</span>
+            </div>
+            
+            <button id="regenerate-btn">Regenerate Graph</button>
+            <button id="toggle-labels-btn">Toggle Labels</button>
+        </div>
+
+        <div id="canvas-container"></div>
+
+        <div class="info">
+            <div id="graph-info">Vertices: 0 | Edges: 0</div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #4CAF50;"></div>
+                    <span>Identity permutation</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #2196F3;"></div>
+                    <span>Even permutations</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #FF9800;"></div>
+                    <span>Odd permutations</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Permutation utilities
+        class Permutation {
+            constructor(array) {
+                this.perm = [...array];
+            }
+
+            toString() {
+                return this.perm.join('');
+            }
+
+            toArray() {
+                return [...this.perm];
+            }
+
+            equals(other) {
+                if (this.perm.length !== other.perm.length) return false;
+                for (let i = 0; i < this.perm.length; i++) {
+                    if (this.perm[i] !== other.perm[i]) return false;
+                }
+                return true;
+            }
+
+            // Apply a consecutive k-cycle starting at position i (0-indexed)
+            applyKCycle(i, k) {
+                const result = [...this.perm];
+                const temp = result[i];
+                for (let j = 0; j < k - 1; j++) {
+                    result[i + j] = result[i + j + 1];
+                }
+                result[i + k - 1] = temp;
+                return new Permutation(result);
+            }
+
+            // Apply inverse of consecutive k-cycle
+            applyInverseKCycle(i, k) {
+                const result = [...this.perm];
+                const temp = result[i + k - 1];
+                for (let j = k - 1; j > 0; j--) {
+                    result[i + j] = result[i + j - 1];
+                }
+                result[i] = temp;
+                return new Permutation(result);
+            }
+
+            // Calculate sign (parity) of permutation: 1 for even, -1 for odd
+            sign() {
+                const n = this.perm.length;
+                let inversions = 0;
+                for (let i = 0; i < n; i++) {
+                    for (let j = i + 1; j < n; j++) {
+                        if (this.perm[i] > this.perm[j]) inversions++;
+                    }
+                }
+                return inversions % 2 === 0 ? 1 : -1;
+            }
+
+            isEven() {
+                return this.sign() === 1;
+            }
+        }
+
+        // Graph generation
+        function generatePermutationGraph(n, k) {
+            const vertices = new Map(); // key: permutation string, value: {perm, neighbors, id}
+            const edges = [];
+            const identity = new Permutation(Array.from({length: n}, (_, i) => i + 1));
+            
+            const queue = [identity];
+            vertices.set(identity.toString(), {
+                perm: identity,
+                neighbors: [],
+                id: 0
+            });
+
+            let idCounter = 1;
+
+            while (queue.length > 0) {
+                const current = queue.shift();
+                const currentKey = current.toString();
+
+                // Generate all neighbors by applying consecutive k-cycles
+                for (let i = 0; i <= n - k; i++) {
+                    // Forward k-cycle
+                    const next1 = current.applyKCycle(i, k);
+                    const next1Key = next1.toString();
+
+                    if (!vertices.has(next1Key)) {
+                        vertices.set(next1Key, {
+                            perm: next1,
+                            neighbors: [],
+                            id: idCounter++
+                        });
+                        queue.push(next1);
+                    }
+
+                    // Add edge
+                    const v1 = vertices.get(currentKey);
+                    const v2 = vertices.get(next1Key);
+                    if (!v1.neighbors.includes(next1Key)) {
+                        v1.neighbors.push(next1Key);
+                        v2.neighbors.push(currentKey);
+                        edges.push([currentKey, next1Key]);
+                    }
+                }
+            }
+
+            return {vertices, edges};
+        }
+
+        // P5.js sketch
+        let graph;
+        let nodes = [];
+        let edges = [];
+        let n = 4;
+        let k = 2;
+        let showLabels = true;
+
+        function setup() {
+            const canvas = createCanvas(1200, 800);
+            canvas.parent('canvas-container');
+            
+            generateGraph();
+            
+            // Event listeners
+            document.getElementById('n-slider').addEventListener('input', (e) => {
+                n = parseInt(e.target.value);
+                document.getElementById('n-value').textContent = n;
+                // Update k slider max
+                const kSlider = document.getElementById('k-slider');
+                kSlider.max = n;
+                if (k > n) {
+                    k = n;
+                    kSlider.value = k;
+                    document.getElementById('k-value').textContent = k;
+                }
+            });
+            
+            document.getElementById('k-slider').addEventListener('input', (e) => {
+                k = parseInt(e.target.value);
+                document.getElementById('k-value').textContent = k;
+            });
+            
+            document.getElementById('regenerate-btn').addEventListener('click', () => {
+                generateGraph();
+            });
+
+            document.getElementById('toggle-labels-btn').addEventListener('click', () => {
+                showLabels = !showLabels;
+            });
+        }
+
+        function generateGraph() {
+            graph = generatePermutationGraph(n, k);
+            
+            // Create nodes array
+            nodes = [];
+            const vertexArray = Array.from(graph.vertices.values());
+            
+            // Position nodes using force-directed layout
+            for (let vertex of vertexArray) {
+                const angle = random(TWO_PI);
+                const radius = random(50, 200);
+                nodes.push({
+                    perm: vertex.perm,
+                    x: width / 2 + cos(angle) * radius,
+                    y: height / 2 + sin(angle) * radius,
+                    vx: 0,
+                    vy: 0,
+                    key: vertex.perm.toString(),
+                    neighbors: vertex.neighbors
+                });
+            }
+
+            // Update info
+            document.getElementById('graph-info').textContent = 
+                `Vertices: ${nodes.length} | Edges: ${graph.edges.length}`;
+        }
+
+        function draw() {
+            background(250);
+            
+            // Apply forces for layout
+            applyForces();
+            
+            // Draw edges
+            stroke(200);
+            strokeWeight(1.5);
+            for (let edge of graph.edges) {
+                const node1 = nodes.find(n => n.key === edge[0]);
+                const node2 = nodes.find(n => n.key === edge[1]);
+                if (node1 && node2) {
+                    line(node1.x, node1.y, node2.x, node2.y);
+                }
+            }
+            
+            // Draw nodes
+            for (let node of nodes) {
+                const isIdentity = node.perm.perm.every((val, idx) => val === idx + 1);
+                const isEven = node.perm.isEven();
+                
+                // Color based on parity
+                if (isIdentity) {
+                    fill(76, 175, 80); // Green for identity
+                } else if (isEven) {
+                    fill(33, 150, 243); // Blue for even
+                } else {
+                    fill(255, 152, 0); // Orange for odd
+                }
+                
+                stroke(60);
+                strokeWeight(2);
+                circle(node.x, node.y, 30);
+                
+                // Draw labels
+                if (showLabels) {
+                    fill(60);
+                    noStroke();
+                    textAlign(CENTER, CENTER);
+                    textSize(12);
+                    text(node.perm.toString(), node.x, node.y - 25);
+                }
+            }
+            
+            // Draw hover info
+            drawHoverInfo();
+        }
+
+        function applyForces() {
+            const repulsion = 5000;
+            const attraction = 0.01;
+            const damping = 0.85;
+            const centerForce = 0.005;
+            
+            // Reset forces
+            for (let node of nodes) {
+                node.vx = 0;
+                node.vy = 0;
+            }
+            
+            // Repulsion between all nodes
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const dx = nodes[j].x - nodes[i].x;
+                    const dy = nodes[j].y - nodes[i].y;
+                    const distSq = dx * dx + dy * dy + 1;
+                    const dist = sqrt(distSq);
+                    const force = repulsion / distSq;
+                    
+                    nodes[i].vx -= (dx / dist) * force;
+                    nodes[i].vy -= (dy / dist) * force;
+                    nodes[j].vx += (dx / dist) * force;
+                    nodes[j].vy += (dy / dist) * force;
+                }
+            }
+            
+            // Attraction along edges
+            for (let edge of graph.edges) {
+                const node1 = nodes.find(n => n.key === edge[0]);
+                const node2 = nodes.find(n => n.key === edge[1]);
+                if (node1 && node2) {
+                    const dx = node2.x - node1.x;
+                    const dy = node2.y - node1.y;
+                    const force = attraction;
+                    
+                    node1.vx += dx * force;
+                    node1.vy += dy * force;
+                    node2.vx -= dx * force;
+                    node2.vy -= dy * force;
+                }
+            }
+            
+            // Center force
+            for (let node of nodes) {
+                const dx = width / 2 - node.x;
+                const dy = height / 2 - node.y;
+                node.vx += dx * centerForce;
+                node.vy += dy * centerForce;
+            }
+            
+            // Update positions
+            for (let node of nodes) {
+                node.x += node.vx * damping;
+                node.y += node.vy * damping;
+                
+                // Keep within bounds
+                node.x = constrain(node.x, 50, width - 50);
+                node.y = constrain(node.y, 50, height - 50);
+            }
+        }
+
+        function drawHoverInfo() {
+            for (let node of nodes) {
+                const d = dist(mouseX, mouseY, node.x, node.y);
+                if (d < 15) {
+                    fill(60);
+                    noStroke();
+                    textAlign(LEFT, TOP);
+                    textSize(14);
+                    const info = `${node.perm.toString()}\n${node.perm.isEven() ? 'Even' : 'Odd'} permutation\nDegree: ${node.neighbors.length}`;
+                    const lines = info.split('\n');
+                    const boxWidth = 150;
+                    const boxHeight = lines.length * 20 + 10;
+                    
+                    fill(255, 255, 255, 230);
+                    stroke(60);
+                    strokeWeight(1);
+                    rect(mouseX + 10, mouseY + 10, boxWidth, boxHeight, 5);
+                    
+                    fill(60);
+                    noStroke();
+                    for (let i = 0; i < lines.length; i++) {
+                        text(lines[i], mouseX + 15, mouseY + 15 + i * 20);
+                    }
+                    break;
+                }
+            }
+        }
+
+        function mouseDragged() {
+            // Allow dragging nodes
+            for (let node of nodes) {
+                const d = dist(mouseX, mouseY, node.x, node.y);
+                if (d < 15) {
+                    node.x = mouseX;
+                    node.y = mouseY;
+                    return;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
+
