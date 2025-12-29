@@ -95,3 +95,96 @@ Would you like me to write Python code to:
 - Create an interactive visualization showing the graph structure?
 
 The resulting graph will be **highly symmetric** - it's the skeleton of a 3D geometric object related to the permutohedron!
+
+
+---------------
+
+# Q: are there formulas for computing vertices, edges, and diameters for D(n,k)?
+
+# Formulas for D(n,k) Parameters
+
+Great question! Here are the formulas we can derive:
+
+## Number of Vertices: $|V|$
+
+Based on the group theory:
+
+$$|V(n,k)| = \begin{cases}
+n! & \text{if } k \text{ is even (generates all of } S_n\text{)} \\
+\frac{n!}{2} & \text{if } k \text{ is odd (generates } A_n\text{)}
+\end{cases}$$
+
+**Example**: D(4,3) has $\frac{4!}{2} = \frac{24}{2} = 12$ vertices ✓
+
+## Degree of Each Vertex: $d$
+
+The degree equals the number of distinct generators:
+
+$$d(n,k) = \begin{cases}
+n - 1 & \text{if } k = 2 \text{ (transpositions are self-inverse)} \\
+2(n - k + 1) & \text{if } k > 2
+\end{cases}$$
+
+**Why?** 
+- We have $(n-k+1)$ consecutive $k$-cycles: $(1,2,\ldots,k), (2,3,\ldots,k+1), \ldots, (n-k+1,\ldots,n)$
+- Plus their $(n-k+1)$ inverses
+- For $k=2$: $(i,i+1) = (i,i+1)^{-1}$, so no doubling
+
+**Example**: D(4,3) has degree $2(4-3+1) = 2(2) = 4$ ✓
+
+## Number of Edges: $|E|$
+
+Since this is a Cayley graph (regular graph):
+
+$$|E(n,k)| = \frac{|V| \times d}{2}$$
+
+Substituting:
+
+$$|E(n,k)| = \begin{cases}
+\frac{n! \cdot (n-1)}{2} & \text{if } k = 2 \\
+n! \cdot (n-k+1) & \text{if } k > 2 \text{ and } k \text{ even} \\
+\frac{n!}{2} \cdot (n-k+1) & \text{if } k > 2 \text{ and } k \text{ odd}
+\end{cases}$$
+
+**Example**: D(4,3) has $\frac{24}{2} \cdot (4-3+1) = 12 \cdot 2 = 24$ edges
+
+## Diameter: $\text{diam}$
+
+This is the **tricky one** - no simple closed form for general $(n,k)$!
+
+### Known Special Cases:
+
+**For $k=2$ (Permutohedron / Cayley graph with Coxeter generators):**
+
+$$\text{diam}(n,2) = \binom{n}{2} = \frac{n(n-1)}{2}$$
+
+This is the maximum number of inversions in a permutation. The furthest point from identity $[1,2,\ldots,n]$ is the reversal $[n,n-1,\ldots,1]$.
+
+**For $k=3$ (generates $A_n$):**
+
+The diameter grows roughly like $\binom{n}{2}$ but the exact formula is more complex. For small $n$:
+- $\text{diam}(4,3) = 3$
+- $\text{diam}(5,3) = 7$ 
+- $\text{diam}(6,3) = 12$
+
+**General bounds:**
+
+$$\frac{n!}{2(n-k+1)} \leq \text{diam}(n,k) \leq \binom{n}{2}$$
+
+(Lower bound from volume growth, upper bound from reducing to $k=2$ case)
+
+## Summary Table
+
+| Parameter | Formula |
+|-----------|---------|
+| Vertices | $n!$ (even $k$) or $\frac{n!}{2}$ (odd $k$) |
+| Degree | $n-1$ ($k=2$) or $2(n-k+1)$ ($k>2$) |
+| Edges | $\frac{\|V\| \cdot d}{2}$ |
+| Diameter | $\binom{n}{2}$ for $k=2$; **open problem** for general $k$ |
+
+**Analogy**: Think of diameter as "how many moves to reach the opposite corner of a Rubik's cube." For $k=2$ (simple swaps), we know exactly. For $k=3$ (3-cycles), it's like asking "God's number" for a specific puzzle variant - we can compute it case-by-case but lack a universal formula.
+
+Would you like me to write Python code to compute these values and empirically explore the diameter for various $(n,k)$ pairs?
+
+
+
