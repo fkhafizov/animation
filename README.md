@@ -1,7 +1,7 @@
 
 
 * [CC chat](https://web.telegram.org/k/#-3459573716)
-* https://fkhafizov.github.io/animation
+* [Demos](https://fkhafizov.github.io/animation)
 
 * Random Sorting Networks https://arxiv.org/pdf/math/0609538
   
