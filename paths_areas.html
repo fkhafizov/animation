@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Area between two paths</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@300;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #e0f4ff 0%, #b8e4fc 50%, #a1d9f7 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        h1 {
+            font-weight: 700;
+            font-size: 2.2rem;
+            color: #1a4a6e;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(255,255,255,0.5);
+            letter-spacing: -0.5px;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.85);
+            padding: 20px 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(26,74,110,0.15);
+            backdrop-filter: blur(10px);
+        }
+        
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .input-group label {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #2c5f85;
+        }
+        
+        .input-group input {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            padding: 10px 15px;
+            border: 2px solid #7ec8e3;
+            border-radius: 10px;
+            width: 180px;
+            background: #f0faff;
+            color: #1a4a6e;
+            transition: all 0.3s ease;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 15px rgba(52,152,219,0.3);
+        }
+        
+        .input-group input::placeholder {
+            color: #a0c4d8;
+        }
+        
+        button {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding: 12px 35px;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(52,152,219,0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52,152,219,0.5);
+            background: linear-gradient(135deg, #5dade2 0%, #3498db 100%);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        #canvas-container {
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(26,74,110,0.2);
+        }
+        
+        .output-panel {
+            background: rgba(255,255,255,0.9);
+            padding: 20px 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(26,74,110,0.15);
+            min-width: 400px;
+            max-width: 800px;
+        }
+        
+        .output-panel h3 {
+            font-weight: 600;
+            color: #1a4a6e;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+        
+        #output {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            color: #2c5f85;
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+        
+        .area-display {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #16a085;
+            padding: 10px 0;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 4px;
+            border-radius: 2px;
+        }
+        
+        .hint {
+            font-size: 0.85rem;
+            color: #6a9bb8;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Area between two paths</h1>
+    
+    <div class="container">
+        <div class="controls">
+            <div class="input-group">
+                <label>P1 :</label>
+                <input type="text" id="p1Input" placeholder="e.g., 012 or 0 1 2">
+            </div>
+            <div class="input-group">
+                <label>P2 :</label>
+                <input type="text" id="p2Input" placeholder="e.g., 210 or 2 1 0">
+            </div>
+            <button id="drawBtn">DRAW</button>
+            <button id="randomP2Btn">GET RANDOM P2</button>
+        </div>
+        
+        <div class="hint">
+            Directions: 0 = Right, 1 = Up, 2 = Diagonal (left-up)<br>
+            Based on notes from Stanislav K. and team
+        </div>
+        
+        <div id="canvas-container"></div>
+        
+        <div class="output-panel">
+            <h3>📊 Results</h3>
+            <div id="output">Enter arrays P1 and P2, then click DRAW.</div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #e74c3c;"></div>
+                    <span>P1 Path</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #27ae60;"></div>
+                    <span>P2 Path</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: rgba(155,89,182,0.3);"></div>
+                    <span>Enclosed Area</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let canvasWidth = 700;
+        let canvasHeight = 600;
+        let gridSize = 50; // pixels per unit
+        let originX, originY;
+        
+        let p1Path = [];
+        let p2Path = [];
+        let p1Array = [];
+        let p2Array = [];
+        let animProgress = 0;
+        let isAnimating = false;
+        let currentArea = 0;
+        
+        function setup() {
+            let canvas = createCanvas(canvasWidth, canvasHeight);
+            canvas.parent('canvas-container');
+            originX = canvasWidth / 2;
+            originY = canvasHeight / 2 + 50;
+            
+            document.getElementById('drawBtn').addEventListener('click', startDrawing);
+            document.getElementById('randomP2Btn').addEventListener('click', generateRandomP2);
+            
+            // Pre-fill example
+            document.getElementById('p1Input').value = "0 1 2";
+            document.getElementById('p2Input').value = "2 1 0";
+        }
+        
+        function draw() {
+            // Light blue gradient background
+            drawBackground();
+            
+            // Draw grid
+            drawGrid();
+            
+            // Draw origin marker
+            drawOrigin();
+            
+            // Draw paths with animation
+            if (p1Path.length > 0 || p2Path.length > 0) {
+                drawPaths();
+            }
+        }
+        
+        function drawBackground() {
+            // Create a soft gradient
+            for (let y = 0; y < height; y++) {
+                let inter = map(y, 0, height, 0, 1);
+                let c = lerpColor(color(200, 230, 255), color(170, 215, 245), inter);
+                stroke(c);
+                line(0, y, width, y);
+            }
+        }
+        
+        function drawGrid() {
+            // Calculate visible grid range
+            let minX = floor(-originX / gridSize);
+            let maxX = ceil((canvasWidth - originX) / gridSize);
+            let minY = floor(-originY / gridSize);
+            let maxY = ceil((canvasHeight - originY) / gridSize);
+            
+            stroke(100, 150, 180, 100);
+            strokeWeight(1);
+            
+            // Draw dotted vertical lines
+            for (let x = minX; x <= maxX; x++) {
+                let screenX = originX + x * gridSize;
+                drawDottedLine(screenX, 0, screenX, canvasHeight);
+            }
+            
+            // Draw dotted horizontal lines
+            for (let y = minY; y <= maxY; y++) {
+                let screenY = originY - y * gridSize;
+                drawDottedLine(0, screenY, canvasWidth, screenY);
+            }
+            
+            // Draw axis labels
+            fill(80, 120, 150);
+            noStroke();
+            textFont('JetBrains Mono');
+            textSize(12);
+            textAlign(CENTER, TOP);
+            
+            for (let x = minX; x <= maxX; x++) {
+                if (x !== 0) {
+                    let screenX = originX + x * gridSize;
+                    text(x, screenX, originY + 5);
+                }
+            }
+            
+            textAlign(RIGHT, CENTER);
+            for (let y = minY; y <= maxY; y++) {
+                if (y !== 0) {
+                    let screenY = originY - y * gridSize;
+                    text(y, originX - 8, screenY);
+                }
+            }
+        }
+        
+        function drawDottedLine(x1, y1, x2, y2) {
+            let distance = dist(x1, y1, x2, y2);
+            let dotSpacing = 8;
+            let numDots = floor(distance / dotSpacing);
+            
+            for (let i = 0; i <= numDots; i++) {
+                let t = i / numDots;
+                let x = lerp(x1, x2, t);
+                let y = lerp(y1, y2, t);
+                point(x, y);
+            }
+        }
+        
+        function drawOrigin() {
+            // Draw origin point with glow
+            noStroke();
+            for (let r = 20; r > 0; r -= 4) {
+                fill(52, 152, 219, map(r, 0, 20, 150, 20));
+                ellipse(originX, originY, r * 2);
+            }
+            fill(255);
+            ellipse(originX, originY, 8);
+            
+            // Label
+            fill(52, 73, 94);
+            textSize(14);
+            textAlign(LEFT, TOP);
+            text("Origin (0,0)", originX + 12, originY + 5);
+        }
+        
+        function drawPaths() {
+            let progress = isAnimating ? min(animProgress, 1) : 1;
+            
+            // Draw filled area first (behind paths)
+            if (progress >= 1 && p1Path.length > 1 && p2Path.length > 1) {
+                drawFilledArea();
+            }
+            
+            // Draw P1 path (red)
+            if (p1Path.length > 1) {
+                let p1Progress = isAnimating ? min(progress * 2, 1) : 1;
+                drawAnimatedPath(p1Path, color(231, 76, 60), p1Progress, 4);
+            }
+            
+            // Draw P2 path (green)
+            if (p2Path.length > 1) {
+                let p2Progress = isAnimating ? max(0, (progress * 2) - 1) : 1;
+                drawAnimatedPath(p2Path, color(39, 174, 96), p2Progress, 4);
+            }
+            
+            // Draw endpoints
+            if (progress >= 1) {
+                drawEndpoints();
+            }
+            
+            // Update animation
+            if (isAnimating) {
+                animProgress += 0.015;
+                if (animProgress >= 1) {
+                    isAnimating = false;
+                    showResults();
+                }
+            }
+        }
+        
+        function drawAnimatedPath(pathPoints, pathColor, progress, weight) {
+            if (pathPoints.length < 2) return;
+            
+            let totalSegments = pathPoints.length - 1;
+            let segmentsToDraw = floor(progress * totalSegments);
+            let partialProgress = (progress * totalSegments) % 1;
+            
+            strokeWeight(weight);
+            stroke(pathColor);
+            noFill();
+            
+            // Draw complete segments
+            for (let i = 0; i < segmentsToDraw && i < totalSegments; i++) {
+                let x1 = originX + pathPoints[i].x * gridSize;
+                let y1 = originY - pathPoints[i].y * gridSize;
+                let x2 = originX + pathPoints[i + 1].x * gridSize;
+                let y2 = originY - pathPoints[i + 1].y * gridSize;
+                line(x1, y1, x2, y2);
+            }
+            
+            // Draw partial segment
+            if (segmentsToDraw < totalSegments) {
+                let i = segmentsToDraw;
+                let x1 = originX + pathPoints[i].x * gridSize;
+                let y1 = originY - pathPoints[i].y * gridSize;
+                let x2 = originX + pathPoints[i + 1].x * gridSize;
+                let y2 = originY - pathPoints[i + 1].y * gridSize;
+                let px = lerp(x1, x2, partialProgress);
+                let py = lerp(y1, y2, partialProgress);
+                line(x1, y1, px, py);
+                
+                // Draw moving point
+                fill(pathColor);
+                noStroke();
+                ellipse(px, py, 10);
+            }
+            
+            // Draw points at vertices
+            noStroke();
+            fill(pathColor);
+            for (let i = 0; i <= segmentsToDraw && i < pathPoints.length; i++) {
+                let x = originX + pathPoints[i].x * gridSize;
+                let y = originY - pathPoints[i].y * gridSize;
+                ellipse(x, y, 8);
+            }
+        }
+        
+        function drawFilledArea() {
+            // Combine paths to form polygon
+            let allPoints = [];
+            
+            // Add P1 path points
+            for (let p of p1Path) {
+                allPoints.push({x: originX + p.x * gridSize, y: originY - p.y * gridSize});
+            }
+            
+            // Add P2 path points in reverse (to close the shape)
+            for (let i = p2Path.length - 1; i >= 0; i--) {
+                allPoints.push({x: originX + p2Path[i].x * gridSize, y: originY - p2Path[i].y * gridSize});
+            }
+            
+            // Draw filled polygon with gradient-like effect
+            noStroke();
+            fill(155, 89, 182, 50);
+            beginShape();
+            for (let p of allPoints) {
+                vertex(p.x, p.y);
+            }
+            endShape(CLOSE);
+            
+            // Draw outline
+            stroke(155, 89, 182, 150);
+            strokeWeight(2);
+            noFill();
+            beginShape();
+            for (let p of allPoints) {
+                vertex(p.x, p.y);
+            }
+            endShape(CLOSE);
+        }
+        
+        function drawEndpoints() {
+            // P1 endpoint
+            if (p1Path.length > 0) {
+                let end1 = p1Path[p1Path.length - 1];
+                let x = originX + end1.x * gridSize;
+                let y = originY - end1.y * gridSize;
+                
+                noStroke();
+                fill(231, 76, 60);
+                ellipse(x, y, 14);
+                fill(255);
+                ellipse(x, y, 6);
+            }
+            
+            // P2 endpoint
+            if (p2Path.length > 0) {
+                let end2 = p2Path[p2Path.length - 1];
+                let x = originX + end2.x * gridSize;
+                let y = originY - end2.y * gridSize;
+                
+                noStroke();
+                fill(39, 174, 96);
+                ellipse(x, y, 14);
+                fill(255);
+                ellipse(x, y, 6);
+            }
+        }
+        
+        function startDrawing() {
+            let p1Input = document.getElementById('p1Input').value.trim();
+            let p2Input = document.getElementById('p2Input').value.trim();
+            
+            // Parse inputs
+            p1Array = parseInput(p1Input);
+            p2Array = parseInput(p2Input);
+            
+            if (p1Array.length === 0 || p2Array.length === 0) {
+                document.getElementById('output').innerHTML = 
+                    '<span style="color: #e74c3c;">Please enter valid arrays (numbers 0, 1, 2 separated by spaces).</span>';
+                return;
+            }
+            
+            // Generate paths
+            p1Path = generatePath(p1Array);
+            p2Path = generatePath(p2Array);
+            
+            // Calculate area
+            currentArea = calculateArea(p1Path, p2Path);
+            
+            // Start animation
+            animProgress = 0;
+            isAnimating = true;
+            
+            document.getElementById('output').innerHTML = 'Drawing paths...';
+        }
+        
+        function parseInput(input) {
+            if (!input) return [];
+            // Remove all spaces first
+            let cleaned = input.replace(/\s+/g, '');
+            // Split into individual characters and parse each as a digit
+            let nums = [];
+            for (let char of cleaned) {
+                let n = parseInt(char);
+                if (!isNaN(n) && n >= 0 && n <= 2) {
+                    nums.push(n);
+                }
+            }
+            return nums;
+        }
+        
+        function generateRandomP2() {
+            let p1Input = document.getElementById('p1Input').value.trim();
+            let p1Digits = parseInput(p1Input);
+            
+            if (p1Digits.length === 0) {
+                document.getElementById('output').innerHTML = 
+                    '<span style="color: #e74c3c;">Please enter P1 first.</span>';
+                return;
+            }
+            
+            // Generate random P2 using digits from P1, same length as P1
+            let randomP2 = [];
+            for (let i = 0; i < p1Digits.length; i++) {
+                // Pick a random digit from the P1 digits
+                let randomIndex = Math.floor(Math.random() * p1Digits.length);
+                randomP2.push(p1Digits[randomIndex]);
+            }
+            
+            // Set the P2 input field
+            document.getElementById('p2Input').value = randomP2.join(' ');
+        }
+        
+        function generatePath(arr) {
+            let path = [{x: 0, y: 0}];
+            let x = 0, y = 0;
+            
+            for (let move of arr) {
+                switch(move) {
+                    case 0: // Right
+                        x += 1;
+                        break;
+                    case 1: // Up
+                        y += 1;
+                        break;
+                    case 2: // Diagonal left-up
+                        x -= 1;
+                        y += 1;
+                        break;
+                }
+                path.push({x: x, y: y});
+            }
+            
+            return path;
+        }
+        
+        function calculateArea(path1, path2) {
+            // Use Shoelace formula for the polygon formed by combining both paths
+            let polygon = [];
+            
+            // Add P1 path
+            for (let p of path1) {
+                polygon.push({x: p.x, y: p.y});
+            }
+            
+            // Add P2 path in reverse (excluding first point which is same as P1's last)
+            for (let i = path2.length - 1; i >= 0; i--) {
+                polygon.push({x: path2[i].x, y: path2[i].y});
+            }
+            
+            // Shoelace formula
+            let area = 0;
+            let n = polygon.length;
+            for (let i = 0; i < n; i++) {
+                let j = (i + 1) % n;
+                area += polygon[i].x * polygon[j].y;
+                area -= polygon[j].x * polygon[i].y;
+            }
+            
+            return Math.abs(area) / 2;
+        }
+        
+        function showResults() {
+            let p1End = p1Path[p1Path.length - 1];
+            let p2End = p2Path[p2Path.length - 1];
+            
+            let outputHtml = `<div class="area-display">Area = ${currentArea}</div>`;
+            outputHtml += `\nP1 path: (0,0) → (${p1End.x}, ${p1End.y})`;
+            outputHtml += `\nP2 path: (0,0) → (${p2End.x}, ${p2End.y})`;
+            
+            if (p1End.x !== p2End.x || p1End.y !== p2End.y) {
+                outputHtml += `\n\n<span style="color: #e67e22;">⚠️ Paths don't meet! Endpoints differ.</span>`;
+            } else {
+                outputHtml += `\n\n<span style="color: #27ae60;">✓ Paths meet at (${p1End.x}, ${p1End.y})</span>`;
+            }
+            
+            // Find other combinations with same area
+            outputHtml += findOtherCombinations(p1Array, p2Array, currentArea);
+            
+            document.getElementById('output').innerHTML = outputHtml;
+        }
+        
+        function findOtherCombinations(origP1, origP2, targetArea) {
+            let len1 = origP1.length;
+            let len2 = origP2.length;
+            
+            // Generate all permutations of the same length with digits 0,1,2
+            let found = [];
+            let origP1Str = origP1.join(' ');
+            let origP2Str = origP2.join(' ');
+            
+            // For reasonable computation, limit search
+            if (len1 > 5 || len2 > 5) {
+                // For longer arrays, just try permutations of the original arrays
+                let p1Perms = getPermutations(origP1);
+                let p2Perms = getPermutations(origP2);
+                
+                for (let perm1 of p1Perms) {
+                    for (let perm2 of p2Perms) {
+                        let p1Str = perm1.join(' ');
+                        let p2Str = perm2.join(' ');
+                        
+                        // Skip original
+                        if (p1Str === origP1Str && p2Str === origP2Str) continue;
+                        
+                        let path1 = generatePath(perm1);
+                        let path2 = generatePath(perm2);
+                        let area = calculateArea(path1, path2);
+                        
+                        // Check if paths meet
+                        let end1 = path1[path1.length - 1];
+                        let end2 = path2[path2.length - 1];
+                        
+                        if (Math.abs(area - targetArea) < 0.0001 && end1.x === end2.x && end1.y === end2.y) {
+                            let key = `${p1Str}|${p2Str}`;
+                            if (!found.some(f => f.key === key)) {
+                                found.push({p1: p1Str, p2: p2Str, key: key});
+                            }
+                        }
+                        
+                        if (found.length >= 10) break;
+                    }
+                    if (found.length >= 10) break;
+                }
+            } else {
+                // Generate all combinations
+                let allArrays1 = generateAllArrays(len1);
+                let allArrays2 = generateAllArrays(len2);
+                
+                for (let arr1 of allArrays1) {
+                    for (let arr2 of allArrays2) {
+                        let p1Str = arr1.join(' ');
+                        let p2Str = arr2.join(' ');
+                        
+                        // Skip original
+                        if (p1Str === origP1Str && p2Str === origP2Str) continue;
+                        
+                        let path1 = generatePath(arr1);
+                        let path2 = generatePath(arr2);
+                        
+                        // Check if paths meet
+                        let end1 = path1[path1.length - 1];
+                        let end2 = path2[path2.length - 1];
+                        
+                        if (end1.x !== end2.x || end1.y !== end2.y) continue;
+                        
+                        let area = calculateArea(path1, path2);
+                        
+                        if (Math.abs(area - targetArea) < 0.0001) {
+                            let key = `${p1Str}|${p2Str}`;
+                            if (!found.some(f => f.key === key)) {
+                                found.push({p1: p1Str, p2: p2Str, key: key});
+                            }
+                        }
+                        
+                        if (found.length >= 15) break;
+                    }
+                    if (found.length >= 15) break;
+                }
+            }
+            
+            if (found.length === 0) {
+                return `\n\n<span style="color: #8e44ad; font-weight: 600;">I CAN NOT FIND ANY OTHER COMBINATIONS FOR P1 P2 GIVING THE SAME AREA</span>`;
+            } else {
+                let result = `\n\n<span style="color: #2980b9; font-weight: 600;">🔍 Other combinations with Area = ${targetArea}:</span>\n`;
+                for (let i = 0; i < Math.min(found.length, 10); i++) {
+                    result += `\n  ${i+1}. P1: [${found[i].p1}]  P2: [${found[i].p2}]`;
+                }
+                if (found.length > 10) {
+                    result += `\n  ... and ${found.length - 10} more`;
+                }
+                return result;
+            }
+        }
+        
+        function generateAllArrays(length) {
+            if (length === 0) return [[]];
+            let result = [];
+            let smaller = generateAllArrays(length - 1);
+            for (let arr of smaller) {
+                for (let digit = 0; digit <= 2; digit++) {
+                    result.push([...arr, digit]);
+                }
+            }
+            return result;
+        }
+        
+        function getPermutations(arr) {
+            if (arr.length <= 1) return [arr];
+            
+            let result = [];
+            let used = new Set();
+            
+            function permute(current, remaining) {
+                if (remaining.length === 0) {
+                    let key = current.join(',');
+                    if (!used.has(key)) {
+                        used.add(key);
+                        result.push([...current]);
+                    }
+                    return;
+                }
+                
+                for (let i = 0; i < remaining.length; i++) {
+                    current.push(remaining[i]);
+                    let newRemaining = [...remaining.slice(0, i), ...remaining.slice(i + 1)];
+                    permute(current, newRemaining);
+                    current.pop();
+                }
+            }
+            
+            permute([], arr);
+            return result;
+        }
+    </script>
+</body>
+</html>
+
