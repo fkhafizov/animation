@@ -1,0 +1,1651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Area of a Solid</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 30%, #a8d8a0 70%, #98d18e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+        }
+        
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 2.5rem;
+            color: #1a5928;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 15px 25px;
+            border-radius: 14px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+        
+        .draw-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 12px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(31, 38, 135, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .draw-controls span {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9rem;
+            color: #2d6a4f;
+            font-weight: 600;
+        }
+        
+        .plane-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.75);
+            padding: 10px 18px;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(31, 38, 135, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .plane-controls span {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.85rem;
+            color: #2d6a4f;
+            font-weight: 600;
+        }
+        
+        .main-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            justify-content: center;
+        }
+        
+        .logs-panel {
+            width: 380px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 14px;
+            box-shadow: 0 8px 24px rgba(31, 38, 135, 0.12);
+            border: 2px solid #52b788;
+            overflow: hidden;
+        }
+        
+        .logs-header {
+            background: linear-gradient(135deg, #40916c, #2d6a4f);
+            color: white;
+            padding: 12px 16px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .logs-content {
+            height: 580px;
+            overflow-y: scroll;
+            padding: 10px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.6;
+            /* Ensure all content is scrollable */
+            overflow-anchor: none;
+        }
+        
+        .logs-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .logs-content::-webkit-scrollbar-track {
+            background: #e9ecef;
+            border-radius: 4px;
+        }
+        
+        .logs-content::-webkit-scrollbar-thumb {
+            background: #52b788;
+            border-radius: 4px;
+        }
+        
+        .logs-content::-webkit-scrollbar-thumb:hover {
+            background: #40916c;
+        }
+        
+        .log-entry {
+            padding: 8px 14px;
+            margin-bottom: 5px;
+            border-radius: 6px;
+            background: #f8f9fa;
+            border-left: 4px solid #adb5bd;
+            font-size: 0.85rem;
+        }
+        
+        .log-entry.p1 {
+            border-left-color: #e63946;
+            background: #fff5f5;
+        }
+        
+        .log-entry.p2 {
+            border-left-color: #457b9d;
+            background: #f0f7ff;
+        }
+        
+        .log-entry.surface {
+            border-left-color: #f4a261;
+            background: #fffaf0;
+        }
+        
+        .log-entry.complete {
+            border-left-color: #40916c;
+            background: #f0fff4;
+            font-weight: 600;
+        }
+        
+        .log-entry .step-num {
+            font-weight: 700;
+            color: #495057;
+        }
+        
+        .log-entry .move-type {
+            color: #6c757d;
+        }
+        
+        .log-entry .position {
+            color: #1b4332;
+            font-weight: 600;
+        }
+        
+        #canvas-container {
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+            border: 3px solid rgba(255, 255, 255, 0.6);
+        }
+        
+        .output-panel {
+            width: 220px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 14px;
+            box-shadow: 0 8px 24px rgba(31, 38, 135, 0.12);
+            border: 2px solid #52b788;
+            overflow: hidden;
+        }
+        
+        .output-header {
+            background: linear-gradient(135deg, #f4a261, #e76f51);
+            color: white;
+            padding: 12px 16px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .output-content {
+            padding: 20px;
+        }
+        
+        .output-item {
+            margin-bottom: 20px;
+        }
+        
+        .output-item label {
+            display: block;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+        
+        .output-item .value {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1b4332;
+            background: linear-gradient(135deg, #d8f3dc, #b7e4c7);
+            padding: 12px 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .status-display {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.85rem;
+            color: #495057;
+            text-align: center;
+            border: 1px solid #dee2e6;
+        }
+        
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .input-group label {
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #2d6a4f;
+        }
+        
+        .input-group input {
+            font-family: 'Space Mono', monospace;
+            font-size: 1rem;
+            padding: 10px 15px;
+            border: 2px solid #52b788;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #1b4332;
+            width: 180px;
+            transition: all 0.3s ease;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #40916c;
+            box-shadow: 0 0 12px rgba(64, 145, 108, 0.4);
+        }
+        
+        button {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .btn-draw {
+            background: linear-gradient(135deg, #40916c, #2d6a4f);
+            color: white;
+            box-shadow: 0 4px 15px rgba(45, 106, 79, 0.4);
+        }
+        
+        .btn-draw:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(45, 106, 79, 0.5);
+        }
+        
+        .btn-draw:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-p1 {
+            background: linear-gradient(135deg, #e63946, #c1121f);
+            color: white;
+            box-shadow: 0 4px 15px rgba(230, 57, 70, 0.4);
+        }
+        
+        .btn-p1:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(230, 57, 70, 0.5);
+        }
+        
+        .btn-p1:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-p2 {
+            background: linear-gradient(135deg, #457b9d, #1d3557);
+            color: white;
+            box-shadow: 0 4px 15px rgba(69, 123, 157, 0.4);
+        }
+        
+        .btn-p2:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(69, 123, 157, 0.5);
+        }
+        
+        .btn-p2:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-surface {
+            background: linear-gradient(135deg, #f4a261, #e76f51);
+            color: white;
+            box-shadow: 0 4px 15px rgba(244, 162, 97, 0.4);
+        }
+        
+        .btn-surface:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(244, 162, 97, 0.5);
+        }
+        
+        .btn-surface:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-random {
+            background: linear-gradient(135deg, #74c69d, #52b788);
+            color: #1b4332;
+            box-shadow: 0 4px 15px rgba(82, 183, 136, 0.4);
+        }
+        
+        .btn-random:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(82, 183, 136, 0.5);
+        }
+        
+        .btn-reset {
+            background: linear-gradient(135deg, #b7e4c7, #95d5b2);
+            color: #1b4332;
+            box-shadow: 0 4px 15px rgba(149, 213, 178, 0.4);
+        }
+        
+        .btn-reset:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(149, 213, 178, 0.5);
+        }
+        
+        .btn-plane {
+            font-size: 0.8rem;
+            padding: 7px 14px;
+            background: linear-gradient(135deg, #dee2e6, #ced4da);
+            color: #495057;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-plane:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn-plane.hidden {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+            color: #1b4332;
+        }
+        
+        .btn-plane-all {
+            font-size: 0.8rem;
+            padding: 7px 14px;
+            background: linear-gradient(135deg, #adb5bd, #868e96);
+            color: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-plane-all:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn-plane-all.hidden {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+        }
+        
+        .instructions {
+            margin-top: 12px;
+            font-size: 0.85rem;
+            color: #2d6a4f;
+            opacity: 0.8;
+            text-align: center;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            color: #2d6a4f;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .legend-color {
+            width: 18px;
+            height: 4px;
+            border-radius: 2px;
+        }
+        
+        .color-p1 { background: #e63946; }
+        .color-p2 { background: #457b9d; }
+        .color-surface { background: rgba(255, 200, 100, 0.7); }
+    </style>
+</head>
+<body>
+    <h1>Area of a Solid</h1>
+    
+    <div class="controls">
+        <div class="input-group">
+            <label>P1 :</label>
+            <input type="text" id="p1Input" value="0012222" placeholder="e.g., 0 1 2 3 or 0123">
+        </div>
+        <div class="input-group">
+            <label>P2 :</label>
+            <input type="text" id="p2Input" value="2212021" placeholder="e.g., 3 2 1 0 or 3210">
+        </div>
+        <button class="btn-random" onclick="getRandomP2()">GET RANDOM P2</button>
+        <button class="btn-draw" id="drawBtn" onclick="drawPaths()">DRAW</button>
+        <button class="btn-reset" onclick="resetCanvas()">RESET</button>
+    </div>
+    
+    <div class="draw-controls">
+        <span>Step-by-step:</span>
+        <button class="btn-p1" id="drawP1Btn" onclick="drawP1Only()">DRAW P1</button>
+        <button class="btn-p2" id="drawP2Btn" onclick="drawP2Only()">DRAW P2</button>
+        <button class="btn-surface" id="showSurfacesBtn" onclick="showSurfacesAnimated()">SHOW SURFACES</button>
+    </div>
+    
+    <div class="plane-controls">
+        <span>Planes:</span>
+        <button class="btn-plane" id="btnXY" onclick="togglePlaneXY()">Hide XY</button>
+        <button class="btn-plane" id="btnYZ" onclick="togglePlaneYZ()">Hide YZ</button>
+        <button class="btn-plane" id="btnXZ" onclick="togglePlaneXZ()">Hide XZ</button>
+        <button class="btn-plane-all" id="btnAll" onclick="toggleAllPlanes()">Hide All Planes</button>
+    </div>
+    
+    <div class="main-container">
+        <div class="logs-panel">
+            <div class="logs-header">
+                📋 Drawing Log
+                <span style="float: right; font-size: 0.7rem;">
+                    <button onclick="scrollLogsTop()" style="padding: 2px 6px; font-size: 0.7rem; cursor: pointer;">⬆ Top</button>
+                    <button onclick="scrollLogsBottom()" style="padding: 2px 6px; font-size: 0.7rem; cursor: pointer;">⬇ Bottom</button>
+                </span>
+            </div>
+            <div class="logs-content" id="logsContent">
+                <div class="log-entry">Ready. Drag canvas to rotate view before drawing.</div>
+            </div>
+        </div>
+        
+        <div id="canvas-container"></div>
+        
+        <div class="output-panel">
+            <div class="output-header">📊 Results</div>
+            <div class="output-content">
+                <div class="output-item">
+                    <label>Surface Area</label>
+                    <div class="value" id="areaOutput">—</div>
+                </div>
+                <div class="output-item">
+                    <label>Volume</label>
+                    <div class="value" id="volumeOutput">—</div>
+                </div>
+                <div class="status-display" id="statusDisplay">
+                    Drag canvas to rotate view
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="legend">
+        <div class="legend-item"><div class="legend-color color-p1"></div> Path P1</div>
+        <div class="legend-item"><div class="legend-color color-p2"></div> Path P2</div>
+        <div class="legend-item"><div class="legend-color color-surface"></div> Solid Surface</div>
+    </div>
+    
+    <p class="instructions">Click and drag on canvas to rotate view at any time. Scroll to zoom.</p>
+
+    <script>
+        let canvasSize = 600;
+        let unitSize = 40;
+        let gridSize = 8;
+        
+        // Orientation: Z up, X right at 45°, Y left at 45°
+        let rotX = 0;
+        let rotY = 0;
+        let zoom = 0.55;
+        
+        let path1Points = [];
+        let path2Points = [];
+        let path1FullPoints = [];
+        let path2FullPoints = [];
+        let p1Digits = [];
+        let p2Digits = [];
+        
+        let isDrawn = false;
+        let isAnimating = false;
+        let isDragging = false;
+        let prevMouseX, prevMouseY;
+        
+        let showPlaneXY = true;
+        let showPlaneYZ = true;
+        let showPlaneXZ = true;
+        
+        // Animation phases: 0=idle, 1=P1, 2=P2, 3=done, 4=P1only, 5=P2only, 6=surfaces
+        let animationPhase = 0;
+        let currentStep = 0;
+        let animationDelay = 600;
+        let lastStepTime = 0;
+        
+        let solidVertices = [];
+        let solidFaces = [];
+        let allSolidFaces = [];
+        let visibleFaceCount = 0;
+        let calculatedArea = 0;
+        let calculatedVolume = 0;
+        let showSolid = false;
+        
+        const faceNames = [
+            'Front face (XY at z=min)',
+            'Back face (XY at z=max)',
+            'Top face (XZ at y=max)',
+            'Bottom face (XZ at y=min)',
+            'Right face (YZ at x=max)',
+            'Left face (YZ at x=min)'
+        ];
+        
+        const moveNames = {
+            0: '+X (right)',
+            1: '+Y (up)',
+            2: '+Z (forward)',
+            3: '+X+Y (XY diag)',
+            4: '+X+Z (XZ diag)',
+            5: '+Y+Z (YZ diag)',
+            6: '+X+Y+Z (space diag)'
+        };
+        
+        function setup() {
+            let canvas = createCanvas(canvasSize, canvasSize, WEBGL);
+            canvas.parent('canvas-container');
+            smooth();
+        }
+        
+        function draw() {
+            background(200, 235, 210);
+            
+            push();
+            noStroke();
+            for (let r = canvasSize; r > 0; r -= 30) {
+                let alpha = map(r, 0, canvasSize, 30, 0);
+                fill(180, 220, 190, alpha);
+                ellipse(0, 0, r, r);
+            }
+            pop();
+            
+            if (isAnimating) {
+                let currentTime = millis();
+                if (currentTime - lastStepTime > animationDelay) {
+                    advanceAnimation();
+                    lastStepTime = currentTime;
+                }
+            }
+            
+            scale(zoom);
+            
+            // Base orientation: Z up (tilted 20° towards viewer), X right-45°, Y left-45°
+            rotateX(-PI/2 + 0.35);  // Z up, tilted 20° towards viewer (0.35 rad ≈ 20°)
+            rotateZ(-PI/4);         // Rotate 45° for isometric view
+            
+            // Apply user rotation on top
+            rotateX(rotX);
+            rotateY(rotY);
+            
+            // NO translation - keep origin at center of canvas
+            // Draw origin marker first (always visible)
+            drawOriginMarker();
+            
+            drawGrid();
+            drawAxes();
+            
+            if (path1Points.length > 0 || path2Points.length > 0 || showSolid) {
+                if (showSolid) {
+                    drawSolid();
+                }
+                
+                if (path1Points.length > 1) {
+                    drawPath(path1Points, color(230, 57, 70), 5);
+                }
+                if (path2Points.length > 1) {
+                    drawPath(path2Points, color(69, 123, 157), 5);
+                }
+                
+                drawPathPoints();
+                
+                if (isAnimating && (animationPhase === 1 || animationPhase === 2 || animationPhase === 4 || animationPhase === 5)) {
+                    drawCurrentStepHighlight();
+                }
+                
+                if (isAnimating && animationPhase === 6 && visibleFaceCount > 0) {
+                    drawCurrentSurfaceHighlight();
+                }
+            }
+        }
+        
+        // Logging functions
+        function clearLogs() {
+            document.getElementById('logsContent').innerHTML = '';
+        }
+        
+        function addLog(message, type = '') {
+            let logsContent = document.getElementById('logsContent');
+            let entry = document.createElement('div');
+            entry.className = 'log-entry ' + type;
+            entry.innerHTML = message;
+            logsContent.appendChild(entry);
+            // Auto-scroll to bottom during animation
+            if (isAnimating) {
+                logsContent.scrollTop = logsContent.scrollHeight;
+            }
+        }
+        
+        function scrollLogsTop() {
+            document.getElementById('logsContent').scrollTop = 0;
+        }
+        
+        function scrollLogsBottom() {
+            let logsContent = document.getElementById('logsContent');
+            logsContent.scrollTop = logsContent.scrollHeight;
+        }
+        
+        function updateStatus(text) {
+            document.getElementById('statusDisplay').textContent = text;
+        }
+        
+        function setButtonsDisabled(disabled) {
+            document.getElementById('drawBtn').disabled = disabled;
+            document.getElementById('drawP1Btn').disabled = disabled;
+            document.getElementById('drawP2Btn').disabled = disabled;
+            document.getElementById('showSurfacesBtn').disabled = disabled;
+        }
+        
+        function drawP1Only() {
+            if (isAnimating) return;
+            
+            let p1Input = document.getElementById('p1Input').value;
+            p1Digits = parseInput(p1Input);
+            
+            if (p1Digits.length === 0) {
+                alert('Please enter a valid array for P1');
+                return;
+            }
+            
+            clearLogs();
+            addLog('<strong>Starting P1 drawing...</strong>', 'p1');
+            addLog(`Input: ${p1Digits.join(' ')}`, 'p1');
+            
+            path1Points = [];
+            path1FullPoints = computeFullPath(p1Digits);
+            
+            animationPhase = 4;
+            currentStep = 0;
+            isAnimating = true;
+            lastStepTime = millis();
+            
+            setButtonsDisabled(true);
+            updateStatus(`Drawing P1... (${p1Digits.length} steps)`);
+        }
+        
+        function drawP2Only() {
+            if (isAnimating) return;
+            
+            let p2Input = document.getElementById('p2Input').value;
+            p2Digits = parseInput(p2Input);
+            
+            if (p2Digits.length === 0) {
+                alert('Please enter a valid array for P2');
+                return;
+            }
+            
+            clearLogs();
+            addLog('<strong>Starting P2 drawing...</strong>', 'p2');
+            addLog(`Input: ${p2Digits.join(' ')}`, 'p2');
+            
+            path2Points = [];
+            path2FullPoints = computeFullPath(p2Digits);
+            
+            animationPhase = 5;
+            currentStep = 0;
+            isAnimating = true;
+            lastStepTime = millis();
+            
+            setButtonsDisabled(true);
+            updateStatus(`Drawing P2... (${p2Digits.length} steps)`);
+        }
+        
+        function showSurfacesAnimated() {
+            if (isAnimating) return;
+            
+            let p1Input = document.getElementById('p1Input').value;
+            let p2Input = document.getElementById('p2Input').value;
+            
+            p1Digits = parseInput(p1Input);
+            p2Digits = parseInput(p2Input);
+            
+            if (p1Digits.length === 0 || p2Digits.length === 0) {
+                alert('Please enter valid arrays for both P1 and P2');
+                return;
+            }
+            
+            clearLogs();
+            addLog('<strong>Building surfaces...</strong>', 'surface');
+            addLog(`P1: ${p1Digits.join(' ')}`, 'p1');
+            addLog(`P2: ${p2Digits.join(' ')}`, 'p2');
+            
+            path1FullPoints = computeFullPath(p1Digits);
+            path2FullPoints = computeFullPath(p2Digits);
+            
+            path1Points = [...path1FullPoints];
+            path2Points = [...path2FullPoints];
+            
+            buildSolidGeometry();
+            allSolidFaces = [...solidFaces];
+            solidFaces = [];
+            visibleFaceCount = 0;
+            showSolid = true;
+            
+            addLog(`Paths computed. Showing ${allSolidFaces.length} surfaces...`, 'surface');
+            
+            animationPhase = 6;
+            currentStep = 0;
+            isAnimating = true;
+            animationDelay = 800;
+            lastStepTime = millis();
+            
+            setButtonsDisabled(true);
+            updateStatus(`Showing surfaces... (${allSolidFaces.length} faces)`);
+        }
+        
+        function togglePlaneXY() {
+            showPlaneXY = !showPlaneXY;
+            updatePlaneButton('btnXY', showPlaneXY, 'XY');
+            updateAllPlanesButton();
+        }
+        
+        function togglePlaneYZ() {
+            showPlaneYZ = !showPlaneYZ;
+            updatePlaneButton('btnYZ', showPlaneYZ, 'YZ');
+            updateAllPlanesButton();
+        }
+        
+        function togglePlaneXZ() {
+            showPlaneXZ = !showPlaneXZ;
+            updatePlaneButton('btnXZ', showPlaneXZ, 'XZ');
+            updateAllPlanesButton();
+        }
+        
+        function toggleAllPlanes() {
+            let anyVisible = showPlaneXY || showPlaneYZ || showPlaneXZ;
+            
+            if (anyVisible) {
+                showPlaneXY = false;
+                showPlaneYZ = false;
+                showPlaneXZ = false;
+            } else {
+                showPlaneXY = true;
+                showPlaneYZ = true;
+                showPlaneXZ = true;
+            }
+            
+            updatePlaneButton('btnXY', showPlaneXY, 'XY');
+            updatePlaneButton('btnYZ', showPlaneYZ, 'YZ');
+            updatePlaneButton('btnXZ', showPlaneXZ, 'XZ');
+            updateAllPlanesButton();
+        }
+        
+        function updatePlaneButton(btnId, isVisible, planeName) {
+            let btn = document.getElementById(btnId);
+            if (isVisible) {
+                btn.textContent = 'Hide ' + planeName;
+                btn.classList.remove('hidden');
+            } else {
+                btn.textContent = 'Show ' + planeName;
+                btn.classList.add('hidden');
+            }
+        }
+        
+        function updateAllPlanesButton() {
+            let btn = document.getElementById('btnAll');
+            let allHidden = !showPlaneXY && !showPlaneYZ && !showPlaneXZ;
+            
+            if (allHidden) {
+                btn.textContent = 'Show All Planes';
+                btn.classList.add('hidden');
+            } else {
+                btn.textContent = 'Hide All Planes';
+                btn.classList.remove('hidden');
+            }
+        }
+        
+        function advanceAnimation() {
+            if (animationPhase === 1) {
+                if (currentStep < path1FullPoints.length) {
+                    path1Points.push(path1FullPoints[currentStep]);
+                    
+                    if (currentStep > 0) {
+                        let digit = p1Digits[currentStep - 1];
+                        let pos = path1FullPoints[currentStep];
+                        addLog(`<span class="step-num">Step ${currentStep}:</span> Move <strong>${digit}</strong> → <span class="move-type">${moveNames[digit]}</span> → <span class="position">(${pos.x}, ${pos.y}, ${pos.z})</span>`, 'p1');
+                    } else {
+                        addLog(`<span class="step-num">Start:</span> Origin <span class="position">(0, 0, 0)</span>`, 'p1');
+                    }
+                    
+                    updateStatus(`P1: Step ${currentStep}/${p1Digits.length}`);
+                    currentStep++;
+                } else {
+                    addLog('<strong>P1 Complete!</strong> Starting P2...', 'complete');
+                    animationPhase = 2;
+                    currentStep = 0;
+                }
+            } else if (animationPhase === 2) {
+                if (currentStep < path2FullPoints.length) {
+                    path2Points.push(path2FullPoints[currentStep]);
+                    
+                    if (currentStep > 0) {
+                        let digit = p2Digits[currentStep - 1];
+                        let pos = path2FullPoints[currentStep];
+                        addLog(`<span class="step-num">Step ${currentStep}:</span> Move <strong>${digit}</strong> → <span class="move-type">${moveNames[digit]}</span> → <span class="position">(${pos.x}, ${pos.y}, ${pos.z})</span>`, 'p2');
+                    } else {
+                        addLog(`<span class="step-num">Start:</span> Origin <span class="position">(0, 0, 0)</span>`, 'p2');
+                    }
+                    
+                    updateStatus(`P2: Step ${currentStep}/${p2Digits.length}`);
+                    currentStep++;
+                } else {
+                    finishFullDraw();
+                }
+            } else if (animationPhase === 4) {
+                if (currentStep < path1FullPoints.length) {
+                    path1Points.push(path1FullPoints[currentStep]);
+                    
+                    if (currentStep > 0) {
+                        let digit = p1Digits[currentStep - 1];
+                        let pos = path1FullPoints[currentStep];
+                        addLog(`<span class="step-num">Step ${currentStep}:</span> Move <strong>${digit}</strong> → <span class="move-type">${moveNames[digit]}</span> → <span class="position">(${pos.x}, ${pos.y}, ${pos.z})</span>`, 'p1');
+                    } else {
+                        addLog(`<span class="step-num">Start:</span> Origin <span class="position">(0, 0, 0)</span>`, 'p1');
+                    }
+                    
+                    updateStatus(`P1: Step ${currentStep}/${p1Digits.length}`);
+                    currentStep++;
+                } else {
+                    finishP1Only();
+                }
+            } else if (animationPhase === 5) {
+                if (currentStep < path2FullPoints.length) {
+                    path2Points.push(path2FullPoints[currentStep]);
+                    
+                    if (currentStep > 0) {
+                        let digit = p2Digits[currentStep - 1];
+                        let pos = path2FullPoints[currentStep];
+                        addLog(`<span class="step-num">Step ${currentStep}:</span> Move <strong>${digit}</strong> → <span class="move-type">${moveNames[digit]}</span> → <span class="position">(${pos.x}, ${pos.y}, ${pos.z})</span>`, 'p2');
+                    } else {
+                        addLog(`<span class="step-num">Start:</span> Origin <span class="position">(0, 0, 0)</span>`, 'p2');
+                    }
+                    
+                    updateStatus(`P2: Step ${currentStep}/${p2Digits.length}`);
+                    currentStep++;
+                } else {
+                    finishP2Only();
+                }
+            } else if (animationPhase === 6) {
+                if (visibleFaceCount < allSolidFaces.length) {
+                    solidFaces.push(allSolidFaces[visibleFaceCount]);
+                    visibleFaceCount++;
+                    
+                    addLog(`<span class="step-num">Surface ${visibleFaceCount}:</span> ${faceNames[visibleFaceCount - 1]}`, 'surface');
+                    updateStatus(`Surface ${visibleFaceCount}/${allSolidFaces.length}`);
+                } else {
+                    finishSurfaceAnimation();
+                }
+            }
+        }
+        
+        function finishFullDraw() {
+            animationPhase = 3;
+            isAnimating = false;
+            isDrawn = true;
+            showSolid = true;
+            
+            buildSolidGeometry();
+            
+            let end1 = path1FullPoints[path1FullPoints.length - 1];
+            let end2 = path2FullPoints[path2FullPoints.length - 1];
+            
+            addLog(`<strong>P2 Complete!</strong>`, 'complete');
+            addLog(`P1 ends at <span class="position">(${end1.x}, ${end1.y}, ${end1.z})</span>`, 'p1');
+            addLog(`P2 ends at <span class="position">(${end2.x}, ${end2.y}, ${end2.z})</span>`, 'p2');
+            addLog(`<strong>Area = ${calculatedArea.toFixed(4)}</strong>`, 'complete');
+            addLog(`<strong>Volume = ${calculatedVolume.toFixed(4)}</strong>`, 'complete');
+            
+            document.getElementById('areaOutput').textContent = calculatedArea.toFixed(4);
+            document.getElementById('volumeOutput').textContent = calculatedVolume.toFixed(4);
+            
+            updateStatus('Done! Drag to rotate.');
+            setButtonsDisabled(false);
+            animationDelay = 600;
+        }
+        
+        function finishP1Only() {
+            animationPhase = 0;
+            isAnimating = false;
+            isDrawn = true;
+            
+            let end1 = path1FullPoints[path1FullPoints.length - 1];
+            addLog(`<strong>P1 Complete!</strong>`, 'complete');
+            addLog(`Ends at <span class="position">(${end1.x}, ${end1.y}, ${end1.z})</span>`, 'p1');
+            
+            updateStatus('P1 done! Drag to rotate.');
+            setButtonsDisabled(false);
+        }
+        
+        function finishP2Only() {
+            animationPhase = 0;
+            isAnimating = false;
+            isDrawn = true;
+            
+            let end2 = path2FullPoints[path2FullPoints.length - 1];
+            addLog(`<strong>P2 Complete!</strong>`, 'complete');
+            addLog(`Ends at <span class="position">(${end2.x}, ${end2.y}, ${end2.z})</span>`, 'p2');
+            
+            updateStatus('P2 done! Drag to rotate.');
+            setButtonsDisabled(false);
+        }
+        
+        function finishSurfaceAnimation() {
+            animationPhase = 3;
+            isAnimating = false;
+            isDrawn = true;
+            
+            addLog(`<strong>All ${allSolidFaces.length} surfaces shown!</strong>`, 'complete');
+            addLog(`<strong>Area = ${calculatedArea.toFixed(4)}</strong>`, 'complete');
+            addLog(`<strong>Volume = ${calculatedVolume.toFixed(4)}</strong>`, 'complete');
+            
+            document.getElementById('areaOutput').textContent = calculatedArea.toFixed(4);
+            document.getElementById('volumeOutput').textContent = calculatedVolume.toFixed(4);
+            
+            updateStatus('Done! Drag to rotate.');
+            setButtonsDisabled(false);
+            animationDelay = 600;
+        }
+        
+        function drawCurrentStepHighlight() {
+            push();
+            noStroke();
+            
+            let highlightPoint = null;
+            let highlightColor = null;
+            
+            if ((animationPhase === 1 || animationPhase === 4) && path1Points.length > 0) {
+                highlightPoint = path1Points[path1Points.length - 1];
+                highlightColor = color(230, 57, 70);
+            } else if ((animationPhase === 2 || animationPhase === 5) && path2Points.length > 0) {
+                highlightPoint = path2Points[path2Points.length - 1];
+                highlightColor = color(69, 123, 157);
+            }
+            
+            if (highlightPoint) {
+                let pulse = sin(millis() * 0.01) * 0.3 + 1;
+                
+                fill(red(highlightColor), green(highlightColor), blue(highlightColor), 150);
+                push();
+                translate(highlightPoint.x * unitSize, -highlightPoint.y * unitSize, highlightPoint.z * unitSize);
+                sphere(12 * pulse);
+                pop();
+                
+                if ((animationPhase === 1 || animationPhase === 4) && path1Points.length > 1) {
+                    let prev = path1Points[path1Points.length - 2];
+                    drawMoveArrow(prev, highlightPoint, color(230, 57, 70, 200));
+                } else if ((animationPhase === 2 || animationPhase === 5) && path2Points.length > 1) {
+                    let prev = path2Points[path2Points.length - 2];
+                    drawMoveArrow(prev, highlightPoint, color(69, 123, 157, 200));
+                }
+            }
+            
+            pop();
+        }
+        
+        function drawCurrentSurfaceHighlight() {
+            if (visibleFaceCount === 0 || solidFaces.length === 0) return;
+            
+            push();
+            let face = solidFaces[solidFaces.length - 1];
+            let pulse = sin(millis() * 0.008) * 0.3 + 0.7;
+            
+            fill(255, 220, 100, 200 * pulse);
+            stroke(255, 180, 50, 255);
+            strokeWeight(3);
+            
+            beginShape();
+            for (let v of face) {
+                vertex(v.x * unitSize, -v.y * unitSize, v.z * unitSize);
+            }
+            endShape(CLOSE);
+            
+            pop();
+        }
+        
+        function drawMoveArrow(from, to, col) {
+            push();
+            stroke(col);
+            strokeWeight(8);
+            
+            let x1 = from.x * unitSize;
+            let y1 = -from.y * unitSize;
+            let z1 = from.z * unitSize;
+            let x2 = to.x * unitSize;
+            let y2 = -to.y * unitSize;
+            let z2 = to.z * unitSize;
+            
+            line(x1, y1, z1, x2, y2, z2);
+            
+            translate(x2, y2, z2);
+            fill(col);
+            noStroke();
+            sphere(6);
+            
+            pop();
+        }
+        
+        function drawGrid() {
+            push();
+            stroke(100, 150, 120, 60);
+            strokeWeight(1);
+            
+            if (showPlaneXY) {
+                for (let i = 0; i <= gridSize; i++) {
+                    let pos = i * unitSize;
+                    drawDottedLine(pos, 0, 0, pos, gridSize * unitSize, 0);
+                    drawDottedLine(0, pos, 0, gridSize * unitSize, pos, 0);
+                }
+            }
+            
+            if (showPlaneXZ) {
+                for (let i = 0; i <= gridSize; i++) {
+                    let pos = i * unitSize;
+                    drawDottedLine(pos, 0, 0, pos, 0, gridSize * unitSize);
+                    drawDottedLine(0, 0, pos, gridSize * unitSize, 0, pos);
+                }
+            }
+            
+            if (showPlaneYZ) {
+                for (let i = 0; i <= gridSize; i++) {
+                    let pos = i * unitSize;
+                    drawDottedLine(0, pos, 0, 0, pos, gridSize * unitSize);
+                    drawDottedLine(0, 0, pos, 0, gridSize * unitSize, pos);
+                }
+            }
+            
+            pop();
+        }
+        
+        function drawDottedLine(x1, y1, z1, x2, y2, z2) {
+            let steps = 15;
+            let dotLength = 0.4;
+            
+            for (let i = 0; i < steps; i += 2) {
+                let t1 = i / steps;
+                let t2 = min((i + dotLength) / steps, 1);
+                
+                let px1 = lerp(x1, x2, t1);
+                let py1 = lerp(y1, y2, t1);
+                let pz1 = lerp(z1, z2, t1);
+                
+                let px2 = lerp(x1, x2, t2);
+                let py2 = lerp(y1, y2, t2);
+                let pz2 = lerp(z1, z2, t2);
+                
+                line(px1, -py1, pz1, px2, -py2, pz2);
+            }
+        }
+        
+        function drawOriginMarker() {
+            // Draw a very prominent origin - large white sphere with black outline
+            push();
+            
+            // Outer glow ring
+            stroke(100, 100, 100, 100);
+            strokeWeight(2);
+            noFill();
+            ellipse(0, 0, 30, 30);
+            
+            // Main origin sphere - white with dark outline
+            fill(255, 255, 255);
+            stroke(0, 0, 0);
+            strokeWeight(2);
+            sphere(12);
+            
+            // Label "O" at origin using small indicator
+            noStroke();
+            fill(50, 50, 50);
+            sphere(5);
+            
+            pop();
+        }
+        
+        function drawAxes() {
+            let axisLength = gridSize * unitSize + 40;
+            
+            // X-axis (red) - thick and prominent
+            push();
+            stroke(230, 50, 50);
+            strokeWeight(5);
+            line(0, 0, 0, axisLength, 0, 0);
+            translate(axisLength, 0, 0);
+            fill(230, 50, 50);
+            noStroke();
+            rotateZ(-PI/2);
+            cone(10, 22);
+            pop();
+            
+            // X label - positioned further out
+            push();
+            translate(axisLength + 45, 0, 0);
+            drawAxisLabel('X', color(230, 50, 50));
+            pop();
+            
+            // Y-axis (green) - thick and prominent
+            push();
+            stroke(50, 200, 50);
+            strokeWeight(5);
+            line(0, 0, 0, 0, -axisLength, 0);
+            translate(0, -axisLength, 0);
+            rotateX(PI);
+            fill(50, 200, 50);
+            noStroke();
+            cone(10, 22);
+            pop();
+            
+            // Y label - positioned further out
+            push();
+            translate(0, -axisLength - 45, 0);
+            drawAxisLabel('Y', color(50, 200, 50));
+            pop();
+            
+            // Z-axis (blue) - thick and prominent
+            push();
+            stroke(50, 100, 230);
+            strokeWeight(5);
+            line(0, 0, 0, 0, 0, axisLength);
+            translate(0, 0, axisLength);
+            rotateX(PI/2);
+            fill(50, 100, 230);
+            noStroke();
+            cone(10, 22);
+            pop();
+            
+            // Z label - positioned further out
+            push();
+            translate(0, 0, axisLength + 45);
+            drawAxisLabel('Z', color(50, 100, 230));
+            pop();
+        }
+        
+        function drawAxisLabel(label, col) {
+            push();
+            
+            // Counter-rotate to face camera (undo all rotations)
+            rotateY(-rotY);
+            rotateX(-rotX);
+            rotateZ(PI/4);           // Undo base Z rotation
+            rotateX(PI/2 - 0.35);    // Undo base X rotation
+            
+            // Large, highly visible background
+            fill(255, 255, 255, 255);
+            noStroke();
+            ellipse(0, 0, 56, 56);
+            
+            // Thick colored border
+            stroke(red(col), green(col), blue(col), 255);
+            strokeWeight(4);
+            noFill();
+            ellipse(0, 0, 56, 56);
+            
+            // Inner circle for emphasis
+            strokeWeight(2);
+            ellipse(0, 0, 48, 48);
+            
+            // Draw letter with very thick strokes
+            stroke(col);
+            strokeWeight(5);
+            noFill();
+            
+            let s = 15;
+            
+            if (label === 'X') {
+                line(-s, -s, s, s);
+                line(-s, s, s, -s);
+            } else if (label === 'Y') {
+                line(-s, -s, 0, 0);
+                line(s, -s, 0, 0);
+                line(0, 0, 0, s);
+            } else if (label === 'Z') {
+                line(-s, -s, s, -s);
+                line(s, -s, -s, s);
+                line(-s, s, s, s);
+            }
+            
+            pop();
+        }
+        
+        function drawPath(points, col, weight) {
+            if (points.length < 2) return;
+            
+            push();
+            stroke(col);
+            strokeWeight(weight);
+            noFill();
+            
+            beginShape();
+            for (let p of points) {
+                vertex(p.x * unitSize, -p.y * unitSize, p.z * unitSize);
+            }
+            endShape();
+            pop();
+        }
+        
+        function drawPathPoints() {
+            push();
+            
+            // Draw P1 step markers - larger spheres with outlines
+            for (let i = 0; i < path1Points.length; i++) {
+                let p = path1Points[i];
+                push();
+                translate(p.x * unitSize, -p.y * unitSize, p.z * unitSize);
+                
+                if (i === 0) {
+                    // Origin point - handled separately
+                } else {
+                    // Step points - larger with white outline
+                    stroke(255, 255, 255);
+                    strokeWeight(1);
+                    fill(230, 57, 70, 240);
+                    sphere(8); // Larger spheres for visibility
+                }
+                pop();
+            }
+            
+            // Draw P2 step markers - larger spheres with outlines
+            for (let i = 0; i < path2Points.length; i++) {
+                let p = path2Points[i];
+                push();
+                translate(p.x * unitSize, -p.y * unitSize, p.z * unitSize);
+                
+                if (i === 0) {
+                    // Origin point - handled separately
+                } else {
+                    // Step points - larger with white outline
+                    stroke(255, 255, 255);
+                    strokeWeight(1);
+                    fill(69, 123, 157, 240);
+                    sphere(8); // Larger spheres for visibility
+                }
+                pop();
+            }
+            
+            // Draw origin point prominently
+            if (path1Points.length > 0 || path2Points.length > 0) {
+                noStroke();
+                fill(20, 20, 20);
+                sphere(10);
+            }
+            pop();
+        }
+        
+        function drawSolid() {
+            if (solidFaces.length === 0) return;
+            
+            push();
+            
+            let faceColors = [
+                [255, 180, 100, 160],
+                [255, 200, 120, 160],
+                [200, 220, 255, 160],
+                [180, 200, 240, 160],
+                [220, 255, 200, 160],
+                [200, 240, 180, 160]
+            ];
+            
+            for (let i = 0; i < solidFaces.length; i++) {
+                let face = solidFaces[i];
+                let col = faceColors[i % faceColors.length];
+                
+                fill(col[0], col[1], col[2], col[3]);
+                stroke(80, 80, 80, 120);
+                strokeWeight(1);
+                
+                beginShape();
+                for (let v of face) {
+                    vertex(v.x * unitSize, -v.y * unitSize, v.z * unitSize);
+                }
+                endShape(CLOSE);
+            }
+            
+            stroke(50, 50, 50, 180);
+            strokeWeight(2);
+            noFill();
+            
+            let edges = getUniqueEdges();
+            for (let edge of edges) {
+                line(
+                    edge.p1.x * unitSize, -edge.p1.y * unitSize, edge.p1.z * unitSize,
+                    edge.p2.x * unitSize, -edge.p2.y * unitSize, edge.p2.z * unitSize
+                );
+            }
+            
+            pop();
+        }
+        
+        function getUniqueEdges() {
+            let edges = [];
+            let edgeSet = new Set();
+            
+            for (let face of solidFaces) {
+                for (let i = 0; i < face.length; i++) {
+                    let p1 = face[i];
+                    let p2 = face[(i + 1) % face.length];
+                    
+                    let key1 = `${p1.x},${p1.y},${p1.z}-${p2.x},${p2.y},${p2.z}`;
+                    let key2 = `${p2.x},${p2.y},${p2.z}-${p1.x},${p1.y},${p1.z}`;
+                    
+                    if (!edgeSet.has(key1) && !edgeSet.has(key2)) {
+                        edgeSet.add(key1);
+                        edges.push({p1: p1, p2: p2});
+                    }
+                }
+            }
+            
+            return edges;
+        }
+        
+        function parseInput(inputStr) {
+            inputStr = inputStr.trim();
+            if (inputStr === '') return [];
+            
+            if (inputStr.includes(' ') || inputStr.includes(',')) {
+                return inputStr.split(/[\s,]+/).filter(s => s !== '').map(s => parseInt(s));
+            } else {
+                return inputStr.split('').map(c => parseInt(c)).filter(n => !isNaN(n));
+            }
+        }
+        
+        function getMoveVector(digit) {
+            switch(digit) {
+                case 0: return {x: 1, y: 0, z: 0};
+                case 1: return {x: 0, y: 1, z: 0};
+                case 2: return {x: 0, y: 0, z: 1};
+                case 3: return {x: 1, y: 1, z: 0};
+                case 4: return {x: 1, y: 0, z: 1};
+                case 5: return {x: 0, y: 1, z: 1};
+                case 6: return {x: 1, y: 1, z: 1};
+                default: return {x: 0, y: 0, z: 0};
+            }
+        }
+        
+        function computeFullPath(digits) {
+            let points = [{x: 0, y: 0, z: 0}];
+            let current = {x: 0, y: 0, z: 0};
+            
+            for (let d of digits) {
+                let move = getMoveVector(d);
+                current = {
+                    x: current.x + move.x,
+                    y: current.y + move.y,
+                    z: current.z + move.z
+                };
+                points.push({...current});
+            }
+            
+            return points;
+        }
+        
+        function buildSolidGeometry() {
+            solidVertices = [];
+            solidFaces = [];
+            
+            let allPoints = [...path1FullPoints, ...path2FullPoints];
+            let minX = Infinity, maxX = -Infinity;
+            let minY = Infinity, maxY = -Infinity;
+            let minZ = Infinity, maxZ = -Infinity;
+            
+            for (let p of allPoints) {
+                minX = min(minX, p.x);
+                maxX = max(maxX, p.x);
+                minY = min(minY, p.y);
+                maxY = max(maxY, p.y);
+                minZ = min(minZ, p.z);
+                maxZ = max(maxZ, p.z);
+            }
+            
+            let dx = maxX - minX;
+            let dy = maxY - minY;
+            let dz = maxZ - minZ;
+            
+            let v000 = {x: minX, y: minY, z: minZ};
+            let v100 = {x: maxX, y: minY, z: minZ};
+            let v010 = {x: minX, y: maxY, z: minZ};
+            let v001 = {x: minX, y: minY, z: maxZ};
+            let v110 = {x: maxX, y: maxY, z: minZ};
+            let v101 = {x: maxX, y: minY, z: maxZ};
+            let v011 = {x: minX, y: maxY, z: maxZ};
+            let v111 = {x: maxX, y: maxY, z: maxZ};
+            
+            solidVertices = [v000, v100, v010, v001, v110, v101, v011, v111];
+            
+            solidFaces = [
+                [v000, v100, v110, v010],
+                [v001, v011, v111, v101],
+                [v010, v110, v111, v011],
+                [v000, v001, v101, v100],
+                [v100, v101, v111, v110],
+                [v000, v010, v011, v001]
+            ];
+            
+            calculatedArea = 2 * (dx * dy + dy * dz + dx * dz);
+            calculatedVolume = dx * dy * dz;
+        }
+        
+        function drawPaths() {
+            if (isAnimating) return;
+            
+            let p1Input = document.getElementById('p1Input').value;
+            let p2Input = document.getElementById('p2Input').value;
+            
+            p1Digits = parseInput(p1Input);
+            p2Digits = parseInput(p2Input);
+            
+            if (p1Digits.length === 0 || p2Digits.length === 0) {
+                alert('Please enter valid arrays for both P1 and P2');
+                return;
+            }
+            
+            clearLogs();
+            addLog('<strong>Starting full drawing...</strong>', '');
+            addLog(`P1 Input: ${p1Digits.join(' ')}`, 'p1');
+            addLog(`P2 Input: ${p2Digits.join(' ')}`, 'p2');
+            
+            path1Points = [];
+            path2Points = [];
+            solidFaces = [];
+            solidVertices = [];
+            showSolid = false;
+            isDrawn = false;
+            
+            path1FullPoints = computeFullPath(p1Digits);
+            path2FullPoints = computeFullPath(p2Digits);
+            
+            animationPhase = 1;
+            currentStep = 0;
+            isAnimating = true;
+            lastStepTime = millis();
+            
+            setButtonsDisabled(true);
+            document.getElementById('areaOutput').textContent = '—';
+            document.getElementById('volumeOutput').textContent = '—';
+            
+            updateStatus(`Drawing P1... (${p1Digits.length} steps)`);
+        }
+        
+        function getRandomP2() {
+            let p1Input = document.getElementById('p1Input').value;
+            let digits = parseInput(p1Input);
+            
+            if (digits.length === 0) {
+                alert('Please enter P1 first');
+                return;
+            }
+            
+            let availableDigits = [...digits];
+            let p2 = [];
+            for (let i = 0; i < digits.length; i++) {
+                let randomIdx = floor(random(availableDigits.length));
+                p2.push(availableDigits[randomIdx]);
+            }
+            
+            document.getElementById('p2Input').value = p2.join('');
+        }
+        
+        function resetCanvas() {
+            path1Points = [];
+            path2Points = [];
+            path1FullPoints = [];
+            path2FullPoints = [];
+            solidVertices = [];
+            solidFaces = [];
+            allSolidFaces = [];
+            visibleFaceCount = 0;
+            isDrawn = false;
+            isAnimating = false;
+            showSolid = false;
+            animationPhase = 0;
+            currentStep = 0;
+            // User rotation (on top of base orientation)
+            rotX = 0;
+            rotY = 0;
+            zoom = 0.55;
+            animationDelay = 600;
+            
+            showPlaneXY = true;
+            showPlaneYZ = true;
+            showPlaneXZ = true;
+            updatePlaneButton('btnXY', true, 'XY');
+            updatePlaneButton('btnYZ', true, 'YZ');
+            updatePlaneButton('btnXZ', true, 'XZ');
+            updateAllPlanesButton();
+            
+            document.getElementById('areaOutput').textContent = '—';
+            document.getElementById('volumeOutput').textContent = '—';
+            setButtonsDisabled(false);
+            updateStatus('Drag canvas to rotate view');
+            
+            clearLogs();
+            addLog('Reset. Drag canvas to rotate view before drawing.', '');
+        }
+        
+        // Mouse interaction - ALWAYS allow rotation
+        function mousePressed() {
+            if (mouseX > 0 && mouseX < canvasSize && mouseY > 0 && mouseY < canvasSize) {
+                isDragging = true;
+                prevMouseX = mouseX;
+                prevMouseY = mouseY;
+            }
+        }
+        
+        function mouseReleased() {
+            isDragging = false;
+        }
+        
+        function mouseDragged() {
+            if (isDragging) {
+                let dx = mouseX - prevMouseX;
+                let dy = mouseY - prevMouseY;
+                
+                rotY += dx * 0.01;
+                rotX += dy * 0.01;
+                
+                prevMouseX = mouseX;
+                prevMouseY = mouseY;
+            }
+        }
+        
+        function mouseWheel(event) {
+            if (mouseX > 0 && mouseX < canvasSize && mouseY > 0 && mouseY < canvasSize) {
+                zoom -= event.delta * 0.001;
+                zoom = constrain(zoom, 0.3, 3);
+                return false;
+            }
+        }
+        
+        // Touch support
+        function touchStarted() {
+            if (touches.length > 0) {
+                let t = touches[0];
+                if (t.x > 0 && t.x < canvasSize && t.y > 0 && t.y < canvasSize) {
+                    isDragging = true;
+                    prevMouseX = t.x;
+                    prevMouseY = t.y;
+                }
+            }
+            return false;
+        }
+        
+        function touchMoved() {
+            if (isDragging && touches.length > 0) {
+                let t = touches[0];
+                let dx = t.x - prevMouseX;
+                let dy = t.y - prevMouseY;
+                
+                rotY += dx * 0.01;
+                rotX += dy * 0.01;
+                
+                prevMouseX = t.x;
+                prevMouseY = t.y;
+            }
+            return false;
+        }
+        
+        function touchEnded() {
+            isDragging = false;
+            return false;
+        }
+    </script>
+</body>
+</html>
