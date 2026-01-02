@@ -114,6 +114,86 @@
             transform: translateY(0);
         }
         
+        .main-area {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        
+        .logs-panel {
+            background: rgba(30, 40, 50, 0.95);
+            padding: 15px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(26,74,110,0.25);
+            width: 280px;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .logs-panel h3 {
+            font-weight: 600;
+            color: #7ec8e3;
+            margin-bottom: 10px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .logs-content {
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: #a0d4e8;
+            line-height: 1.6;
+        }
+        
+        .logs-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .logs-content::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+        
+        .logs-content::-webkit-scrollbar-thumb {
+            background: rgba(126, 200, 227, 0.5);
+            border-radius: 4px;
+        }
+        
+        .logs-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(126, 200, 227, 0.7);
+        }
+        
+        .log-entry {
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+        }
+        
+        .log-entry.p1 {
+            background: rgba(231, 76, 60, 0.2);
+            border-left: 3px solid #e74c3c;
+        }
+        
+        .log-entry.p2 {
+            background: rgba(39, 174, 96, 0.2);
+            border-left: 3px solid #27ae60;
+        }
+        
+        .log-entry.info {
+            background: rgba(52, 152, 219, 0.2);
+            border-left: 3px solid #3498db;
+        }
+        
+        .log-entry.result {
+            background: rgba(155, 89, 182, 0.2);
+            border-left: 3px solid #9b59b6;
+        }
+
         #canvas-container {
             border-radius: 20px;
             overflow: hidden;
@@ -121,51 +201,105 @@
         }
         
         .output-panel {
-            background: rgba(255,255,255,0.9);
-            padding: 20px 30px;
+            background: rgba(255,255,255,0.95);
+            padding: 20px;
             border-radius: 16px;
             box-shadow: 0 8px 32px rgba(26,74,110,0.15);
-            min-width: 400px;
-            max-width: 800px;
+            width: 280px;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
         }
         
         .output-panel h3 {
             font-weight: 600;
             color: #1a4a6e;
-            margin-bottom: 10px;
-            font-size: 1.2rem;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
         }
         
-        #output {
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: linear-gradient(135deg, #f8fbfd 0%, #e8f4f8 100%);
+            border-radius: 10px;
+            margin-bottom: 12px;
+            border: 1px solid #d0e8f0;
+        }
+        
+        .result-label {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 1rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #2c5f85;
+        }
+        
+        .result-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 1.3rem;
+            color: #16a085;
+        }
+        
+        .result-value.inversions {
+            color: #8e44ad;
+        }
+        
+        .path-info {
+            margin-top: 15px;
+            padding: 12px;
+            background: #f0f8ff;
+            border-radius: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
             color: #2c5f85;
             line-height: 1.8;
-            white-space: pre-wrap;
         }
         
-        .area-display {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #16a085;
-            padding: 10px 0;
+        .path-info .label {
+            color: #6a9bb8;
+            font-size: 0.75rem;
+        }
+        
+        .status-message {
+            margin-top: auto;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        
+        .status-message.success {
+            background: rgba(39, 174, 96, 0.15);
+            color: #27ae60;
+        }
+        
+        .status-message.warning {
+            background: rgba(230, 126, 34, 0.15);
+            color: #e67e22;
         }
         
         .legend {
             display: flex;
-            gap: 20px;
-            margin-top: 10px;
-            font-size: 0.9rem;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e8f0;
         }
         
         .legend-item {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #5a8aa8;
         }
         
         .legend-color {
-            width: 20px;
+            width: 24px;
             height: 4px;
             border-radius: 2px;
         }
@@ -199,32 +333,63 @@
             Based on notes from Stanislav K. and team
         </div>
         
-        <div id="canvas-container"></div>
-        
-        <div class="output-panel">
-            <h3>📊 Results</h3>
-            <div id="output">Enter arrays P1 and P2, then click DRAW.</div>
-            <div class="legend">
-                <div class="legend-item">
-                    <div class="legend-color" style="background: #e74c3c;"></div>
-                    <span>P1 Path</span>
+        <div class="main-area">
+            <!-- Logs Panel (LEFT) -->
+            <div class="logs-panel">
+                <h3>📋 Step Log</h3>
+                <div class="logs-content" id="logsContent">
+                    <div class="log-entry info">Ready. Enter P1 and P2, then click DRAW.</div>
                 </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background: #27ae60;"></div>
-                    <span>P2 Path</span>
+            </div>
+            
+            <!-- Canvas (CENTER) -->
+            <div id="canvas-container"></div>
+            
+            <!-- Output Panel (RIGHT) -->
+            <div class="output-panel">
+                <h3>📊 Results</h3>
+                
+                <div class="result-row">
+                    <span class="result-label">Area</span>
+                    <span class="result-value" id="areaValue">—</span>
                 </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background: rgba(155,89,182,0.3);"></div>
-                    <span>Enclosed Area</span>
+                
+                <div class="result-row">
+                    <span class="result-label">P2→P1 Inversions</span>
+                    <span class="result-value inversions" id="inversionsValue">—</span>
+                </div>
+                
+                <div class="path-info" id="pathInfo">
+                    <div class="label">P1 Path</div>
+                    <div id="p1PathDisplay">—</div>
+                    <div class="label" style="margin-top: 8px;">P2 Path</div>
+                    <div id="p2PathDisplay">—</div>
+                </div>
+                
+                <div class="status-message" id="statusMessage" style="display: none;"></div>
+                
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #e74c3c;"></div>
+                        <span>P1 Path</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #27ae60;"></div>
+                        <span>P2 Path</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: rgba(155,89,182,0.5);"></div>
+                        <span>Enclosed Area</span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        let canvasWidth = 700;
+        let canvasWidth = 600;
         let canvasHeight = 600;
-        let gridSize = 50; // pixels per unit
+        let gridSize = 50;
         let originX, originY;
         
         let p1Path = [];
@@ -234,6 +399,11 @@
         let animProgress = 0;
         let isAnimating = false;
         let currentArea = 0;
+        let currentInversions = 0;
+        
+        // Track animation steps for logging
+        let lastLoggedP1Step = -1;
+        let lastLoggedP2Step = -1;
         
         function setup() {
             let canvas = createCanvas(canvasWidth, canvasHeight);
@@ -249,24 +419,30 @@
             document.getElementById('p2Input').value = "2 1 0";
         }
         
+        function clearLogs() {
+            document.getElementById('logsContent').innerHTML = '';
+        }
+        
+        function addLog(message, type = 'info') {
+            let logsContent = document.getElementById('logsContent');
+            let entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = message;
+            logsContent.appendChild(entry);
+            logsContent.scrollTop = logsContent.scrollHeight;
+        }
+        
         function draw() {
-            // Light blue gradient background
             drawBackground();
-            
-            // Draw grid
             drawGrid();
-            
-            // Draw origin marker
             drawOrigin();
             
-            // Draw paths with animation
             if (p1Path.length > 0 || p2Path.length > 0) {
                 drawPaths();
             }
         }
         
         function drawBackground() {
-            // Create a soft gradient
             for (let y = 0; y < height; y++) {
                 let inter = map(y, 0, height, 0, 1);
                 let c = lerpColor(color(200, 230, 255), color(170, 215, 245), inter);
@@ -276,7 +452,6 @@
         }
         
         function drawGrid() {
-            // Calculate visible grid range
             let minX = floor(-originX / gridSize);
             let maxX = ceil((canvasWidth - originX) / gridSize);
             let minY = floor(-originY / gridSize);
@@ -285,19 +460,16 @@
             stroke(100, 150, 180, 100);
             strokeWeight(1);
             
-            // Draw dotted vertical lines
             for (let x = minX; x <= maxX; x++) {
                 let screenX = originX + x * gridSize;
                 drawDottedLine(screenX, 0, screenX, canvasHeight);
             }
             
-            // Draw dotted horizontal lines
             for (let y = minY; y <= maxY; y++) {
                 let screenY = originY - y * gridSize;
                 drawDottedLine(0, screenY, canvasWidth, screenY);
             }
             
-            // Draw axis labels
             fill(80, 120, 150);
             noStroke();
             textFont('JetBrains Mono');
@@ -334,7 +506,6 @@
         }
         
         function drawOrigin() {
-            // Draw origin point with glow
             noStroke();
             for (let r = 20; r > 0; r -= 4) {
                 fill(52, 152, 219, map(r, 0, 20, 150, 20));
@@ -343,7 +514,6 @@
             fill(255);
             ellipse(originX, originY, 8);
             
-            // Label
             fill(52, 73, 94);
             textSize(14);
             textAlign(LEFT, TOP);
@@ -353,7 +523,6 @@
         function drawPaths() {
             let progress = isAnimating ? min(animProgress, 1) : 1;
             
-            // Draw filled area first (behind paths)
             if (progress >= 1 && p1Path.length > 1 && p2Path.length > 1) {
                 drawFilledArea();
             }
@@ -361,23 +530,33 @@
             // Draw P1 path (red)
             if (p1Path.length > 1) {
                 let p1Progress = isAnimating ? min(progress * 2, 1) : 1;
-                drawAnimatedPath(p1Path, color(231, 76, 60), p1Progress, 4);
+                let p1Step = drawAnimatedPath(p1Path, color(231, 76, 60), p1Progress, 4, 'P1');
+                
+                // Log P1 steps
+                if (isAnimating && p1Step > lastLoggedP1Step && p1Step < p1Array.length) {
+                    logStep('P1', p1Step, p1Array, p1Path);
+                    lastLoggedP1Step = p1Step;
+                }
             }
             
             // Draw P2 path (green)
             if (p2Path.length > 1) {
                 let p2Progress = isAnimating ? max(0, (progress * 2) - 1) : 1;
-                drawAnimatedPath(p2Path, color(39, 174, 96), p2Progress, 4);
+                let p2Step = drawAnimatedPath(p2Path, color(39, 174, 96), p2Progress, 4, 'P2');
+                
+                // Log P2 steps
+                if (isAnimating && p2Progress > 0 && p2Step > lastLoggedP2Step && p2Step < p2Array.length) {
+                    logStep('P2', p2Step, p2Array, p2Path);
+                    lastLoggedP2Step = p2Step;
+                }
             }
             
-            // Draw endpoints
             if (progress >= 1) {
                 drawEndpoints();
             }
             
-            // Update animation
             if (isAnimating) {
-                animProgress += 0.015;
+                animProgress += 0.012;
                 if (animProgress >= 1) {
                     isAnimating = false;
                     showResults();
@@ -385,8 +564,23 @@
             }
         }
         
-        function drawAnimatedPath(pathPoints, pathColor, progress, weight) {
-            if (pathPoints.length < 2) return;
+        function logStep(pathName, stepIndex, arr, path) {
+            let move = arr[stepIndex];
+            let moveNames = ['Right (+1,0)', 'Up (0,+1)', 'Diag (-1,+1)'];
+            let from = path[stepIndex];
+            let to = path[stepIndex + 1];
+            let type = pathName === 'P1' ? 'p1' : 'p2';
+            
+            addLog(
+                `<strong>${pathName}[${stepIndex}]</strong> = ${move}<br>` +
+                `${moveNames[move]}<br>` +
+                `(${from.x},${from.y}) → (${to.x},${to.y})`,
+                type
+            );
+        }
+        
+        function drawAnimatedPath(pathPoints, pathColor, progress, weight, pathName) {
+            if (pathPoints.length < 2) return -1;
             
             let totalSegments = pathPoints.length - 1;
             let segmentsToDraw = floor(progress * totalSegments);
@@ -396,7 +590,6 @@
             stroke(pathColor);
             noFill();
             
-            // Draw complete segments
             for (let i = 0; i < segmentsToDraw && i < totalSegments; i++) {
                 let x1 = originX + pathPoints[i].x * gridSize;
                 let y1 = originY - pathPoints[i].y * gridSize;
@@ -405,7 +598,6 @@
                 line(x1, y1, x2, y2);
             }
             
-            // Draw partial segment
             if (segmentsToDraw < totalSegments) {
                 let i = segmentsToDraw;
                 let x1 = originX + pathPoints[i].x * gridSize;
@@ -416,13 +608,11 @@
                 let py = lerp(y1, y2, partialProgress);
                 line(x1, y1, px, py);
                 
-                // Draw moving point
                 fill(pathColor);
                 noStroke();
                 ellipse(px, py, 10);
             }
             
-            // Draw points at vertices
             noStroke();
             fill(pathColor);
             for (let i = 0; i <= segmentsToDraw && i < pathPoints.length; i++) {
@@ -430,23 +620,21 @@
                 let y = originY - pathPoints[i].y * gridSize;
                 ellipse(x, y, 8);
             }
+            
+            return segmentsToDraw;
         }
         
         function drawFilledArea() {
-            // Combine paths to form polygon
             let allPoints = [];
             
-            // Add P1 path points
             for (let p of p1Path) {
                 allPoints.push({x: originX + p.x * gridSize, y: originY - p.y * gridSize});
             }
             
-            // Add P2 path points in reverse (to close the shape)
             for (let i = p2Path.length - 1; i >= 0; i--) {
                 allPoints.push({x: originX + p2Path[i].x * gridSize, y: originY - p2Path[i].y * gridSize});
             }
             
-            // Draw filled polygon with gradient-like effect
             noStroke();
             fill(155, 89, 182, 50);
             beginShape();
@@ -455,7 +643,6 @@
             }
             endShape(CLOSE);
             
-            // Draw outline
             stroke(155, 89, 182, 150);
             strokeWeight(2);
             noFill();
@@ -467,7 +654,6 @@
         }
         
         function drawEndpoints() {
-            // P1 endpoint
             if (p1Path.length > 0) {
                 let end1 = p1Path[p1Path.length - 1];
                 let x = originX + end1.x * gridSize;
@@ -480,7 +666,6 @@
                 ellipse(x, y, 6);
             }
             
-            // P2 endpoint
             if (p2Path.length > 0) {
                 let end2 = p2Path[p2Path.length - 1];
                 let x = originX + end2.x * gridSize;
@@ -498,35 +683,46 @@
             let p1Input = document.getElementById('p1Input').value.trim();
             let p2Input = document.getElementById('p2Input').value.trim();
             
-            // Parse inputs
             p1Array = parseInput(p1Input);
             p2Array = parseInput(p2Input);
             
             if (p1Array.length === 0 || p2Array.length === 0) {
-                document.getElementById('output').innerHTML = 
-                    '<span style="color: #e74c3c;">Please enter valid arrays (numbers 0, 1, 2 separated by spaces).</span>';
+                addLog('Error: Please enter valid arrays', 'info');
                 return;
             }
+            
+            // Clear and initialize logs
+            clearLogs();
+            addLog(`<strong>Starting animation</strong>`, 'info');
+            addLog(`P1 = [${p1Array.join(', ')}]`, 'p1');
+            addLog(`P2 = [${p2Array.join(', ')}]`, 'p2');
+            addLog(`—————————————`, 'info');
+            
+            // Reset step tracking
+            lastLoggedP1Step = -1;
+            lastLoggedP2Step = -1;
             
             // Generate paths
             p1Path = generatePath(p1Array);
             p2Path = generatePath(p2Array);
             
-            // Calculate area
+            // Calculate area and inversions
             currentArea = calculateArea(p1Path, p2Path);
+            currentInversions = calculateInversions(p2Array, p1Array);
+            
+            // Reset output panel
+            document.getElementById('areaValue').textContent = '...';
+            document.getElementById('inversionsValue').textContent = '...';
+            document.getElementById('statusMessage').style.display = 'none';
             
             // Start animation
             animProgress = 0;
             isAnimating = true;
-            
-            document.getElementById('output').innerHTML = 'Drawing paths...';
         }
         
         function parseInput(input) {
             if (!input) return [];
-            // Remove all spaces first
             let cleaned = input.replace(/\s+/g, '');
-            // Split into individual characters and parse each as a digit
             let nums = [];
             for (let char of cleaned) {
                 let n = parseInt(char);
@@ -542,21 +738,19 @@
             let p1Digits = parseInput(p1Input);
             
             if (p1Digits.length === 0) {
-                document.getElementById('output').innerHTML = 
-                    '<span style="color: #e74c3c;">Please enter P1 first.</span>';
+                addLog('Error: Enter P1 first', 'info');
                 return;
             }
             
-            // Generate random P2 using digits from P1, same length as P1
-            let randomP2 = [];
-            for (let i = 0; i < p1Digits.length; i++) {
-                // Pick a random digit from the P1 digits
-                let randomIndex = Math.floor(Math.random() * p1Digits.length);
-                randomP2.push(p1Digits[randomIndex]);
+            // Create a copy of P1 digits and shuffle it (Fisher-Yates shuffle)
+            let randomP2 = [...p1Digits];
+            for (let i = randomP2.length - 1; i > 0; i--) {
+                let j = Math.floor(Math.random() * (i + 1));
+                [randomP2[i], randomP2[j]] = [randomP2[j], randomP2[i]];
             }
             
-            // Set the P2 input field
             document.getElementById('p2Input').value = randomP2.join(' ');
+            addLog(`Generated random P2: [${randomP2.join(', ')}]`, 'info');
         }
         
         function generatePath(arr) {
@@ -565,16 +759,9 @@
             
             for (let move of arr) {
                 switch(move) {
-                    case 0: // Right
-                        x += 1;
-                        break;
-                    case 1: // Up
-                        y += 1;
-                        break;
-                    case 2: // Diagonal left-up
-                        x -= 1;
-                        y += 1;
-                        break;
+                    case 0: x += 1; break;
+                    case 1: y += 1; break;
+                    case 2: x -= 1; y += 1; break;
                 }
                 path.push({x: x, y: y});
             }
@@ -583,20 +770,16 @@
         }
         
         function calculateArea(path1, path2) {
-            // Use Shoelace formula for the polygon formed by combining both paths
             let polygon = [];
             
-            // Add P1 path
             for (let p of path1) {
                 polygon.push({x: p.x, y: p.y});
             }
             
-            // Add P2 path in reverse (excluding first point which is same as P1's last)
             for (let i = path2.length - 1; i >= 0; i--) {
                 polygon.push({x: path2[i].x, y: path2[i].y});
             }
             
-            // Shoelace formula
             let area = 0;
             let n = polygon.length;
             for (let i = 0; i < n; i++) {
@@ -608,159 +791,87 @@
             return Math.abs(area) / 2;
         }
         
+        // Calculate inversions needed to transform P2 into P1 using bubble sort (adjacent swaps)
+        function calculateInversions(p2, p1) {
+            // Build position map: for each element in P1, where should it go?
+            // We need to count adjacent swaps to sort P2 into P1
+            
+            // If arrays have different lengths or different element counts, return -1
+            if (p2.length !== p1.length) return -1;
+            
+            // Create a copy of p2 to work with
+            let arr = [...p2];
+            let target = [...p1];
+            let inversions = 0;
+            
+            // For each position, find where the correct element is and bubble it up
+            for (let i = 0; i < arr.length; i++) {
+                // Find where target[i] is in arr starting from position i
+                let j = i;
+                while (j < arr.length && arr[j] !== target[i]) {
+                    j++;
+                }
+                
+                // If we can't find it, arrays have different elements
+                if (j >= arr.length) {
+                    // Try to match by finding any matching element
+                    // This handles cases where there are duplicates
+                    let found = false;
+                    for (let k = i; k < arr.length; k++) {
+                        if (arr[k] === target[i]) {
+                            j = k;
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) return -1;
+                }
+                
+                // Bubble arr[j] to position i
+                while (j > i) {
+                    [arr[j], arr[j-1]] = [arr[j-1], arr[j]];
+                    inversions++;
+                    j--;
+                }
+            }
+            
+            return inversions;
+        }
+        
         function showResults() {
             let p1End = p1Path[p1Path.length - 1];
             let p2End = p2Path[p2Path.length - 1];
             
-            let outputHtml = `<div class="area-display">Area = ${currentArea}</div>`;
-            outputHtml += `\nP1 path: (0,0) → (${p1End.x}, ${p1End.y})`;
-            outputHtml += `\nP2 path: (0,0) → (${p2End.x}, ${p2End.y})`;
+            // Update output panel
+            document.getElementById('areaValue').textContent = currentArea;
+            document.getElementById('inversionsValue').textContent = currentInversions >= 0 ? currentInversions : 'N/A';
             
+            document.getElementById('p1PathDisplay').textContent = `(0,0) → (${p1End.x}, ${p1End.y})`;
+            document.getElementById('p2PathDisplay').textContent = `(0,0) → (${p2End.x}, ${p2End.y})`;
+            
+            // Status message
+            let statusEl = document.getElementById('statusMessage');
             if (p1End.x !== p2End.x || p1End.y !== p2End.y) {
-                outputHtml += `\n\n<span style="color: #e67e22;">⚠️ Paths don't meet! Endpoints differ.</span>`;
+                statusEl.className = 'status-message warning';
+                statusEl.innerHTML = `⚠️ Paths don't meet!<br>Endpoints differ.`;
             } else {
-                outputHtml += `\n\n<span style="color: #27ae60;">✓ Paths meet at (${p1End.x}, ${p1End.y})</span>`;
+                statusEl.className = 'status-message success';
+                statusEl.innerHTML = `✓ Paths meet at (${p1End.x}, ${p1End.y})`;
             }
+            statusEl.style.display = 'block';
             
-            // Find other combinations with same area
-            outputHtml += findOtherCombinations(p1Array, p2Array, currentArea);
+            // Log final results
+            addLog(`—————————————`, 'info');
+            addLog(`<strong>Animation complete</strong>`, 'result');
+            addLog(`Area = <strong>${currentArea}</strong>`, 'result');
+            addLog(`P2→P1 Inversions = <strong>${currentInversions}</strong>`, 'result');
             
-            document.getElementById('output').innerHTML = outputHtml;
-        }
-        
-        function findOtherCombinations(origP1, origP2, targetArea) {
-            let len1 = origP1.length;
-            let len2 = origP2.length;
-            
-            // Generate all permutations of the same length with digits 0,1,2
-            let found = [];
-            let origP1Str = origP1.join(' ');
-            let origP2Str = origP2.join(' ');
-            
-            // For reasonable computation, limit search
-            if (len1 > 5 || len2 > 5) {
-                // For longer arrays, just try permutations of the original arrays
-                let p1Perms = getPermutations(origP1);
-                let p2Perms = getPermutations(origP2);
-                
-                for (let perm1 of p1Perms) {
-                    for (let perm2 of p2Perms) {
-                        let p1Str = perm1.join(' ');
-                        let p2Str = perm2.join(' ');
-                        
-                        // Skip original
-                        if (p1Str === origP1Str && p2Str === origP2Str) continue;
-                        
-                        let path1 = generatePath(perm1);
-                        let path2 = generatePath(perm2);
-                        let area = calculateArea(path1, path2);
-                        
-                        // Check if paths meet
-                        let end1 = path1[path1.length - 1];
-                        let end2 = path2[path2.length - 1];
-                        
-                        if (Math.abs(area - targetArea) < 0.0001 && end1.x === end2.x && end1.y === end2.y) {
-                            let key = `${p1Str}|${p2Str}`;
-                            if (!found.some(f => f.key === key)) {
-                                found.push({p1: p1Str, p2: p2Str, key: key});
-                            }
-                        }
-                        
-                        if (found.length >= 10) break;
-                    }
-                    if (found.length >= 10) break;
-                }
+            if (p1End.x === p2End.x && p1End.y === p2End.y) {
+                addLog(`✓ Paths meet at (${p1End.x}, ${p1End.y})`, 'result');
             } else {
-                // Generate all combinations
-                let allArrays1 = generateAllArrays(len1);
-                let allArrays2 = generateAllArrays(len2);
-                
-                for (let arr1 of allArrays1) {
-                    for (let arr2 of allArrays2) {
-                        let p1Str = arr1.join(' ');
-                        let p2Str = arr2.join(' ');
-                        
-                        // Skip original
-                        if (p1Str === origP1Str && p2Str === origP2Str) continue;
-                        
-                        let path1 = generatePath(arr1);
-                        let path2 = generatePath(arr2);
-                        
-                        // Check if paths meet
-                        let end1 = path1[path1.length - 1];
-                        let end2 = path2[path2.length - 1];
-                        
-                        if (end1.x !== end2.x || end1.y !== end2.y) continue;
-                        
-                        let area = calculateArea(path1, path2);
-                        
-                        if (Math.abs(area - targetArea) < 0.0001) {
-                            let key = `${p1Str}|${p2Str}`;
-                            if (!found.some(f => f.key === key)) {
-                                found.push({p1: p1Str, p2: p2Str, key: key});
-                            }
-                        }
-                        
-                        if (found.length >= 15) break;
-                    }
-                    if (found.length >= 15) break;
-                }
+                addLog(`⚠️ Endpoints differ!`, 'info');
             }
-            
-            if (found.length === 0) {
-                return `\n\n<span style="color: #8e44ad; font-weight: 600;">I CAN NOT FIND ANY OTHER COMBINATIONS FOR P1 P2 GIVING THE SAME AREA</span>`;
-            } else {
-                let result = `\n\n<span style="color: #2980b9; font-weight: 600;">🔍 Other combinations with Area = ${targetArea}:</span>\n`;
-                for (let i = 0; i < Math.min(found.length, 10); i++) {
-                    result += `\n  ${i+1}. P1: [${found[i].p1}]  P2: [${found[i].p2}]`;
-                }
-                if (found.length > 10) {
-                    result += `\n  ... and ${found.length - 10} more`;
-                }
-                return result;
-            }
-        }
-        
-        function generateAllArrays(length) {
-            if (length === 0) return [[]];
-            let result = [];
-            let smaller = generateAllArrays(length - 1);
-            for (let arr of smaller) {
-                for (let digit = 0; digit <= 2; digit++) {
-                    result.push([...arr, digit]);
-                }
-            }
-            return result;
-        }
-        
-        function getPermutations(arr) {
-            if (arr.length <= 1) return [arr];
-            
-            let result = [];
-            let used = new Set();
-            
-            function permute(current, remaining) {
-                if (remaining.length === 0) {
-                    let key = current.join(',');
-                    if (!used.has(key)) {
-                        used.add(key);
-                        result.push([...current]);
-                    }
-                    return;
-                }
-                
-                for (let i = 0; i < remaining.length; i++) {
-                    current.push(remaining[i]);
-                    let newRemaining = [...remaining.slice(0, i), ...remaining.slice(i + 1)];
-                    permute(current, newRemaining);
-                    current.pop();
-                }
-            }
-            
-            permute([], arr);
-            return result;
         }
     </script>
 </body>
 </html>
-
