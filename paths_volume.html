@@ -380,6 +380,17 @@
             box-shadow: 0 6px 20px rgba(82, 183, 136, 0.5);
         }
         
+        .btn-cayley {
+            background: linear-gradient(135deg, #9d4edd, #7b2cbf);
+            color: white;
+            box-shadow: 0 4px 15px rgba(123, 44, 191, 0.4);
+        }
+        
+        .btn-cayley:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(123, 44, 191, 0.5);
+        }
+        
         .btn-reset {
             background: linear-gradient(135deg, #b7e4c7, #95d5b2);
             color: #1b4332;
@@ -473,6 +484,7 @@
             <input type="text" id="p2Input" value="2212021" placeholder="e.g., 3 2 1 0 or 3210">
         </div>
         <button class="btn-random" onclick="getRandomP2()">GET RANDOM P2</button>
+        <button class="btn-cayley" onclick="getCayleyVector()">GET CAYLEY(P1)</button>
         <button class="btn-draw" id="drawBtn" onclick="drawPaths()">DRAW</button>
         <button class="btn-reset" onclick="resetCanvas()">RESET</button>
     </div>
@@ -586,11 +598,11 @@
         const moveNames = {
             0: '+X (right)',
             1: '+Y (up)',
-            2: '+Z (forward)',
-            3: '+X+Y (XY diag)',
+            2: '+X+Y (XY diag)',
+            3: '+Z (forward)',
             4: '+X+Z (XZ diag)',
             5: '+Y+Z (YZ diag)',
-            6: '+X+Y+Z (space diag)'
+            6: '+X+Y+Z (cube diag)'
         };
         
         function setup() {
@@ -1409,13 +1421,13 @@
         
         function getMoveVector(digit) {
             switch(digit) {
-                case 0: return {x: 1, y: 0, z: 0};
-                case 1: return {x: 0, y: 1, z: 0};
-                case 2: return {x: 0, y: 0, z: 1};
-                case 3: return {x: 1, y: 1, z: 0};
-                case 4: return {x: 1, y: 0, z: 1};
-                case 5: return {x: 0, y: 1, z: 1};
-                case 6: return {x: 1, y: 1, z: 1};
+                case 0: return {x: 1, y: 0, z: 0};  // X-axis right
+                case 1: return {x: 0, y: 1, z: 0};  // Y-axis up
+                case 2: return {x: 1, y: 1, z: 0};  // XY diagonal (unit square on xy-plane)
+                case 3: return {x: 0, y: 0, z: 1};  // Z-axis forward
+                case 4: return {x: 1, y: 0, z: 1};  // XZ diagonal (unit square on xz-plane)
+                case 5: return {x: 0, y: 1, z: 1};  // YZ diagonal (unit square on yz-plane)
+                case 6: return {x: 1, y: 1, z: 1};  // XYZ diagonal (unit cube)
                 default: return {x: 0, y: 0, z: 0};
             }
         }
@@ -1525,6 +1537,7 @@
         }
         
         function getRandomP2() {
+            // Generate a random PERMUTATION of P1 (same digits, different order)
             let p1Input = document.getElementById('p1Input').value;
             let digits = parseInput(p1Input);
             
@@ -1533,14 +1546,46 @@
                 return;
             }
             
-            let availableDigits = [...digits];
-            let p2 = [];
-            for (let i = 0; i < digits.length; i++) {
-                let randomIdx = floor(random(availableDigits.length));
-                p2.push(availableDigits[randomIdx]);
+            // Fisher-Yates shuffle to create a random permutation
+            let shuffled = [...digits];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                let j = floor(random(i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
             }
             
-            document.getElementById('p2Input').value = p2.join('');
+            document.getElementById('p2Input').value = shuffled.join('');
+        }
+        
+        function getCayleyVector() {
+            // Get a random vector from the Cayley graph of P1
+            // by applying random adjacent transpositions (Coxeter generators)
+            let p1Input = document.getElementById('p1Input').value;
+            let digits = parseInput(p1Input);
+            
+            if (digits.length === 0) {
+                alert('Please enter P1 first');
+                return;
+            }
+            
+            if (digits.length < 2) {
+                alert('P1 must have at least 2 elements for Cayley graph');
+                return;
+            }
+            
+            // Start with a copy of P1
+            let result = [...digits];
+            
+            // Apply random number of adjacent transpositions (between n and n*2 swaps)
+            let numSwaps = floor(random(digits.length, digits.length * 3));
+            
+            for (let s = 0; s < numSwaps; s++) {
+                // Pick a random position to swap with its neighbor
+                let i = floor(random(result.length - 1));
+                // Swap position i with position i+1 (adjacent transposition)
+                [result[i], result[i + 1]] = [result[i + 1], result[i]];
+            }
+            
+            document.getElementById('p2Input').value = result.join('');
         }
         
         function resetCanvas() {
