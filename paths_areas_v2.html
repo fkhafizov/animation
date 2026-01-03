@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>H: Area under green curve = dist(P1,P2)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Sora:wght@300;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Sora', sans-serif;
+            background: linear-gradient(180deg, 
+                #b8d4e8 0%,      /* soft sky blue at top */
+                #e8f0d8 25%,     /* pale green-yellow transition */
+                #fdf8e3 50%,     /* warm light yellow */
+                #fefcf4 75%,     /* creamy off-white */
+                #ffffff 100%    /* pure white at bottom */
+            );
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 25px;
+        }
+        
+        h1 {
+            font-weight: 700;
+            font-size: 2.4rem;
+            color: #3d5a6e;
+            margin-bottom: 25px;
+            text-shadow: 2px 2px 6px rgba(255,255,255,0.8);
+            letter-spacing: -0.5px;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,253,245,0.95);
+            padding: 22px 35px;
+            border-radius: 18px;
+            box-shadow: 0 10px 40px rgba(80,70,50,0.1);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(220,200,150,0.3);
+        }
+        
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .input-group label {
+            font-family: 'Fira Code', monospace;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #2a5a7a;
+        }
+        
+        .input-group input {
+            font-family: 'Fira Code', monospace;
+            font-size: 1rem;
+            padding: 12px 18px;
+            border: 2px solid #8ecae6;
+            border-radius: 12px;
+            width: 200px;
+            background: #f0f9ff;
+            color: #1a4a6e;
+            transition: all 0.3s ease;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #219ebc;
+            box-shadow: 0 0 18px rgba(33,158,188,0.25);
+            background: #fff;
+        }
+        
+        .input-group input::placeholder {
+            color: #9dc5d9;
+        }
+        
+        button {
+            font-family: 'Sora', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            padding: 14px 32px;
+            background: linear-gradient(145deg, #219ebc 0%, #1a7a94 100%);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 18px rgba(33,158,188,0.35);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(33,158,188,0.45);
+            background: linear-gradient(145deg, #38b6d2 0%, #219ebc 100%);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button.secondary {
+            background: linear-gradient(145deg, #6c757d 0%, #495057 100%);
+            box-shadow: 0 5px 18px rgba(73,80,87,0.35);
+        }
+        
+        button.secondary:hover {
+            background: linear-gradient(145deg, #868e96 0%, #6c757d 100%);
+            box-shadow: 0 8px 25px rgba(73,80,87,0.45);
+        }
+        
+        .main-area {
+            display: flex;
+            gap: 25px;
+            align-items: flex-start;
+        }
+        
+        .logs-panel {
+            background: rgba(25, 35, 45, 0.96);
+            padding: 18px;
+            border-radius: 18px;
+            box-shadow: 0 10px 40px rgba(26,74,110,0.2);
+            width: 300px;
+            height: 620px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .logs-panel h3 {
+            font-weight: 600;
+            color: #8ecae6;
+            margin-bottom: 12px;
+            font-size: 1.05rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(142,202,230,0.2);
+        }
+        
+        .logs-content {
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.8rem;
+            color: #a8d4ea;
+            line-height: 1.7;
+            padding-right: 8px;
+        }
+        
+        .logs-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .logs-content::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.08);
+            border-radius: 4px;
+        }
+        
+        .logs-content::-webkit-scrollbar-thumb {
+            background: rgba(142, 202, 230, 0.4);
+            border-radius: 4px;
+        }
+        
+        .logs-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(142, 202, 230, 0.6);
+        }
+        
+        .log-entry {
+            padding: 6px 10px;
+            border-radius: 6px;
+            margin-bottom: 5px;
+            word-break: break-word;
+        }
+        
+        .log-entry.p1 {
+            background: rgba(220, 53, 69, 0.18);
+            border-left: 3px solid #dc3545;
+        }
+        
+        .log-entry.p2 {
+            background: rgba(25, 135, 84, 0.18);
+            border-left: 3px solid #198754;
+        }
+        
+        .log-entry.info {
+            background: rgba(33, 158, 188, 0.18);
+            border-left: 3px solid #219ebc;
+        }
+        
+        .log-entry.result {
+            background: rgba(111, 66, 193, 0.18);
+            border-left: 3px solid #6f42c1;
+        }
+        
+        .log-entry.step {
+            background: rgba(255, 193, 7, 0.15);
+            border-left: 3px solid #ffc107;
+        }
+
+        #canvas-container {
+            border-radius: 22px;
+            overflow: hidden;
+            box-shadow: 0 12px 50px rgba(80,70,50,0.12);
+            border: 3px solid rgba(255,250,230,0.8);
+        }
+        
+        .output-panel {
+            background: rgba(255,253,248,0.96);
+            padding: 22px;
+            border-radius: 18px;
+            box-shadow: 0 10px 40px rgba(80,70,50,0.1);
+            width: 300px;
+            height: 620px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(220,200,150,0.3);
+        }
+        
+        .output-panel h3 {
+            font-weight: 600;
+            color: #3d5a6e;
+            margin-bottom: 18px;
+            font-size: 1.15rem;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e8e0c8;
+        }
+        
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 18px;
+            background: linear-gradient(135deg, #fefcf6 0%, #f8f4e8 100%);
+            border-radius: 12px;
+            margin-bottom: 14px;
+            border: 1px solid #e8e0c8;
+        }
+        
+        .result-label {
+            font-family: 'Fira Code', monospace;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #2a5a7a;
+        }
+        
+        .result-value {
+            font-family: 'Fira Code', monospace;
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: #198754;
+        }
+        
+        .result-value.inversions {
+            color: #6f42c1;
+        }
+        
+        .path-info {
+            margin-top: 18px;
+            padding: 15px;
+            background: #faf8f0;
+            border-radius: 12px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.82rem;
+            color: #4a5a68;
+            line-height: 1.9;
+        }
+        
+        .path-info .label {
+            color: #6a9bb8;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .legend {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: auto;
+            padding-top: 18px;
+            border-top: 2px solid #e8e0c8;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.88rem;
+            color: #4a7a98;
+        }
+        
+        .legend-color {
+            width: 28px;
+            height: 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>H: Area under green curve = dist(P1,P2)</h1>
+    
+    <div class="container">
+        <div class="controls">
+            <div class="input-group">
+                <label>P1 :</label>
+                <input type="text" id="p1Input" placeholder="e.g., 0123 or 0 1 2 3">
+            </div>
+            <div class="input-group">
+                <label>P2 :</label>
+                <input type="text" id="p2Input" placeholder="e.g., 3210 or 3 2 1 0">
+            </div>
+            <button id="drawBtn">DRAW</button>
+            <button id="randomP2Btn" class="secondary">GET RANDOM P2</button>
+            <button id="triangleBtn" class="secondary">SHOW TRIANGLE</button>
+            <button id="aggregateBtn" class="secondary">AGGREGATE</button>
+        </div>
+        
+        <div class="main-area">
+            <!-- Logs Panel (LEFT) -->
+            <div class="logs-panel">
+                <h3>📋 Step Log</h3>
+                <div class="logs-content" id="logsContent">
+                    <div class="log-entry info">Ready. Enter P1 and P2, then click DRAW.</div>
+                </div>
+            </div>
+            
+            <!-- Canvas (CENTER) -->
+            <div id="canvas-container"></div>
+            
+            <!-- Output Panel (RIGHT) -->
+            <div class="output-panel">
+                <h3>📊 Results</h3>
+                
+                <div class="result-row">
+                    <span class="result-label">Area</span>
+                    <span class="result-value" id="areaValue">—</span>
+                </div>
+                
+                <div class="result-row">
+                    <span class="result-label">dist(P1,P2)</span>
+                    <span class="result-value inversions" id="inversionsValue">—</span>
+                </div>
+                
+                <div class="path-info" id="pathInfo">
+                    <div class="label">P1 Array</div>
+                    <div id="p1Display">—</div>
+                    
+                    <div class="label" style="margin-top: 10px;">P2 Array</div>
+                    <div id="p2Display">—</div>
+                    
+                    <div class="label" style="margin-top: 10px;">Lehmer Code (P2)</div>
+                    <div id="lehmerDisplay">—</div>
+                    
+                    <div class="label" style="margin-top: 10px;">Inversion Vector</div>
+                    <div id="invVectorDisplay">—</div>
+                    
+                    <div class="label" style="margin-top: 10px;">Inv Vector Length</div>
+                    <div id="invLengthDisplay">—</div>
+                    
+                    <div class="label" style="margin-top: 10px;">Diameter (S<sub>k</sub>)</div>
+                    <div id="diameterDisplay">—</div>
+                </div>
+                
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #dc3545;"></div>
+                        <span>P1 (Red - Vertical)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #198754;"></div>
+                        <span>P2 (Green - Inversions)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: rgba(111, 66, 193, 0.5);"></div>
+                        <span>Enclosed Area</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Triangle Section (Below Main Area) -->
+        <div id="triangle-section" style="display: none;">
+            <h2 style="color: #3d5a6e; margin: 20px 0 15px 0; font-size: 1.4rem;">
+                Lattice Triangle
+            </h2>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <div id="triangle-canvas-container" style="border-radius: 18px; overflow: hidden; box-shadow: 0 10px 40px rgba(80,70,50,0.12); border: 3px solid rgba(255,200,100,0.5);"></div>
+                <div id="triangle-stats" style="font-family: 'Fira Code', monospace; font-size: 1rem; color: #3d5a6e; background: rgba(255,253,248,0.96); padding: 20px 25px; border-radius: 12px; border: 1px solid rgba(220,200,150,0.3); min-width: 150px;">
+                    <div style="color: #25855a; font-weight: 600; font-size: 1.2rem;" id="triangleInversions">—</div>
+                    <div style="color: #6a9bb8; font-size: 0.85rem; margin-top: 5px;">inversions</div>
+                    <div style="border-top: 1px solid #e8e0c8; margin: 12px 0;"></div>
+                    <div style="color: #c07820; font-weight: 600; font-size: 1.2rem;" id="triangleTotalPts">—</div>
+                    <div style="color: #6a9bb8; font-size: 0.85rem; margin-top: 5px;">total points</div>
+                </div>
+            </div>
+            <div id="triangle-info" style="margin-top: 15px; font-family: 'Fira Code', monospace; font-size: 0.9rem; color: #4a5a68; background: rgba(255,253,248,0.96); padding: 15px 25px; border-radius: 12px; display: inline-block;"></div>
+        </div>
+    </div>
+
+    <script>
+        let canvasWidth = 650;
+        let canvasHeight = 620;
+        let gridSize = 45;
+        let baseGridSize = 45;
+        let originX, originY;
+        
+        let p1Array = [];
+        let p2Array = [];
+        let inversionVector = [];
+        let p1Path = [];
+        let p2Path = [];
+        
+        let animProgress = 0;
+        let isAnimating = false;
+        let animationPhase = 0; // 0 = p1, 1 = p2
+        
+        let currentArea = 0;
+        let totalInversions = 0;
+        let currentBumpWidth = 0;
+        let currentPermLength = 0;
+        let currentInvLength = 0;
+        
+        let showTriangle = false;
+        let triangleSize = 0; // m = n-2
+        let triangleSketch = null; // Separate p5 instance for triangle
+        let aggregateMode = false; // When true, show first dist points as green
+        
+        function setup() {
+            let canvas = createCanvas(canvasWidth, canvasHeight);
+            canvas.parent('canvas-container');
+            
+            // Origin in lower-middle of canvas
+            originX = canvasWidth / 2 - 50;
+            originY = canvasHeight - 80;
+            
+            document.getElementById('drawBtn').addEventListener('click', startDrawing);
+            document.getElementById('randomP2Btn').addEventListener('click', generateRandomP2);
+            document.getElementById('triangleBtn').addEventListener('click', toggleTriangle);
+            document.getElementById('aggregateBtn').addEventListener('click', showAggregate);
+            
+            // Pre-fill example
+            document.getElementById('p1Input').value = "0 1 2 3";
+            document.getElementById('p2Input').value = "3 2 1 0";
+        }
+        
+        function clearLogs() {
+            document.getElementById('logsContent').innerHTML = '';
+        }
+        
+        function addLog(message, type = 'info') {
+            let logsContent = document.getElementById('logsContent');
+            let entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = message;
+            logsContent.appendChild(entry);
+            logsContent.scrollTop = logsContent.scrollHeight;
+        }
+        
+        function draw() {
+            drawBackground();
+            drawGrid();
+            drawOrigin();
+            
+            if (p1Path.length > 0 || p2Path.length > 0) {
+                drawPaths();
+            }
+        }
+        
+        function drawBackground() {
+            // Warm yellow gradient with soft blue at top, fading to white
+            for (let y = 0; y < height; y++) {
+                let inter = map(y, 0, height, 0, 1);
+                let topColor = color(184, 212, 232);    // soft sky blue
+                let midColor = color(253, 248, 227);    // warm light yellow
+                let bottomColor = color(255, 255, 255); // white
+                
+                let c;
+                if (inter < 0.4) {
+                    // Blue to yellow transition
+                    c = lerpColor(topColor, midColor, inter / 0.4);
+                } else {
+                    // Yellow to white transition
+                    c = lerpColor(midColor, bottomColor, (inter - 0.4) / 0.6);
+                }
+                stroke(c);
+                line(0, y, width, y);
+            }
+        }
+        
+        function drawGrid() {
+            // Calculate visible grid range
+            let minX = floor(-originX / gridSize);
+            let maxX = ceil((canvasWidth - originX) / gridSize);
+            let minY = floor(-(canvasHeight - originY) / gridSize);
+            let maxY = ceil(originY / gridSize);
+            
+            stroke(80, 130, 170, 80);
+            strokeWeight(1);
+            
+            // Draw dotted vertical lines at positive integers
+            for (let x = 1; x <= maxX; x++) {
+                let screenX = originX + x * gridSize;
+                if (screenX > 0 && screenX < canvasWidth) {
+                    drawDottedLine(screenX, 0, screenX, canvasHeight);
+                }
+            }
+            
+            // Draw dotted horizontal lines at positive integers
+            for (let y = 1; y <= maxY; y++) {
+                let screenY = originY - y * gridSize;
+                if (screenY > 0 && screenY < canvasHeight) {
+                    drawDottedLine(0, screenY, canvasWidth, screenY);
+                }
+            }
+            
+            // Axis lines (slightly more visible)
+            stroke(80, 130, 170, 120);
+            strokeWeight(1.5);
+            // X-axis
+            line(0, originY, canvasWidth, originY);
+            // Y-axis
+            line(originX, 0, originX, canvasHeight);
+            
+            // Labels for positive integers
+            fill(60, 100, 140);
+            noStroke();
+            textFont('Fira Code');
+            textSize(11);
+            textAlign(CENTER, TOP);
+            
+            for (let x = 1; x <= maxX; x++) {
+                let screenX = originX + x * gridSize;
+                if (screenX > 0 && screenX < canvasWidth - 20) {
+                    text(x, screenX, originY + 6);
+                }
+            }
+            
+            textAlign(RIGHT, CENTER);
+            for (let y = 1; y <= maxY; y++) {
+                let screenY = originY - y * gridSize;
+                if (screenY > 20 && screenY < canvasHeight) {
+                    text(y, originX - 8, screenY);
+                }
+            }
+        }
+        
+        function drawDottedLine(x1, y1, x2, y2) {
+            let distance = dist(x1, y1, x2, y2);
+            let dotSpacing = 6;
+            let numDots = floor(distance / dotSpacing);
+            
+            strokeWeight(1.5);
+            for (let i = 0; i <= numDots; i++) {
+                let t = i / numDots;
+                let x = lerp(x1, x2, t);
+                let y = lerp(y1, y2, t);
+                point(x, y);
+            }
+        }
+        
+        function drawOrigin() {
+            // Glowing origin point
+            noStroke();
+            for (let r = 22; r > 0; r -= 4) {
+                fill(33, 158, 188, map(r, 0, 22, 180, 20));
+                ellipse(originX, originY, r * 2);
+            }
+            fill(255);
+            ellipse(originX, originY, 10);
+            
+            fill(40, 80, 110);
+            textSize(12);
+            textAlign(LEFT, TOP);
+            text("(0,0)", originX + 14, originY + 6);
+        }
+        
+        function drawPaths() {
+            let n = p1Array.length;
+            if (n === 0) return;
+            
+            // Calculate progress for animation
+            let progress = isAnimating ? min(animProgress, 1) : 1;
+            
+            // Draw filled area when complete
+            if (progress >= 1 && p1Path.length > 1 && p2Path.length > 1) {
+                drawFilledArea();
+            }
+            
+            // Draw P1 path (red - vertical line)
+            if (p1Path.length > 1) {
+                let p1Progress = isAnimating ? (animationPhase === 0 ? progress : 1) : 1;
+                drawAnimatedPath(p1Path, color(220, 53, 69), p1Progress, 4);
+            }
+            
+            // Draw P2 path (green - inversion-based)
+            if (p2Path.length > 1) {
+                let p2Progress = isAnimating ? (animationPhase === 1 ? progress : (animationPhase > 1 ? 1 : 0)) : 1;
+                drawAnimatedPath(p2Path, color(25, 135, 84), p2Progress, 4);
+            }
+            
+            // Draw endpoints when complete
+            if (progress >= 1 && animationPhase >= 2) {
+                drawEndpoints();
+            }
+            
+            // Animation logic
+            if (isAnimating) {
+                animProgress += 0.025;
+                if (animProgress >= 1) {
+                    animProgress = 0;
+                    animationPhase++;
+                    
+                    if (animationPhase === 1) {
+                        addLog(`<strong>Drawing P2 path...</strong>`, 'p2');
+                    } else if (animationPhase >= 2) {
+                        isAnimating = false;
+                        showResults();
+                    }
+                }
+            }
+        }
+        
+        function drawAnimatedPath(pathPoints, pathColor, progress, weight) {
+            if (pathPoints.length < 2) return;
+            
+            let totalSegments = pathPoints.length - 1;
+            let segmentsToDraw = floor(progress * totalSegments);
+            let partialProgress = (progress * totalSegments) % 1;
+            
+            strokeWeight(weight);
+            stroke(pathColor);
+            noFill();
+            
+            // Draw complete segments
+            for (let i = 0; i < segmentsToDraw && i < totalSegments; i++) {
+                let x1 = originX + pathPoints[i].x * gridSize;
+                let y1 = originY - pathPoints[i].y * gridSize;
+                let x2 = originX + pathPoints[i + 1].x * gridSize;
+                let y2 = originY - pathPoints[i + 1].y * gridSize;
+                line(x1, y1, x2, y2);
+            }
+            
+            // Draw partial segment
+            if (segmentsToDraw < totalSegments && progress > 0) {
+                let i = segmentsToDraw;
+                let x1 = originX + pathPoints[i].x * gridSize;
+                let y1 = originY - pathPoints[i].y * gridSize;
+                let x2 = originX + pathPoints[i + 1].x * gridSize;
+                let y2 = originY - pathPoints[i + 1].y * gridSize;
+                let px = lerp(x1, x2, partialProgress);
+                let py = lerp(y1, y2, partialProgress);
+                line(x1, y1, px, py);
+                
+                // Animated tip
+                fill(pathColor);
+                noStroke();
+                ellipse(px, py, 12);
+            }
+            
+            // Draw vertices
+            noStroke();
+            fill(pathColor);
+            for (let i = 0; i <= segmentsToDraw && i < pathPoints.length; i++) {
+                let x = originX + pathPoints[i].x * gridSize;
+                let y = originY - pathPoints[i].y * gridSize;
+                ellipse(x, y, 8);
+            }
+        }
+        
+        function drawFilledArea() {
+            // Create polygon from both paths
+            let allPoints = [];
+            
+            // P1 path forward
+            for (let p of p1Path) {
+                allPoints.push({x: originX + p.x * gridSize, y: originY - p.y * gridSize});
+            }
+            
+            // P2 path backward (to close the loop)
+            for (let i = p2Path.length - 1; i >= 0; i--) {
+                allPoints.push({x: originX + p2Path[i].x * gridSize, y: originY - p2Path[i].y * gridSize});
+            }
+            
+            // Fill
+            noStroke();
+            fill(111, 66, 193, 45);
+            beginShape();
+            for (let p of allPoints) {
+                vertex(p.x, p.y);
+            }
+            endShape(CLOSE);
+            
+            // Outline
+            stroke(111, 66, 193, 120);
+            strokeWeight(2);
+            noFill();
+            beginShape();
+            for (let p of allPoints) {
+                vertex(p.x, p.y);
+            }
+            endShape(CLOSE);
+        }
+        
+        function drawEndpoints() {
+            // P1 end
+            if (p1Path.length > 0) {
+                let end = p1Path[p1Path.length - 1];
+                let x = originX + end.x * gridSize;
+                let y = originY - end.y * gridSize;
+                
+                noStroke();
+                fill(220, 53, 69);
+                ellipse(x, y, 16);
+                fill(255);
+                ellipse(x, y, 7);
+            }
+            
+            // P2 end
+            if (p2Path.length > 0) {
+                let end = p2Path[p2Path.length - 1];
+                let x = originX + end.x * gridSize;
+                let y = originY - end.y * gridSize;
+                
+                noStroke();
+                fill(25, 135, 84);
+                ellipse(x, y, 16);
+                fill(255);
+                ellipse(x, y, 7);
+            }
+        }
+        
+        function parseInput(input) {
+            if (!input) return [];
+            
+            // Remove all whitespace
+            let cleaned = input.replace(/\s+/g, '');
+            let nums = [];
+            
+            // Read one character at a time (single digits)
+            for (let char of cleaned) {
+                let n = parseInt(char);
+                if (!isNaN(n) && n >= 0 && n <= 9) {
+                    nums.push(n);
+                }
+            }
+            
+            return nums;
+        }
+        
+        function generateRandomP2() {
+            let p1Input = document.getElementById('p1Input').value.trim();
+            let p1Digits = parseInput(p1Input);
+            
+            if (p1Digits.length === 0) {
+                addLog('Error: Enter P1 first', 'info');
+                return;
+            }
+            
+            // Fisher-Yates shuffle
+            let randomP2 = [...p1Digits];
+            for (let i = randomP2.length - 1; i > 0; i--) {
+                let j = Math.floor(Math.random() * (i + 1));
+                [randomP2[i], randomP2[j]] = [randomP2[j], randomP2[i]];
+            }
+            
+            document.getElementById('p2Input').value = randomP2.join(' ');
+            addLog(`Generated random P2: [${randomP2.join(', ')}]`, 'info');
+        }
+        
+        function toggleTriangle() {
+            let p1Input = document.getElementById('p1Input').value.trim();
+            let p1Digits = parseInput(p1Input);
+            
+            if (p1Digits.length === 0) {
+                addLog('Error: Enter P1 first to determine n', 'info');
+                return;
+            }
+            
+            let n = p1Digits.length;
+            
+            if (n < 2) {
+                addLog('Error: Need n >= 2 for triangle', 'info');
+                return;
+            }
+            
+            showTriangle = !showTriangle;
+            
+            let triangleSection = document.getElementById('triangle-section');
+            
+            if (showTriangle) {
+                // Triangle with m = n-2 has (m+1)(m+2)/2 = n(n-1)/2 lattice points
+                triangleSize = n - 2;
+                if (triangleSize < 1) triangleSize = 1;
+                
+                let numPoints = (triangleSize + 1) * (triangleSize + 2) / 2;
+                let diameter = n * (n - 1) / 2;
+                
+                addLog(`—————————————`, 'info');
+                addLog(`<strong>Showing Lattice Triangle</strong>`, 'step');
+                addLog(`n = ${n}, m = n-2 = ${triangleSize}`, 'step');
+                addLog(`Triangle vertices: (0,0), (${triangleSize},0), (0,${triangleSize})`, 'step');
+                addLog(`Lattice points = (m+1)(m+2)/2 = ${numPoints}`, 'step');
+                addLog(`Diameter S_${n} = ${diameter}`, 'step');
+                
+                // Show triangle section
+                triangleSection.style.display = 'block';
+                
+                // Update info text
+                document.getElementById('triangle-info').innerHTML = 
+                    `<strong>S<sub>${n}</sub></strong> &nbsp;|&nbsp; ` +
+                    `m = n−2 = <strong>${triangleSize}</strong> &nbsp;|&nbsp; ` +
+                    `Vertices: (0,0), (${triangleSize},0), (0,${triangleSize}) &nbsp;|&nbsp; ` +
+                    `Lattice points = <strong>${numPoints}</strong> = Diameter`;
+                
+                // Create triangle canvas with inversion vector overlay
+                aggregateMode = false;
+                createTriangleCanvas(triangleSize, numPoints, inversionVector, totalInversions, false);
+                
+            } else {
+                addLog(`Triangle hidden`, 'info');
+                triangleSection.style.display = 'none';
+                
+                // Remove existing triangle sketch
+                if (triangleSketch) {
+                    triangleSketch.remove();
+                    triangleSketch = null;
+                }
+            }
+        }
+        
+        function showAggregate() {
+            if (!showTriangle) {
+                addLog('Error: Show triangle first', 'info');
+                return;
+            }
+            
+            if (totalInversions === 0) {
+                addLog('Error: Run DRAW first to compute inversions', 'info');
+                return;
+            }
+            
+            aggregateMode = true;
+            addLog(`—————————————`, 'info');
+            addLog(`<strong>AGGREGATE mode</strong>`, 'step');
+            addLog(`Showing green at positions 0 to ${totalInversions - 1}`, 'step');
+            addLog(`dist(P1,P2) = ${totalInversions}`, 'step');
+            
+            // Redraw triangle in aggregate mode
+            createTriangleCanvas(triangleSize, (triangleSize + 1) * (triangleSize + 2) / 2, inversionVector, totalInversions, true);
+        }
+        
+        function createTriangleCanvas(m, numPoints, invVector, dist, isAggregate) {
+            // Remove existing sketch if any
+            if (triangleSketch) {
+                triangleSketch.remove();
+            }
+            
+            // Calculate canvas size based on triangle size
+            let cellSize = Math.min(50, 400 / (m + 2));
+            cellSize = Math.max(cellSize, 25);
+            let padding = 60;
+            let triCanvasWidth = (m + 2) * cellSize + padding * 2;
+            let triCanvasHeight = (m + 2) * cellSize + padding * 2;
+            
+            // Generate ordered lattice points:
+            // Row by row from bottom (y=0) to top, left to right within each row
+            // Row y=0: (0,0), (1,0), ..., (m,0)
+            // Row y=1: (0,1), (1,1), ..., (m-1,1)
+            // etc.
+            let orderedPoints = [];
+            for (let y = 0; y <= m; y++) {
+                for (let x = 0; x <= m - y; x++) {
+                    orderedPoints.push({x: x, y: y});
+                }
+            }
+            
+            // Create p5 instance for triangle
+            triangleSketch = new p5(function(p) {
+                p.setup = function() {
+                    let canvas = p.createCanvas(triCanvasWidth, triCanvasHeight);
+                    canvas.parent('triangle-canvas-container');
+                    p.noLoop();
+                    p.drawTriangle();
+                };
+                
+                p.drawTriangle = function() {
+                    // Background gradient (warm yellow)
+                    for (let y = 0; y < p.height; y++) {
+                        let inter = p.map(y, 0, p.height, 0, 1);
+                        let c = p.lerpColor(p.color(255, 250, 235), p.color(255, 245, 220), inter);
+                        p.stroke(c);
+                        p.line(0, y, p.width, y);
+                    }
+                    
+                    let originX = padding;
+                    let originY = p.height - padding;
+                    
+                    // Draw grid lines
+                    p.stroke(200, 180, 140, 100);
+                    p.strokeWeight(1);
+                    for (let x = 0; x <= m + 1; x++) {
+                        let px = originX + x * cellSize;
+                        p.line(px, padding / 2, px, p.height - padding / 2);
+                    }
+                    for (let y = 0; y <= m + 1; y++) {
+                        let py = originY - y * cellSize;
+                        p.line(padding / 2, py, p.width - padding / 2, py);
+                    }
+                    
+                    // Draw axes
+                    p.stroke(100, 80, 60);
+                    p.strokeWeight(2);
+                    p.line(originX, originY, originX + (m + 1.5) * cellSize, originY); // x-axis
+                    p.line(originX, originY, originX, originY - (m + 1.5) * cellSize); // y-axis
+                    
+                    // Axis labels
+                    p.fill(80, 60, 40);
+                    p.noStroke();
+                    p.textSize(12);
+                    p.textAlign(p.CENTER, p.TOP);
+                    for (let x = 0; x <= m; x++) {
+                        p.text(x, originX + x * cellSize, originY + 8);
+                    }
+                    p.textAlign(p.RIGHT, p.CENTER);
+                    for (let y = 0; y <= m; y++) {
+                        p.text(y, originX - 8, originY - y * cellSize);
+                    }
+                    
+                    // Triangle vertices
+                    let v0 = {x: originX, y: originY};
+                    let v1 = {x: originX + m * cellSize, y: originY};
+                    let v2 = {x: originX, y: originY - m * cellSize};
+                    
+                    // Fill triangle
+                    p.noStroke();
+                    p.fill(255, 193, 7, 50);
+                    p.beginShape();
+                    p.vertex(v0.x, v0.y);
+                    p.vertex(v1.x, v1.y);
+                    p.vertex(v2.x, v2.y);
+                    p.endShape(p.CLOSE);
+                    
+                    // Draw triangle edges
+                    p.stroke(255, 152, 0);
+                    p.strokeWeight(3);
+                    p.line(v0.x, v0.y, v1.x, v1.y);
+                    p.line(v1.x, v1.y, v2.x, v2.y);
+                    p.line(v2.x, v2.y, v0.x, v0.y);
+                    
+                    // Draw all lattice points with index labels
+                    // Orange = base point, Green = inversion (or aggregate)
+                    let greenCount = 0;
+                    for (let i = 0; i < orderedPoints.length; i++) {
+                        let pt = orderedPoints[i];
+                        let px = originX + pt.x * cellSize;
+                        let py = originY - pt.y * cellSize;
+                        
+                        // Check if this point should be green
+                        // Aggregate mode: green for i < dist
+                        // Normal mode: green for Inv[i] = 1
+                        let isInversion = isAggregate 
+                            ? (i < dist) 
+                            : (invVector && i < invVector.length && invVector[i] === 1);
+                        
+                        if (isInversion) {
+                            // GREEN circle for inversion
+                            p.noStroke();
+                            p.fill(25, 135, 84, 80);
+                            p.ellipse(px, py, 24);
+                            
+                            p.fill(25, 135, 84);
+                            p.ellipse(px, py, 16);
+                            
+                            p.fill(255);
+                            p.ellipse(px, py, 6);
+                            
+                            greenCount++;
+                        } else {
+                            // Orange point (base)
+                            p.noStroke();
+                            p.fill(255, 152, 0, 40);
+                            p.ellipse(px, py, 16);
+                            
+                            p.fill(255, 180, 100);
+                            p.ellipse(px, py, 10);
+                            
+                            p.fill(255);
+                            p.ellipse(px, py, 4);
+                        }
+                        
+                        // Draw index label (small, below/beside the point)
+                        p.fill(100, 80, 60);
+                        p.noStroke();
+                        p.textSize(9);
+                        p.textAlign(p.CENTER, p.TOP);
+                        p.text(i, px, py + 10);
+                    }
+                    
+                    // Vertex labels
+                    p.fill(180, 100, 0);
+                    p.noStroke();
+                    p.textSize(13);
+                    p.textAlign(p.RIGHT, p.TOP);
+                    p.text(`(0,0)`, v0.x - 5, v0.y + 5);
+                    p.textAlign(p.LEFT, p.TOP);
+                    p.text(`(${m},0)`, v1.x + 5, v1.y + 5);
+                    p.textAlign(p.RIGHT, p.BOTTOM);
+                    p.text(`(0,${m})`, v2.x - 5, v2.y - 5);
+                    
+                    // Update external stats display
+                    document.getElementById('triangleInversions').textContent = greenCount;
+                    document.getElementById('triangleTotalPts').textContent = orderedPoints.length;
+                };
+            });
+        }
+        
+        // Compute inversion vector using bubble sort (P2 → P1)
+        // Returns array of 0s and 1s for EVERY comparison step
+        // 1 = swap occurred, 0 = no swap needed
+        function computeInversionVector(p2, p1) {
+            if (p2.length !== p1.length) return { vector: [], totalSwaps: 0, permLength: 0 };
+            
+            let n = p2.length;
+            let arr = [...p2];
+            let target = [...p1];
+            let invVector = [];
+            let totalSwaps = 0;
+            
+            // Create a mapping: value -> target position
+            // This transforms the problem into sorting to [0,1,2,...,n-1]
+            let targetPosition = {};
+            for (let i = 0; i < n; i++) {
+                targetPosition[target[i]] = i;
+            }
+            
+            // Transform arr values to their target positions
+            let transformed = arr.map(v => targetPosition[v]);
+            
+            // Standard bubble sort - track ALL comparisons
+            // Total comparisons = n(n-1)/2
+            for (let pass = 0; pass < n - 1; pass++) {
+                for (let j = 0; j < n - 1 - pass; j++) {
+                    if (transformed[j] > transformed[j + 1]) {
+                        // Swap needed (inversion)
+                        [transformed[j], transformed[j + 1]] = [transformed[j + 1], transformed[j]];
+                        invVector.push(1);
+                        totalSwaps++;
+                    } else {
+                        // No swap needed
+                        invVector.push(0);
+                    }
+                }
+            }
+            
+            return { vector: invVector, totalSwaps: totalSwaps, permLength: n };
+        }
+        
+        // Generate P1 path: straight vertical line up by N units
+        // N = length of inversion vector (total bubble sort comparisons)
+        function generateP1Path(N) {
+            let path = [{x: 0, y: 0}];
+            for (let i = 0; i < N; i++) {
+                path.push({x: 0, y: i + 1});
+            }
+            return path;
+        }
+        
+        // Generate P2 path based on inversion vector using BLOCKS of consecutive 1s
+        // For each block of consecutive 1s:
+        //   - Go right 1 unit
+        //   - Go up by block length
+        //   - Go left 1 unit (back to x=0)
+        // For 0s: just go up
+        function generateP2Path(invVector) {
+            let path = [{x: 0, y: 0}];
+            let x = 0;
+            let y = 0;
+            let blocks = []; // Store block info for logging
+            
+            let i = 0;
+            while (i < invVector.length) {
+                if (invVector[i] === 1) {
+                    // Found start of a block of 1s
+                    let blockStart = i;
+                    let blockLength = 0;
+                    
+                    // Count consecutive 1s
+                    while (i < invVector.length && invVector[i] === 1) {
+                        blockLength++;
+                        i++;
+                    }
+                    
+                    blocks.push({start: blockStart, length: blockLength});
+                    
+                    // Draw block: right 1, up blockLength, left 1
+                    x += 1;
+                    path.push({x: x, y: y});
+                    
+                    y += blockLength;
+                    path.push({x: x, y: y});
+                    
+                    x -= 1;
+                    path.push({x: x, y: y});
+                } else {
+                    // Single 0: just go up 1
+                    y += 1;
+                    path.push({x: x, y: y});
+                    i++;
+                }
+            }
+            
+            return {path: path, blocks: blocks};
+        }
+        
+        // Compute Lehmer code for a permutation
+        // Lehmer code[i] = number of elements to the right of position i that are smaller than perm[i]
+        function computeLehmerCode(perm) {
+            let n = perm.length;
+            let lehmer = [];
+            
+            for (let i = 0; i < n; i++) {
+                let count = 0;
+                for (let j = i + 1; j < n; j++) {
+                    if (perm[j] < perm[i]) {
+                        count++;
+                    }
+                }
+                lehmer.push(count);
+            }
+            
+            return lehmer;
+        }
+        
+        // Calculate area using shoelace formula
+        function calculateArea(path1, path2) {
+            let polygon = [];
+            
+            // P1 path forward
+            for (let p of path1) {
+                polygon.push({x: p.x, y: p.y});
+            }
+            
+            // P2 path backward
+            for (let i = path2.length - 1; i >= 0; i--) {
+                polygon.push({x: path2[i].x, y: path2[i].y});
+            }
+            
+            // Shoelace formula
+            let area = 0;
+            let n = polygon.length;
+            for (let i = 0; i < n; i++) {
+                let j = (i + 1) % n;
+                area += polygon[i].x * polygon[j].y;
+                area -= polygon[j].x * polygon[i].y;
+            }
+            
+            return Math.abs(area) / 2;
+        }
+        
+        function startDrawing() {
+            let p1Input = document.getElementById('p1Input').value.trim();
+            let p2Input = document.getElementById('p2Input').value.trim();
+            
+            p1Array = parseInput(p1Input);
+            p2Array = parseInput(p2Input);
+            
+            if (p1Array.length === 0 || p2Array.length === 0) {
+                addLog('Error: Please enter valid arrays', 'info');
+                return;
+            }
+            
+            if (p1Array.length !== p2Array.length) {
+                addLog('Error: P1 and P2 must have the same length', 'info');
+                return;
+            }
+            
+            // Check if P2 is a permutation of P1
+            let p1Sorted = [...p1Array].sort();
+            let p2Sorted = [...p2Array].sort();
+            let isPermutation = p1Sorted.every((v, i) => v === p2Sorted[i]);
+            
+            if (!isPermutation) {
+                addLog('Warning: P2 is not a permutation of P1', 'info');
+            }
+            
+            let n = p1Array.length;
+            
+            // Clear logs and start
+            clearLogs();
+            addLog(`<strong>Starting computation</strong>`, 'info');
+            addLog(`P1 = [${p1Array.join(', ')}]`, 'p1');
+            addLog(`P2 = [${p2Array.join(', ')}]`, 'p2');
+            addLog(`Permutation size = ${n}`, 'info');
+            addLog(`—————————————`, 'info');
+            
+            // Compute inversion vector
+            addLog(`<strong>Computing inversions (P2 → P1)</strong>`, 'step');
+            let result = computeInversionVector(p2Array, p1Array);
+            inversionVector = result.vector;
+            totalInversions = result.totalSwaps;
+            let permLength = result.permLength;
+            
+            let N = inversionVector.length; // Total comparisons = n(n-1)/2
+            addLog(`Permutation length n = ${permLength}`, 'step');
+            addLog(`Total comparisons N = ${N}`, 'step');
+            addLog(`Inversion vector: [${inversionVector.join(', ')}]`, 'step');
+            addLog(`Total swaps (inversions): ${totalInversions}`, 'step');
+            addLog(`—————————————`, 'info');
+            
+            // Generate paths
+            addLog(`<strong>Generating paths</strong>`, 'info');
+            
+            // P1: vertical line of length N
+            p1Path = generateP1Path(N);
+            addLog(`P1: Vertical line from (0,0) to (0,${N})`, 'p1');
+            
+            // Bump width = 1
+            let bumpWidth = 1;
+            currentBumpWidth = bumpWidth;
+            currentPermLength = permLength;
+            currentInvLength = N;
+            
+            // P2: draw using blocks of consecutive 1s
+            let p2Result = generateP2Path(inversionVector);
+            p2Path = p2Result.path;
+            let blocks = p2Result.blocks;
+            
+            addLog(`—————————————`, 'info');
+            addLog(`<strong>P2 Path (Block-based)</strong>`, 'p2');
+            addLog(`Found ${blocks.length} block(s) of consecutive 1s`, 'p2');
+            
+            // Log each block
+            for (let b = 0; b < blocks.length; b++) {
+                let block = blocks[b];
+                addLog(`Block ${b+1}: start=${block.start}, length=${block.length}`, 'p2');
+                addLog(`  → right 1, up ${block.length}, left 1`, 'p2');
+            }
+            
+            // Count zeros (they become individual up movements)
+            let zeros = inversionVector.filter(v => v === 0).length;
+            addLog(`Plus ${zeros} single up-steps (for 0s)`, 'info');
+            
+            // Adjust grid size to fit the paths on canvas
+            let maxHeight = N;
+            let maxWidth = 2; // bumpWidth is 1, add margin
+            let availableHeight = canvasHeight - 120; // Leave margins
+            let availableWidth = canvasWidth / 2 - 50;
+            
+            gridSize = Math.min(
+                baseGridSize,
+                availableHeight / maxHeight,
+                availableWidth / maxWidth
+            );
+            gridSize = Math.max(gridSize, 15); // Minimum grid size
+            
+            // Recalculate origin for centered view
+            originX = canvasWidth / 2 - (gridSize / 2);
+            originY = canvasHeight - 60;
+            
+            addLog(`Grid size adjusted to ${gridSize.toFixed(1)}px`, 'info');
+            
+            addLog(`—————————————`, 'info');
+            addLog(`<strong>Drawing P1 path...</strong>`, 'p1');
+            
+            // Calculate area
+            currentArea = calculateArea(p1Path, p2Path);
+            
+            // Reset output panel
+            document.getElementById('areaValue').textContent = '...';
+            document.getElementById('inversionsValue').textContent = '...';
+            
+            // Update path info
+            document.getElementById('p1Display').textContent = `[${p1Array.join(', ')}]`;
+            document.getElementById('p2Display').textContent = `[${p2Array.join(', ')}]`;
+            
+            // Compute and display Lehmer code for P2
+            let lehmerCode = computeLehmerCode(p2Array);
+            document.getElementById('lehmerDisplay').textContent = `[${lehmerCode.join(', ')}]`;
+            addLog(`Lehmer code (P2): [${lehmerCode.join(', ')}]`, 'step');
+            
+            // Truncate inversion vector display if too long
+            if (inversionVector.length <= 15) {
+                document.getElementById('invVectorDisplay').textContent = `[${inversionVector.join(', ')}]`;
+            } else {
+                let first5 = inversionVector.slice(0, 5).join(', ');
+                let last5 = inversionVector.slice(-5).join(', ');
+                document.getElementById('invVectorDisplay').textContent = `[${first5}, ..., ${last5}]`;
+            }
+            
+            // Inv vector length with formula
+            let expectedN = (permLength * (permLength - 1)) / 2;
+            document.getElementById('invLengthDisplay').textContent = `N = ${N} = ${permLength}×(${permLength}-1)/2`;
+            
+            // Diameter of permutohedron S_k where k = len(P1)
+            // Diameter = k(k-1)/2 (maximum inversions)
+            let diameter = (permLength * (permLength - 1)) / 2;
+            document.getElementById('diameterDisplay').textContent = `${diameter} = ${permLength}×(${permLength}-1)/2`;
+            
+            // Start animation
+            animProgress = 0;
+            animationPhase = 0;
+            isAnimating = true;
+        }
+        
+        function showResults() {
+            // Update output panel
+            document.getElementById('areaValue').textContent = currentArea.toFixed(0);
+            document.getElementById('inversionsValue').textContent = totalInversions;
+            
+            // Log results
+            addLog(`—————————————`, 'info');
+            addLog(`<strong>Animation complete!</strong>`, 'result');
+            addLog(`Area = <strong>${currentArea.toFixed(0)}</strong>`, 'result');
+            addLog(`dist(P1,P2) = <strong>${totalInversions}</strong>`, 'result');
+            
+            let p1End = p1Path[p1Path.length - 1];
+            let p2End = p2Path[p2Path.length - 1];
+            
+            if (p1End.x === p2End.x && p1End.y === p2End.y) {
+                addLog(`✓ Paths meet at (${p1End.x}, ${p1End.y})`, 'result');
+            } else {
+                addLog(`⚠️ Paths end at different points!`, 'info');
+                addLog(`P1 ends at (${p1End.x}, ${p1End.y})`, 'p1');
+                addLog(`P2 ends at (${p2End.x}, ${p2End.y})`, 'p2');
+            }
+        }
+    </script>
+</body>
+</html>
+
