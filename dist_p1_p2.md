@@ -472,3 +472,61 @@ dist(P1,e) - dist(P2,e) = 6 - 2 = 4
 ```
 
 **Key insight:** $\sum \text{lehmer}(P) = d(P, \text{identity})$
+
+
+
+
+
+
+
+# d(P1,P2) = d(e,P1) - d(e,P2)
+
+# Concise Permutation Distance Code
+
+```python
+def perm_inv(P):
+    """Compute permutation inverse."""
+    inv = [0] * len(P)
+    for i, val in enumerate(P):
+        inv[val] = i
+    return inv
+
+def count_inversions(P):
+    """Count inversions in permutation."""
+    n = len(P)
+    return sum(1 for i in range(n) for j in range(i+1, n) if P[i] > P[j])
+
+def count_inv(P1, P2):
+    """Distance between P1 and P2 in permutohedron = inversions(P2 ∘ P1^-1)."""
+    P1_inv = perm_inv(P1)
+    comp = [P2[P1_inv[i]] for i in range(len(P1))]
+    return count_inversions(comp)
+
+
+# Tests
+if __name__ == "__main__":
+    P1 = [3, 2, 1, 0]
+    P2 = [0, 3, 1, 2]
+    e = [0, 1, 2, 3]
+    
+    print(f"dist(P1, P2) = {count_inv(P1, P2)}")
+    print(f"dist(P1, e) = {count_inv(P1, e)}")
+    print(f"dist(P2, e) = {count_inv(P2, e)}")
+    print(f"Difference: {count_inv(P1, e) - count_inv(P2, e)}")
+    
+    # Quick tests
+    print(f"\nSymmetry: {count_inv(P1, P2)} = {count_inv(P2, P1)}")
+    P3 = [1, 0, 2, 3]
+    print(f"Triangle: {count_inv(P1, P3)} ≤ {count_inv(P1, P2)} + {count_inv(P2, P3)} = {count_inv(P1, P2) + count_inv(P2, P3)}")
+```
+
+**Output:**
+```
+dist(P1, P2) = 4
+dist(P1, e) = 6
+dist(P2, e) = 2
+Difference: 4
+
+Symmetry: 4 = 4
+Triangle: 5 ≤ 4 + 3 = 7
+```
