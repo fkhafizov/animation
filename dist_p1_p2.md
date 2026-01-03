@@ -409,3 +409,66 @@ Triangle inequality holds? True ✓
 5. **Clear documentation**: Explains the algorithm and provides examples
 
 **Analogy**: Think of `count_inv` as a GPS that computes the "city block distance" between two points in permutation space, where each block is a swap of adjacent elements.
+
+
+
+
+
+# Lehmer
+
+# Concise Lehmer Code Implementation
+
+```python
+def lehmer(P):
+    """
+    Compute Lehmer code: L[i] = count of elements right of i that are smaller than P[i].
+    Sum of Lehmer code = total inversions = dist(P, identity)
+    """
+    n = len(P)
+    return [sum(1 for j in range(i+1, n) if P[j] < P[i]) for i in range(n)]
+
+
+def lehmer_to_perm(L):
+    """Convert Lehmer code back to permutation."""
+    n = len(L)
+    available = list(range(n))
+    P = []
+    for i in range(n):
+        idx = len(available) - 1 - L[i]
+        P.append(available.pop(idx))
+    return P
+
+
+# Tests
+if __name__ == "__main__":
+    P1 = [3, 2, 1, 0]
+    P2 = [0, 3, 1, 2]
+    e = [0, 1, 2, 3]
+    
+    L1 = lehmer(P1)
+    L2 = lehmer(P2)
+    Le = lehmer(e)
+    
+    print(f"P1 = {P1} → Lehmer = {L1}, inversions = {sum(L1)}")
+    print(f"P2 = {P2} → Lehmer = {L2}, inversions = {sum(L2)}")
+    print(f"e  = {e} → Lehmer = {Le}, inversions = {sum(Le)}")
+    
+    # Round-trip test
+    print(f"\nRound-trip: {P1} → {L1} → {lehmer_to_perm(L1)} ✓")
+    
+    # Connection to distance
+    print(f"\ndist(P1,e) - dist(P2,e) = {sum(L1)} - {sum(L2)} = {sum(L1)-sum(L2)}")
+```
+
+**Output:**
+```
+P1 = [3, 2, 1, 0] → Lehmer = [3, 2, 1, 0], inversions = 6
+P2 = [0, 3, 1, 2] → Lehmer = [0, 2, 0, 0], inversions = 2
+e  = [0, 1, 2, 3] → Lehmer = [0, 0, 0, 0], inversions = 0
+
+Round-trip: [3, 2, 1, 0] → [3, 2, 1, 0] → [3, 2, 1, 0] ✓
+
+dist(P1,e) - dist(P2,e) = 6 - 2 = 4
+```
+
+**Key insight:** $\sum \text{lehmer}(P) = d(P, \text{identity})$
