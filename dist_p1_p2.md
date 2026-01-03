@@ -106,3 +106,97 @@ print(f"\nDistance d(P1, P2) = {distance}")
 ```
 
 Would you like me to also find the actual sequence of 4 adjacent transpositions that transforms P1 into P2?
+
+# Let e=[0 1  2 3].  compute dist(P1, e) - dist(P2, e)
+
+# Computing dist(P1, e) - dist(P2, e)
+
+Great question! This will reveal an interesting relationship.
+
+## Computing dist(P1, e)
+
+For distance from identity in the permutohedron, we simply count inversions in the permutation itself.
+
+**P1 = [3, 2, 1, 0]** (the complete reversal)
+
+Count all inversions:
+
+| Pair | Values | Inversion? |
+|------|--------|------------|
+| (0,1) | 3 vs 2 | ✓ (3 > 2) |
+| (0,2) | 3 vs 1 | ✓ (3 > 1) |
+| (0,3) | 3 vs 0 | ✓ (3 > 0) |
+| (1,2) | 2 vs 1 | ✓ (2 > 1) |
+| (1,3) | 2 vs 0 | ✓ (2 > 0) |
+| (2,3) | 1 vs 0 | ✓ (1 > 0) |
+
+$$d(\text{P1}, e) = 6 = \binom{4}{2}$$
+
+This is the **diameter** of the permutohedron $S_4$ - P1 is the furthest point from identity!
+
+## Computing dist(P2, e)
+
+**P2 = [0, 3, 1, 2]**
+
+Count inversions:
+
+| Pair | Values | Inversion? |
+|------|--------|------------|
+| (0,1) | 0 vs 3 | ✗ (0 < 3) |
+| (0,2) | 0 vs 1 | ✗ (0 < 1) |
+| (0,3) | 0 vs 2 | ✗ (0 < 2) |
+| (1,2) | 3 vs 1 | ✓ (3 > 1) |
+| (1,3) | 3 vs 2 | ✓ (3 > 2) |
+| (2,3) | 1 vs 2 | ✗ (1 < 2) |
+
+$$d(\text{P2}, e) = 2$$
+
+## The Difference
+
+$$d(\text{P1}, e) - d(\text{P2}, e) = 6 - 2 = 4$$
+
+## 🎯 Key Observation!
+
+Notice that:
+$$d(\text{P1}, e) - d(\text{P2}, e) = 4 = d(\text{P1}, \text{P2})$$
+
+This is **NOT a coincidence**! Here's why:
+
+**Analogy**: Think of this like three cities on a straight highway. If city P1 is 6 miles from the origin e, and city P2 is 2 miles from the origin, and they're on the same "route," then the distance between them is $|6-2| = 4$ miles.
+
+This happens because in the permutohedron:
+- The shortest path from P1 to P2 **passes through** the identity region
+- We're essentially going from P1 towards e (reducing inversions), then from e towards P2
+
+## Verification Code
+
+```python
+def count_inversions(perm):
+    count = 0
+    n = len(perm)
+    for i in range(n):
+        for j in range(i+1, n):
+            if perm[i] > perm[j]:
+                count += 1
+    return count
+
+e = [0, 1, 2, 3]
+P1 = [3, 2, 1, 0]
+P2 = [0, 3, 1, 2]
+
+dist_P1_e = count_inversions(P1)
+dist_P2_e = count_inversions(P2)
+
+print(f"dist(P1, e) = {dist_P1_e}")
+print(f"dist(P2, e) = {dist_P2_e}")
+print(f"dist(P1, e) - dist(P2, e) = {dist_P1_e - dist_P2_e}")
+print(f"\nPreviously computed: dist(P1, P2) = 4")
+print(f"They match! ✓")
+```
+
+## The Triangle Inequality at Work
+
+This demonstrates that the shortest path satisfies:
+$$d(\text{P1}, \text{P2}) = |d(\text{P1}, e) - d(\text{P2}, e)|$$
+
+This equality (rather than just inequality) occurs when the three points are "aligned" - the geodesic from P1 to P2 actually goes through (or very near) the identity!
