@@ -200,3 +200,212 @@ This demonstrates that the shortest path satisfies:
 $$d(\text{P1}, \text{P2}) = |d(\text{P1}, e) - d(\text{P2}, e)|$$
 
 This equality (rather than just inequality) occurs when the three points are "aligned" - the geodesic from P1 to P2 actually goes through (or very near) the identity!
+
+
+
+
+
+
+============
+
+
+
+# Python Function for Bubble Sort Distance
+
+Here's a clean implementation with helper functions:
+
+```python
+def count_inv(P1, P2):
+    """
+    Compute the distance between two permutations P1 and P2 in the permutohedron.
+    
+    This equals the number of adjacent transpositions (bubble sort steps) needed
+    to transform P1 into P2.
+    
+    Parameters:
+    -----------
+    P1, P2 : list or array
+        Permutations of the same elements (typically 0, 1, 2, ..., n-1)
+    
+    Returns:
+    --------
+    int : Number of inversions = distance in permutohedron graph
+    
+    Algorithm:
+    ----------
+    dist(P1, P2) = inversions(P2 ∘ P1^(-1))
+    
+    Example:
+    --------
+    >>> count_inv([3, 2, 1, 0], [0, 3, 1, 2])
+    4
+    """
+    # Compute P1 inverse
+    n = len(P1)
+    P1_inv = [0] * n
+    for i in range(n):
+        P1_inv[P1[i]] = i
+    
+    # Compute composition: P2 ∘ P1_inv
+    composition = [P2[P1_inv[i]] for i in range(n)]
+    
+    # Count inversions in the composition
+    inv_count = 0
+    for i in range(n):
+        for j in range(i + 1, n):
+            if composition[i] > composition[j]:
+                inv_count += 1
+    
+    return inv_count
+
+
+# Alternative: More modular version with separate functions
+def permutation_inverse(perm):
+    """Compute the inverse of a permutation."""
+    n = len(perm)
+    inv = [0] * n
+    for i in range(n):
+        inv[perm[i]] = i
+    return inv
+
+
+def compose_permutations(p1, p2):
+    """
+    Compose two permutations: (p1 ∘ p2)[i] = p1[p2[i]].
+    
+    Read as: "apply p2 first, then p1"
+    """
+    return [p1[p2[i]] for i in range(len(p1))]
+
+
+def count_inversions(perm):
+    """
+    Count the number of inversions in a permutation.
+    
+    An inversion is a pair (i,j) where i < j but perm[i] > perm[j].
+    """
+    count = 0
+    n = len(perm)
+    for i in range(n):
+        for j in range(i + 1, n):
+            if perm[i] > perm[j]:
+                count += 1
+    return count
+
+
+def count_inv_modular(P1, P2):
+    """
+    Modular version using helper functions.
+    More readable for understanding the algorithm.
+    """
+    P1_inv = permutation_inverse(P1)
+    composition = compose_permutations(P2, P1_inv)
+    return count_inversions(composition)
+
+
+# Test cases
+if __name__ == "__main__":
+    # Your original example
+    P1 = [3, 2, 1, 0]
+    P2 = [0, 3, 1, 2]
+    e = [0, 1, 2, 3]
+    
+    print("="*50)
+    print("Testing count_inv function")
+    print("="*50)
+    
+    dist_P1_P2 = count_inv(P1, P2)
+    print(f"\nP1 = {P1}")
+    print(f"P2 = {P2}")
+    print(f"dist(P1, P2) = {dist_P1_P2}")
+    
+    # Verify with distances from identity
+    dist_P1_e = count_inv(P1, e)
+    dist_P2_e = count_inv(P2, e)
+    
+    print(f"\nVerification:")
+    print(f"dist(P1, e) = {dist_P1_e}")
+    print(f"dist(P2, e) = {dist_P2_e}")
+    print(f"dist(P1, e) - dist(P2, e) = {dist_P1_e - dist_P2_e}")
+    print(f"Matches dist(P1, P2)? {dist_P1_e - dist_P2_e == dist_P1_P2} ✓")
+    
+    # Additional test cases
+    print("\n" + "="*50)
+    print("Additional Test Cases")
+    print("="*50)
+    
+    # Distance from identity is just inversion count
+    test_perms = [
+        [0, 1, 2, 3],
+        [1, 0, 2, 3],
+        [3, 2, 1, 0],
+        [2, 3, 0, 1]
+    ]
+    
+    for p in test_perms:
+        d = count_inv(p, e)
+        inv = count_inversions(p)
+        print(f"dist({p}, e) = {d} (inversions = {inv})")
+    
+    # Symmetry test: dist(A, B) should equal dist(B, A)
+    print(f"\nSymmetry check:")
+    print(f"dist(P1, P2) = {count_inv(P1, P2)}")
+    print(f"dist(P2, P1) = {count_inv(P2, P1)}")
+    
+    # Triangle inequality test
+    P3 = [1, 0, 2, 3]
+    d12 = count_inv(P1, P2)
+    d23 = count_inv(P2, P3)
+    d13 = count_inv(P1, P3)
+    print(f"\nTriangle inequality:")
+    print(f"dist(P1, P2) = {d12}")
+    print(f"dist(P2, P3) = {d23}")
+    print(f"dist(P1, P3) = {d13}")
+    print(f"Triangle inequality holds? {d13 <= d12 + d23} ✓")
+```
+
+## Output:
+
+```
+==================================================
+Testing count_inv function
+==================================================
+
+P1 = [3, 2, 1, 0]
+P2 = [0, 3, 1, 2]
+dist(P1, P2) = 4
+
+Verification:
+dist(P1, e) = 6
+dist(P2, e) = 2
+dist(P1, e) - dist(P2, e) = 4
+Matches dist(P1, P2)? True ✓
+
+==================================================
+Additional Test Cases
+==================================================
+dist([0, 1, 2, 3], e) = 0 (inversions = 0)
+dist([1, 0, 2, 3], e) = 1 (inversions = 1)
+dist([3, 2, 1, 0], e) = 6 (inversions = 6)
+dist([2, 3, 0, 1], e) = 4 (inversions = 4)
+
+Symmetry check:
+dist(P1, P2) = 4
+dist(P2, P1) = 4
+
+Triangle inequality:
+dist(P1, P2) = 4
+dist(P2, P3) = 3
+dist(P1, P3) = 5
+Triangle inequality holds? True ✓
+```
+
+## Key Features:
+
+1. **Main function** `count_inv(P1, P2)`: Single-purpose, efficient
+2. **Modular version**: Breaks down the algorithm into understandable pieces
+3. **Comprehensive tests**: Verifies correctness with multiple properties
+4. **Time complexity**: $O(n^2)$ for the inversion counting
+5. **Clear documentation**: Explains the algorithm and provides examples
+
+**Analogy**: Think of `count_inv` as a GPS that computes the "city block distance" between two points in permutation space, where each block is a swap of adjacent elements.
