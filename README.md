@@ -9,6 +9,13 @@
     4. SHOW MORE INFO (additional calculations such as TP, TN, ...)
     5. Animate ROC
     6. Observe: AAC = (1-AUC) x (N-k) x k
+  * [paths_areas_v3](https://fkhafizov.github.io/animation/paths_areas_v3.html)
+    1. N (dim of permuhedron)
+    2. RAND(P1) + RAND(P2) or enter permutations manually
+    3. DRAW
+    4. SHOW TRIANGLE
+    5. LEHMER CHART
+ 
 
 * Random Sorting Networks https://arxiv.org/pdf/math/0609538
   
