@@ -4,7 +4,22 @@
 
 # Building the Inversion Vector $\text{Inv}(P_1 \to e)$
 
-## Overview
+# Overview Inv(P1→e)
+
+The inversion vector $\text{Inv}(P_1 \to e)$ encodes the **bubble sort trace** — it records every swap (1) or no-swap (0) as you transform permutation $P_1$ into the identity $e = [0, 1, 2, 3]$.
+
+## The Analogy
+
+Think of it like a **flight recorder for bubble sort**. Each bit in the vector is a yes/no answer to: "Did we swap at this comparison?"
+
+## The Structure
+
+For $n = 4$ elements, bubble sort performs **3 passes**, each with **3 adjacent comparisons**:
+
+$$\underbrace{(0,1), (1,2), (2,3)}_{\text{Pass 1}}, \underbrace{(0,1), (1,2), (2,3)}_{\text{Pass 2}}, \underbrace{(0,1), (1,2), (2,3)}_{\text{Pass 3}}$$
+
+This gives us $3 \times 3 = 9$ comparison slots — exactly the length of your vector.
+
 
 **Starting Permutation:** $P_1 = [3, 1, 2, 0]$
 
