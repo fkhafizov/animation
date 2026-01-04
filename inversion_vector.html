@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Building Inv(P₁→e) Vector</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f8f9fa;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #2980b9;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #7f8c8d;
+            margin-top: 25px;
+        }
+        .intro {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .pass-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .pass-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        th {
+            background: #3498db;
+            color: white;
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: 600;
+        }
+        td {
+            padding: 12px 8px;
+            text-align: center;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .array {
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+        }
+        .red {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .swap-yes {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .swap-no {
+            color: #95a5a6;
+        }
+        .bit-1 {
+            background: #d5f4e6;
+            color: #27ae60;
+            font-weight: bold;
+            border-radius: 4px;
+            padding: 4px 10px;
+        }
+        .bit-0 {
+            background: #fdeaea;
+            color: #e74c3c;
+            font-weight: bold;
+            border-radius: 4px;
+            padding: 4px 10px;
+        }
+        .result-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 30px;
+            text-align: center;
+        }
+        .result-vector {
+            font-family: 'Courier New', monospace;
+            font-size: 1.4em;
+            margin: 15px 0;
+            letter-spacing: 2px;
+        }
+        .pass-bits {
+            display: inline-block;
+            margin: 0 8px;
+            padding: 5px 12px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+        }
+        .sum-box {
+            background: #fff;
+            color: #2c3e50;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .formula {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.2em;
+            text-align: center;
+            margin: 15px 0;
+        }
+        .bracket {
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+    <h1>Building the Inversion Vector Inv(P₁→e)</h1>
+    
+    <div class="intro">
+        <p><strong>Starting Permutation:</strong> <span class="array">P₁ = [3, 1, 2, 0]</span></p>
+        <p><strong>Target (Identity):</strong> <span class="array">e = [0, 1, 2, 3]</span></p>
+        <p><strong>Method:</strong> Record each swap (1) or no-swap (0) during bubble sort</p>
+    </div>
+
+    <!-- Pass 1 -->
+    <div class="pass-container">
+        <div class="pass-title">Pass 1</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Compare</th>
+                    <th>Before</th>
+                    <th>Swap?</th>
+                    <th>After</th>
+                    <th>Bit</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>(0,1)</td>
+                    <td class="array">[<span class="red">3</span>, <span class="red">1</span>, 2, 0]</td>
+                    <td><span class="swap-yes">3 > 1 → Yes</span></td>
+                    <td class="array">[1, 3, 2, 0]</td>
+                    <td><span class="bit-1">1</span></td>
+                </tr>
+                <tr>
+                    <td>(1,2)</td>
+                    <td class="array">[1, <span class="red">3</span>, <span class="red">2</span>, 0]</td>
+                    <td><span class="swap-yes">3 > 2 → Yes</span></td>
+                    <td class="array">[1, 2, 3, 0]</td>
+                    <td><span class="bit-1">1</span></td>
+                </tr>
+                <tr>
+                    <td>(2,3)</td>
+                    <td class="array">[1, 2, <span class="red">3</span>, <span class="red">0</span>]</td>
+                    <td><span class="swap-yes">3 > 0 → Yes</span></td>
+                    <td class="array">[1, 2, 0, 3]</td>
+                    <td><span class="bit-1">1</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <p style="text-align: right; color: #7f8c8d;">Pass 1 bits: <strong>[1, 1, 1]</strong></p>
+    </div>
+
+    <!-- Pass 2 -->
+    <div class="pass-container">
+        <div class="pass-title">Pass 2</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Compare</th>
+                    <th>Before</th>
+                    <th>Swap?</th>
+                    <th>After</th>
+                    <th>Bit</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>(0,1)</td>
+                    <td class="array">[<span class="red">1</span>, <span class="red">2</span>, 0, 3]</td>
+                    <td><span class="swap-no">1 < 2 → No</span></td>
+                    <td class="array">[1, 2, 0, 3]</td>
+                    <td><span class="bit-0">0</span></td>
+                </tr>
+                <tr>
+                    <td>(1,2)</td>
+                    <td class="array">[1, <span class="red">2</span>, <span class="red">0</span>, 3]</td>
+                    <td><span class="swap-yes">2 > 0 → Yes</span></td>
+                    <td class="array">[1, 0, 2, 3]</td>
+                    <td><span class="bit-1">1</span></td>
+                </tr>
+                <tr>
+                    <td>(2,3)</td>
+                    <td class="array">[1, 0, <span class="red">2</span>, <span class="red">3</span>]</td>
+                    <td><span class="swap-no">2 < 3 → No</span></td>
+                    <td class="array">[1, 0, 2, 3]</td>
+                    <td><span class="bit-0">0</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <p style="text-align: right; color: #7f8c8d;">Pass 2 bits: <strong>[0, 1, 0]</strong></p>
+    </div>
+
+    <!-- Pass 3 -->
+    <div class="pass-container">
+        <div class="pass-title">Pass 3</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Compare</th>
+                    <th>Before</th>
+                    <th>Swap?</th>
+                    <th>After</th>
+                    <th>Bit</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>(0,1)</td>
+                    <td class="array">[<span class="red">1</span>, <span class="red">0</span>, 2, 3]</td>
+                    <td><span class="swap-yes">1 > 0 → Yes</span></td>
+                    <td class="array">[0, 1, 2, 3]</td>
+                    <td><span class="bit-1">1</span></td>
+                </tr>
+                <tr>
+                    <td>(1,2)</td>
+                    <td class="array">[0, <span class="red">1</span>, <span class="red">2</span>, 3]</td>
+                    <td><span class="swap-no">1 < 2 → No</span></td>
+                    <td class="array">[0, 1, 2, 3]</td>
+                    <td><span class="bit-0">0</span></td>
+                </tr>
+                <tr>
+                    <td>(2,3)</td>
+                    <td class="array">[0, 1, <span class="red">2</span>, <span class="red">3</span>]</td>
+                    <td><span class="swap-no">2 < 3 → No</span></td>
+                    <td class="array">[0, 1, 2, 3]</td>
+                    <td><span class="bit-0">0</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <p style="text-align: right; color: #7f8c8d;">Pass 3 bits: <strong>[1, 0, 0]</strong></p>
+    </div>
+
+    <!-- Result -->
+    <div class="result-box">
+        <h2 style="margin-top: 0; color: white;">Final Result</h2>
+        <div class="result-vector">
+            Inv(P₁→e) = [
+            <span class="pass-bits">1, 1, 1</span>
+            <span class="pass-bits">0, 1, 0</span>
+            <span class="pass-bits">1, 0, 0</span>
+            ]
+        </div>
+        <p style="opacity: 0.9;">Pass 1 &nbsp;|&nbsp; Pass 2 &nbsp;|&nbsp; Pass 3</p>
+    </div>
+
+    <div class="sum-box">
+        <h3 style="margin-top: 0;">Kendall Tau Distance (Total Inversions)</h3>
+        <div class="formula">
+            Σ Inv(P₁→e) = 1+1+1+0+1+0+1+0+0 = <strong>5</strong>
+        </div>
+        <p style="text-align: center; color: #7f8c8d;">
+            This is the geodesic distance from P₁ to the identity in the permutohedron.
+        </p>
+    </div>
+</body>
+</html>
