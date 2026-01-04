@@ -72,6 +72,10 @@ This is the **geodesic distance** from $P_1$ to the identity in the permutohedro
 
 -----------------
 -----------------
+-----------------
+-----------------
+-----------------
+-----------------
 
 
 
