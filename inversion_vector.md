@@ -81,8 +81,67 @@ This is the **geodesic distance** from $P_1$ to the identity in the permutohedro
 
 
 
+# Building the Inversion Vector Inv(P1→e)
+
+The inversion vector $\text{Inv}(P_1 \to e)$ encodes the **bubble sort trace** — it records every swap (1) or no-swap (0) as you transform permutation $P_1$ into the identity $e = [0, 1, 2, 3]$.
+
+## The Analogy
+
+Think of it like a **flight recorder for bubble sort**. Each bit in the vector is a yes/no answer to: "Did we swap at this comparison?"
+
+## The Structure
+
+For $n = 4$ elements, bubble sort performs **3 passes**, each with **3 adjacent comparisons**:
+
+$$\underbrace{(0,1), (1,2), (2,3)}_{\text{Pass 1}}, \underbrace{(0,1), (1,2), (2,3)}_{\text{Pass 2}}, \underbrace{(0,1), (1,2), (2,3)}_{\text{Pass 3}}$$
+
+This gives us $3 \times 3 = 9$ comparison slots — exactly the length of your vector.
+
+## Step-by-Step Trace
+
+Starting with $P_1 = [3, 1, 2, 0]$:
+
+| Pass | Compare | Before | Swap? | After | Bit |
+|:----:|:-------:|:------:|:-----:|:-----:|:---:|
+| **1** | (0,1) | [**3, 1**, 2, 0] | 3 > 1 → Yes | [1, 3, 2, 0] | **1** |
+| **1** | (1,2) | [1, **3, 2**, 0] | 3 > 2 → Yes | [1, 2, 3, 0] | **1** |
+| **1** | (2,3) | [1, 2, **3, 0**] | 3 > 0 → Yes | [1, 2, 0, 3] | **1** |
+| **2** | (0,1) | [**1, 2**, 0, 3] | 1 < 2 → No | [1, 2, 0, 3] | **0** |
+| **2** | (1,2) | [1, **2, 0**, 3] | 2 > 0 → Yes | [1, 0, 2, 3] | **1** |
+| **2** | (2,3) | [1, 0, **2, 3**] | 2 < 3 → No | [1, 0, 2, 3] | **0** |
+| **3** | (0,1) | [**1, 0**, 2, 3] | 1 > 0 → Yes | [0, 1, 2, 3] | **1** |
+| **3** | (1,2) | [0, **1, 2**, 3] | 1 < 2 → No | [0, 1, 2, 3] | **0** |
+| **3** | (2,3) | [0, 1, **2, 3**] | 2 < 3 → No | [0, 1, 2, 3] | **0** |
+
+## Result
+
+$$\text{Inv}(P_1 \to e) = [\underbrace{1, 1, 1}_{\text{Pass 1}}, \underbrace{0, 1, 0}_{\text{Pass 2}}, \underbrace{1, 0, 0}_{\text{Pass 3}}]$$
+
+## Key Insight
+
+The **sum** of this vector equals the **Kendall tau distance** (number of inversions):
+
+$$\sum \text{Inv}(P_1 \to e) = 1+1+1+0+1+0+1+0+0 = 5$$
+
+This is exactly how many adjacent transpositions are needed to sort $P_1$ — the geodesic distance in the permutohedron!
 
 
+
+
+
+
+
+
+
+
+
+
+-----------------
+-----------------
+-----------------
+-----------------
+-----------------
+-----------------
 
 
 
