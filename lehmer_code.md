@@ -1,3 +1,39 @@
+2026.01.04
+
+# is it true that the last digit in lehmer code is always 0?
+
+
+Yes, that's absolutely correct! The last digit in a Lehmer code is **always 0**.
+
+Here's why:
+
+## The Reasoning
+
+The Lehmer code for a permutation $\sigma = (\sigma_1, \sigma_2, \ldots, \sigma_n)$ is defined as $(d_1, d_2, \ldots, d_n)$ where:
+
+$$d_i = \text{number of indices } j > i \text{ such that } \sigma_j < \sigma_i$$
+
+For the last position $i = n$, we're counting elements **to the right** of position $n$ that are smaller than $\sigma_n$. But there are no positions to the right of $n$! Therefore:
+
+$$d_n = 0 \text{ (always)}$$
+
+## Quick Example
+
+Consider the permutation $[3, 1, 4, 2]$:
+
+- Position 1: $d_1 = 2$ (elements 1 and 2 are smaller and to the right)
+- Position 2: $d_2 = 0$ (no elements to the right are smaller than 1)
+- Position 3: $d_3 = 1$ (element 2 is smaller and to the right)
+- Position 4: $d_4 = 0$ (no elements to the right at all)
+
+Lehmer code: $[2, 0, 1, 0]$
+
+## Practical Implication
+
+This is why many implementations represent Lehmer codes using only the first $n-1$ digits, effectively working in the factorial number system with digits $(d_1, d_2, \ldots, d_{n-1})$ where $0 \leq d_i \leq n-i$. The last 0 is redundant and carries no information.
+
+
+
 2025.12.28
 
 # lehmer_code.md
