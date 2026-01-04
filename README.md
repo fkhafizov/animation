@@ -2,6 +2,13 @@
 
 * [CC chat](https://web.telegram.org/k/#-3459573716)
 * [Demos](https://fkhafizov.github.io/animation)
+  * [roc_aac_path_length](https://fkhafizov.github.io/animation/roc_aac_path_length.html):
+    1. Select N (num samples)
+    2. Generate Random r (ground truth)
+    3. Gemerate New Data  (build a plot)
+    4. SHOW MORE INFO (additional calculations such as TP, TN, ...)
+    5. Animate ROC
+    6. Observe: AAC = (1-AUC) x (N-k) x k
 
 * Random Sorting Networks https://arxiv.org/pdf/math/0609538
   
