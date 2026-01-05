@@ -95,7 +95,7 @@ This is the **geodesic distance** from $P_1$ to the identity in the permutohedro
 
 
 
-# Show me how the optimized (shrinkng range) approach would work?
+# [How the optimized (shrinkng range) approach would work?](https://github.com/fkhafizov/animation/blob/main/inversion_vector_optimized.md)
 
 
 Great question! The optimized bubble sort shrinks the comparison range after each pass because the largest element "bubbles up" to its final position. This reduces total comparisons from $n \times (n-1)$ to $\frac{n(n-1)}{2}$ (triangular number).Here's the key insight:
