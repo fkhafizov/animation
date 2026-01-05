@@ -68,6 +68,64 @@ What you’ve defined (a **binary** 0/1 record of “swap happened” vs “no s
 * Call your 0/1 string something like **“bubble-sort swap trace”** or **“swap indicator sequence (bubble-sort network)”**.
 * Reserve **“inversion code”** for **Lehmer code / inversion table**. ([Wikipedia][1])
 
+```
 [1]: https://en.wikipedia.org/wiki/Kendall_rank_correlation_coefficient?utm_source=chatgpt.com "Kendall rank correlation coefficient"
 [2]: https://community.ams.org/journals/jams/2022-35-04/S0894-0347-2021-00993-1/S0894-0347-2021-00993-1.pdf?utm_source=chatgpt.com "The Archimedean limit of random sorting networks"
 [3]: https://mathoverflow.net/questions/233857/a-decomposition-of-w-0-which-is-similar-to-the-reduced-decomposition?utm_source=chatgpt.com "A decomposition of $w_0$ which is similar to the reduced ..."
+```
+
+
+# Q
+if c=(1,1,1,0,1,0) is a bubble sort trace for the optimized bubble sort algorithm applied to some x\in S_n. Assume that at the end of the optimized bubble sort algorithm applied to x we got e.  What is x? Explain your calculations.
+
+# A
+
+Plan: I’ll interpret your 6-bit trace as outcomes of the fixed bubble-sort comparator schedule for $n=4$, reconstruct the pre-image by reversing the swaps from $e$, and verify by forward simulation.
+
+
+Because an adjacent swap is its own inverse, you can reconstruct the input permutation by **running the bubble-sort schedule backward** from the final sorted output $e$ and “undoing” exactly the swaps indicated by your bits.
+
+For $n=4$, the (fixed) optimized bubble-sort comparison schedule has $3+2+1=6$ comparisons in this order (0-based positions):
+
+1. compare $(0,1)$
+2. compare $(1,2)$
+3. compare $(2,3)$
+4. compare $(0,1)$
+5. compare $(1,2)$
+6. compare $(0,1)$
+
+Your trace is
+$$
+c=(1,1,1,0,1,0),
+$$
+meaning: at step $t$ you swapped if $c_t=1$, otherwise you did nothing.
+
+### Reconstruct $x$ from $e$ by reversing the steps
+
+Start from
+$$
+e=(0,1,2,3)
+$$
+and go from step 6 down to step 1, swapping the same adjacent positions whenever the bit is 1:
+
+* **Step 6:** compare $(0,1)$, bit $0$ → do nothing
+  $(0,1,2,3)$
+* **Step 5:** compare $(1,2)$, bit $1$ → swap positions 1 and 2
+  $(0,2,1,3)$
+* **Step 4:** compare $(0,1)$, bit $0$ → do nothing
+  $(0,2,1,3)$
+* **Step 3:** compare $(2,3)$, bit $1$ → swap positions 2 and 3
+  $(0,2,3,1)$
+* **Step 2:** compare $(1,2)$, bit $1$ → swap positions 1 and 2
+  $(0,3,2,1)$
+* **Step 1:** compare $(0,1)$, bit $1$ → swap positions 0 and 1
+  $(3,0,2,1)$
+
+So the input must have been
+$$
+\boxed{x=(3,0,2,1).}
+$$
+
+### Quick check (forward simulation)
+
+If you run bubble sort on $x=(3,0,2,1)$ with that schedule, the swap/no-swap outcomes are exactly $111010$ and the final result is $e=(0,1,2,3)$, matching your assumptions.
