@@ -91,6 +91,25 @@ This is the **geodesic distance** from $P_1$ to the identity in the permutohedro
 
 
 -----------------
+
+
+
+
+# Show me how the optimized (shrinkng range) approach would work?
+
+
+Great question! The optimized bubble sort shrinks the comparison range after each pass because the largest element "bubbles up" to its final position. This reduces total comparisons from $n \times (n-1)$ to $\frac{n(n-1)}{2}$ (triangular number).Here's the key insight:
+
+| Pass | Range | Why |
+|:----:|:-----:|:----|
+| 1 | indices 0-3 | Full array |
+| 2 | indices 0-2 | The $3$ bubbled to position 3 — skip it |
+| 3 | indices 0-1 | The $2$ bubbled to position 2 — skip it too |
+
+This gives you a **triangular structure**: $3 + 2 + 1 = 6$ comparisons instead of $3 \times 3 = 9$.
+
+The optimized vector $[1,1,1,0,1,1]$ is more compact but encodes the same 5 inversions. It also maps directly to the **Lehmer code** $(3,1,1,0)$ — each pass's swap count corresponds to how many smaller elements sit to the right of each position.
+
 -----------------
 -----------------
 -----------------
