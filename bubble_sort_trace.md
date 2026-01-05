@@ -1,6 +1,7 @@
 2026.01.05
 
-
+* https://chatgpt.com/c/6959f5b3-fd80-832a-b62c-f7344f3ba30b
+  
 # Q:
 
 Let x \in S4 be a vertex of Cayley graph build by adjacent transformtions (i,i+1) from e=(0,1,2,3).
@@ -186,3 +187,40 @@ If your “optimized” version **terminates early** when a pass has no swaps, t
 
 With either convention, the forward and inverse maps above remain well-defined and bijective (for permutations with distinct elements).
 
+
+
+
+# Q
+Test case. Let t="101111010011001001011" be the optimized bubble sort trace for moving P to E of S_7. Find P.
+
+
+# A
+
+Plan: I’ll treat your 21-bit string as outcomes for the fixed $S_7$ bubble-sort comparator schedule (6+5+4+3+2+1), reconstruct $P$ by reversing the indicated swaps from $E=(0,1,2,3,4,5,6)$, and sanity-check by a forward simulation.
+
+
+Because $|t|=21=\binom{7}{2}$, this matches the fixed “optimized bubble-sort” comparator schedule for $n=7$ (passes of lengths $6,5,4,3,2,1$):
+
+* Pass 1 compares $(0,1),(1,2),(2,3),(3,4),(4,5),(5,6)$
+* Pass 2 compares $(0,1),(1,2),(2,3),(3,4),(4,5)$
+* …
+* Pass 6 compares $(0,1)$
+
+Let $E=(0,1,2,3,4,5,6)$. Your trace bit $t_k\in{0,1}$ records whether the compare–exchange at step $k$ swapped.
+
+### Key idea (invert the trace)
+
+Adjacent swaps are involutions (their own inverse). So to recover $P$, you can start from $E$ and run the same schedule **backwards**:
+
+* traverse the 21 comparators in reverse order;
+* if the corresponding bit is **1**, swap those two adjacent positions; if it is **0**, do nothing.
+
+Carrying this out for
+$t=\texttt{101111010011001001011}$
+gives the unique permutation
+
+$$
+\boxed{P=(3,2,6,1,4,5,0).}
+$$
+
+Sanity check: running the fixed bubble-sort schedule forward on $P$ produces exactly the same trace $t$ and ends at $E=(0,1,2,3,4,5,6)$.
