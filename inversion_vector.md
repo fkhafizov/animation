@@ -1,3 +1,5 @@
+2026.01.04
+
 # Building the Inversion Vector $\text{Inv}(P_1 \to e)$
 
 
@@ -81,7 +83,10 @@ This is the **geodesic distance** from $P_1$ to the identity in the permutohedro
 
 
 
-
+## NOTE
+ - for a vector $P \in S_N$ bubble sort will need $(N-1)$ comparisons for each pass.
+ - the maximum number of passes is $(N-1)$ for $P=e^{-1}$.
+ - Hance the maximum langth of the inversion code in $(N-1)^2$
 
 
 -----------------
