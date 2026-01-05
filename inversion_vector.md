@@ -84,9 +84,10 @@ This is the **geodesic distance** from $P_1$ to the identity in the permutohedro
 
 
 ## NOTE
- - for a vector $P \in S_N$ bubble sort will need $(N-1)$ comparisons for each pass.
- - the maximum number of passes is $(N-1)$ for $P=e^{-1}$.
- - Hance the maximum langth of the inversion code in $(N-1)^2$
+ - for a vector $P \in S_N$ bubble sort will need $(N-1)$ comparisons for each pass and the maximum number of passes is $(N-1)$ for $P=e^{-1}$.
+ - OPTIMIZED APPROACH: we will need less comparisons in each consequitive pass.
+ - UNOPTIMZAED APPROACH: maximum length of the inversion code in $(N-1)^2$. 
+ - OPTIMIZED APPROACH (shrinking range) $(N-1) + (N-2) +\dots +1 = N(N-1)/2$.
 
 
 -----------------
