@@ -2,7 +2,7 @@
 
 
 
-# Building the Inversion Vector $\text{Inv}(P_1 \to e)$
+
 
 
 The inversion vector $\text{Inv}(P_1 \to e)$ encodes the **bubble sort trace** — it records every swap (1) or no-swap (0) as you transform permutation $P_1$ into the identity $e = [0, 1, 2, 3]$.
