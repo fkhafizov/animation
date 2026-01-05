@@ -129,3 +129,60 @@ $$
 ### Quick check (forward simulation)
 
 If you run bubble sort on $x=(3,0,2,1)$ with that schedule, the swap/no-swap outcomes are exactly $111010$ and the final result is $e=(0,1,2,3)$, matching your assumptions.
+
+# Q
+is there a well-defined bijection mapping a permutation x in S_n to its bubble-sort swap trace and back?
+
+# A
+
+Yes — **if you fix the comparison schedule** (i.e., you run bubble sort as a fixed “comparator network” with exactly $m=\binom{n}{2}$ adjacent comparisons in a predetermined order), then there is a **well-defined bijection**
+[
+S_n ;\longleftrightarrow; \mathcal{T}_n
+]
+where $\mathcal{T}_n$ is the set of **realizable** swap traces (binary strings that actually occur from some permutation).
+
+### Forward map: permutation $\to$ swap trace
+
+Fix the standard bubble-sort schedule of adjacent comparisons:
+
+* pass 1: $(1,2),(2,3),\dots,(n-1,n)$
+* pass 2: $(1,2),(2,3),\dots,(n-2,n-1)$
+* …
+* pass $n-1$: $(1,2)$
+
+(Use 0-based indices if you prefer; same idea.)
+
+Given $x\in S_n$, run the compare–exchange steps. At each comparator, record
+
+* $1$ if a swap happened,
+* $0$ if no swap.
+
+This produces a binary string $c(x)\in{0,1}^m$.
+
+### Inverse map: swap trace $\to$ permutation
+
+Given a trace $c\in\mathcal{T}_n$ and knowing the final output is the sorted permutation
+[
+e=(0,1,\dots,n-1),
+]
+you can reconstruct $x$ **uniquely**:
+
+1. Start from $e$.
+2. Traverse the same comparator schedule **backwards**.
+3. Whenever the recorded bit is $1$, apply that adjacent swap; if it is $0$, do nothing.
+
+Because an adjacent swap is its own inverse, this exactly undoes the run and returns the unique input permutation $x$ that generated that trace.
+
+### Important caveat
+
+This bijection is between $S_n$ and the set of **valid/reachable traces** $\mathcal{T}_n$, **not** all $2^m$ binary strings. If you pick an arbitrary $c\in{0,1}^m$, reverse-applying it to $e$ always gives some permutation, but that permutation’s forward bubble-sort run may not reproduce the same $c$ unless $c$ is realizable.
+
+### What about “optimized bubble sort” with early stopping?
+
+If your “optimized” version **terminates early** when a pass has no swaps, then trace lengths vary. You can restore a clean bijection by adopting one of these conventions:
+
+* **Always run the full $m=\binom{n}{2}$ schedule** anyway (standard in sorting-network language), or
+* **Pad** the trace with trailing 0’s for all skipped comparisons after early termination.
+
+With either convention, the forward and inverse maps above remain well-defined and bijective (for permutations with distinct elements).
+
