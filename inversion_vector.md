@@ -8,8 +8,8 @@
 The inversion vector $\text{Inv}(P_1 \to e)$ encodes the **bubble sort trace** — it records every swap (1) or no-swap (0) as you transform permutation $P_1$ into the identity $e = [0, 1, 2, 3]$.
 
 ## The Analogy
-
-Think of it like a **flight recorder for bubble sort**. Each bit in the vector is a yes/no answer to: "Did we swap at this comparison?"
+* Think of it like a **flight recorder for bubble sort**.
+* Each bit in the vector is a yes/no answer to: "Did we swap at this comparison?"
 
 ## The Structure
 
