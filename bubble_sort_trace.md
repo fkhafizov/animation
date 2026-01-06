@@ -224,3 +224,78 @@ $$
 $$
 
 Sanity check: running the fixed bubble-sort schedule forward on $P$ produces exactly the same trace $t$ and ends at $E=(0,1,2,3,4,5,6)$.
+
+
+# Q
+
+can you recover a vertex of a permuhedron from it's lehmer code? E.g. if the lehmer code is 3,2,4,1,1,1,0 what is the x?
+
+# A
+
+Yes. For permutations of ${0,1,\dots,n-1}$, the Lehmer code
+$$
+L=(L_0,\dots,L_{n-1}),\qquad L_i=#{j>i:\ x_i>x_j},
+$$
+can be inverted uniquely.
+
+### How to recover $x$ from $L$
+
+Maintain an ordered list of remaining symbols
+$$
+A=[0,1,\dots,n-1].
+$$
+For $i=0,1,\dots,n-1$:
+
+* set $x_i$ to the element of $A$ at **index** $L_i$ (0-based indexing),
+* remove that element from $A$.
+
+This works because valid Lehmer digits satisfy $0\le L_i\le n-1-i$.
+
+### Example: $L=(3,2,4,1,1,1,0)$ (so $n=7$)
+
+Start $A=[0,1,2,3,4,5,6]$.
+
+* $L_0=3 \Rightarrow x_0=A[3]=3$, remove 3 $\Rightarrow A=[0,1,2,4,5,6]$
+* $L_1=2 \Rightarrow x_1=A[2]=2$, remove 2 $\Rightarrow A=[0,1,4,5,6]$
+* $L_2=4 \Rightarrow x_2=A[4]=6$, remove 6 $\Rightarrow A=[0,1,4,5]$
+* $L_3=1 \Rightarrow x_3=A[1]=1$, remove 1 $\Rightarrow A=[0,4,5]$
+* $L_4=1 \Rightarrow x_4=A[1]=4$, remove 4 $\Rightarrow A=[0,5]$
+* $L_5=1 \Rightarrow x_5=A[1]=5$, remove 5 $\Rightarrow A=[0]$
+* $L_6=0 \Rightarrow x_6=A[0]=0$, remove 0 $\Rightarrow A=[]$
+
+So
+$$
+\boxed{x=(3,2,6,1,4,5,0).}
+$$
+
+If you want, I can give a short Python function `lehmer_to_perm(L)` that returns $x$.
+
+```
+from typing import List
+
+def lehmer_to_perm(L: List[int]) -> List[int]:
+    """
+    Convert a Lehmer code L (0-based digits) into the permutation of [0..n-1].
+
+    Validity condition: 0 <= L[i] <= n-1-i for all i.
+    """
+    n = len(L)
+    for i, d in enumerate(L):
+        max_d = n - 1 - i
+        if not (0 <= d <= max_d):
+            raise ValueError(
+                f"Invalid Lehmer digit L[{i}]={d}; must satisfy 0 <= L[{i}] <= {max_d}."
+            )
+
+    A = list(range(n))  # remaining symbols
+    x = []
+    for d in L:
+        x.append(A.pop(d))  # pick d-th smallest remaining symbol
+    return x
+
+
+# Example
+L = [3, 2, 4, 1, 1, 1, 0]
+print(lehmer_to_perm(L))  # -> [3, 2, 6, 1, 4, 5, 0]
+```
+
