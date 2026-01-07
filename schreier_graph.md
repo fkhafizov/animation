@@ -64,4 +64,50 @@ Your graph of **binary strings of length $n$ with $k$ ones**, with edges given b
 
 If you tell me which context you care about (counting shortest paths, distances, mixing, subgroup structure, etc.), I’ll tailor the “most useful” properties to that goal.
 
+# QA
+
+Take length $5$ binary strings and generators
+$s_1=(1,2),\ s_2=(2,3),\ s_3=(3,4),\ s_4=(4,5)$ acting by swapping adjacent positions.
+
+Starting vertex $E=00011$. Its orbit under adjacent swaps is **all** weight-2 strings (10 vertices).
+(When a swap hits equal bits, nothing changes; I omit those self-loops.)
+
+## Vertices
+
+[
+V={00011,00101,00110,01001,01010,01100,10001,10010,10100,11000}.
+]
+
+## Labeled edges (undirected)
+
+Each edge is $v \xleftrightarrow{s_i} s_i\cdot v$:
+
+* $00011 \xleftrightarrow{s_3} 00101$
+* $00101 \xleftrightarrow{s_4} 00110$
+* $00101 \xleftrightarrow{s_2} 01001$
+* $00110 \xleftrightarrow{s_2} 01010$
+* $01001 \xleftrightarrow{s_4} 01010$
+* $01001 \xleftrightarrow{s_1} 10001$
+* $01010 \xleftrightarrow{s_3} 01100$
+* $01010 \xleftrightarrow{s_1} 10010$
+* $01100 \xleftrightarrow{s_1} 10100$
+* $10001 \xleftrightarrow{s_4} 10010$
+* $10010 \xleftrightarrow{s_3} 10100$
+* $10100 \xleftrightarrow{s_2} 11000$
+
+## Adjacency list (with generator labels)
+
+* $00011$: $(00101,s_3)$
+* $00101$: $(00011,s_3),(00110,s_4),(01001,s_2)$
+* $00110$: $(00101,s_4),(01010,s_2)$
+* $01001$: $(00101,s_2),(01010,s_4),(10001,s_1)$
+* $01010$: $(00110,s_2),(01001,s_4),(01100,s_3),(10010,s_1)$
+* $01100$: $(01010,s_3),(10100,s_1)$
+* $10001$: $(01001,s_1),(10010,s_4)$
+* $10010$: $(01010,s_1),(10001,s_4),(10100,s_3)$
+* $10100$: $(01100,s_1),(10010,s_3),(11000,s_2)$
+* $11000$: $(10100,s_2)$
+
+(Useful mental picture: identify a string with the ordered positions of its two 1s, $(i,j)$ with $1\le i<j\le 5$; then an edge moves one of the positions by $\pm1$ when it doesn’t collide with the other.)
+
 
