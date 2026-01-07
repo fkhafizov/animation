@@ -1,5 +1,20 @@
 2026.01.07
 
+
+# **граф Шрайера** = **Schreier graph** (also written **Schreier coset graph**).
+
+Give the standard  usage in group theory, plus a one-sentence definition and common synonyms/spellings so you can use it in papers.
+
+
+
+In group theory: given a group action (often of $G$ on cosets $G/H$) and a generating set $S$, the Schreier graph has vertices = the points/cosets, and directed (often labeled) edges $x \to s\cdot x$ for $s\in S$.
+
+
+
+
+# useful?
+
+
 Schreier graphs are useful because they let you study a **group action** (often huge) using a **finite, concrete graph** that still preserves the algebraic structure.
 
 Here are the main payoffs.
