@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schreier Graph Visualizer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;600&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            overflow: hidden;
+            background: linear-gradient(180deg, #c8e6c9 0%, #b3e5fc 100%);
+        }
+        
+        #controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            z-index: 100;
+            min-width: 260px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+        
+        h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.3rem;
+            color: #2e7d32;
+            margin-bottom: 20px;
+            letter-spacing: -0.5px;
+        }
+        
+        .control-group {
+            margin-bottom: 18px;
+        }
+        
+        label {
+            display: block;
+            font-size: 0.75rem;
+            color: #546e7a;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 1.1rem;
+            font-family: 'JetBrains Mono', monospace;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: #fafafa;
+            color: #37474f;
+            transition: all 0.2s ease;
+        }
+        
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #66bb6a;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 187, 106, 0.15);
+        }
+        
+        .slider-group {
+            margin-bottom: 16px;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .slider-value {
+            font-size: 0.8rem;
+            color: #37474f;
+            font-weight: 600;
+            background: #e8f5e9;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #e0e0e0 0%, #e0e0e0 100%);
+            outline: none;
+            cursor: pointer;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #66bb6a 0%, #42a5f5 100%);
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            box-shadow: 0 3px 10px rgba(102, 187, 106, 0.4);
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #66bb6a 0%, #42a5f5 100%);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        .section-divider {
+            margin: 20px 0 16px 0;
+            padding-top: 16px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .section-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.7rem;
+            color: #78909c;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 14px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 14px;
+            font-size: 0.9rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            background: linear-gradient(135deg, #66bb6a 0%, #42a5f5 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 187, 106, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .shake-btn {
+            margin-top: 16px;
+            background: linear-gradient(135deg, #ff9800 0%, #ff5722 100%);
+        }
+        
+        .shake-btn:hover {
+            box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+        }
+        
+        .info {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 0.75rem;
+            color: #78909c;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+        
+        .info-value {
+            color: #37474f;
+            font-weight: 600;
+        }
+        
+        #legend {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            padding: 18px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            z-index: 100;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+        
+        #legend h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.85rem;
+            color: #2e7d32;
+            margin-bottom: 12px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 0.75rem;
+            color: #546e7a;
+        }
+        
+        .legend-color {
+            width: 24px;
+            height: 4px;
+            border-radius: 2px;
+            margin-right: 10px;
+        }
+        
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <h2>⬡ Schreier Graph</h2>
+        <div class="control-group">
+            <label>N (String Length: 2-10)</label>
+            <input type="number" id="inputN" value="5" min="2" max="10">
+        </div>
+        <div class="control-group">
+            <label>K (Number of Ones)</label>
+            <input type="number" id="inputK" value="2" min="1" max="9">
+        </div>
+        <button onclick="rebuildGraph()">Generate Graph</button>
+        
+        <div class="section-divider">
+            <div class="section-title">Physics & Appearance</div>
+        </div>
+        
+        <div class="slider-group">
+            <div class="slider-label">
+                <label>Node Size</label>
+                <span class="slider-value" id="nodeSizeValue">32</span>
+            </div>
+            <input type="range" id="nodeSizeSlider" min="20" max="100" value="32" oninput="updateNodeSize(this.value)">
+        </div>
+        
+        <div class="slider-group">
+            <div class="slider-label">
+                <label>Repulsion</label>
+                <span class="slider-value" id="repulsionValue">25000</span>
+            </div>
+            <input type="range" id="repulsionSlider" min="1000" max="80000" value="25000" oninput="updateRepulsion(this.value)">
+        </div>
+        
+        <div class="slider-group">
+            <div class="slider-label">
+                <label>Attraction</label>
+                <span class="slider-value" id="attractionValue">0.006</span>
+            </div>
+            <input type="range" id="attractionSlider" min="1" max="50" value="6" oninput="updateAttraction(this.value)">
+        </div>
+        
+        <button class="shake-btn" onclick="shakeNodes()">🔀 Shake &amp; Resettle</button>
+        
+        <div class="info">
+            <div class="info-row">
+                <span>Zeros:</span>
+                <span class="info-value" id="infoZeros">3</span>
+            </div>
+            <div class="info-row">
+                <span>Starting node:</span>
+                <span class="info-value" id="infoStart">00011</span>
+            </div>
+            <div class="info-row">
+                <span>Total nodes:</span>
+                <span class="info-value" id="infoNodes">10</span>
+            </div>
+        </div>
+    </div>
+    
+    <div id="legend"></div>
+    <div id="canvas-container"></div>
+
+    <script>
+        // Graph data structures
+        let nodes = [];
+        let edges = [];
+        let N = 5;
+        let K = 2;
+        
+        // Physics simulation parameters (configurable)
+        let REPULSION = 25000;
+        let ATTRACTION = 0.006;
+        const DAMPING = 0.85;
+        const CENTER_PULL = 0.008;
+        let NODE_SIZE = 32;
+        
+        // Beautiful node color palette
+        const nodeColors = [
+            '#FF6B6B', // Coral Red
+            '#4ECDC4', // Teal
+            '#FFE66D', // Sunny Yellow
+            '#95E1D3', // Mint
+            '#F38181', // Salmon
+            '#AA96DA', // Lavender
+            '#FCBAD3', // Pink
+            '#A8D8EA', // Sky Blue
+            '#FF9F43', // Orange
+            '#6C5CE7', // Purple
+            '#00CEC9', // Cyan
+            '#FD79A8', // Rose
+            '#55E6C1', // Emerald
+            '#F8B500', // Gold
+            '#9B59B6', // Amethyst
+            '#3498DB', // Blue
+            '#E74C3C', // Red
+            '#1ABC9C', // Turquoise
+            '#F39C12', // Sunflower
+            '#8E44AD', // Wisteria
+            '#2ECC71', // Green
+            '#E91E63', // Magenta
+            '#00BCD4', // Light Cyan
+            '#FF5722', // Deep Orange
+            '#673AB7', // Deep Purple
+            '#009688', // Dark Teal
+            '#FFEB3B', // Yellow
+            '#795548', // Brown
+            '#607D8B', // Blue Grey
+            '#CDDC39', // Lime
+        ];
+        
+        // Color palette for transpositions (i, i+1)
+        const transpositionColors = [
+            '#e53935', // (0,1) - Red
+            '#fb8c00', // (1,2) - Orange  
+            '#fdd835', // (2,3) - Yellow
+            '#43a047', // (3,4) - Green
+            '#00acc1', // (4,5) - Cyan
+            '#5c6bc0', // (5,6) - Indigo
+            '#8e24aa', // (6,7) - Purple
+            '#d81b60', // (7,8) - Pink
+            '#6d4c41', // (8,9) - Brown
+        ];
+        
+        class Node {
+            constructor(label, x, y, colorIndex) {
+                this.label = label;
+                this.x = x;
+                this.y = y;
+                this.vx = 0;
+                this.vy = 0;
+                this.colorIndex = colorIndex;
+            }
+            
+            get radius() {
+                return NODE_SIZE;
+            }
+        }
+        
+        class Edge {
+            constructor(from, to, transposition) {
+                this.from = from;
+                this.to = to;
+                this.transposition = transposition; // which (i, i+1)
+            }
+        }
+        
+        function generateAllStrings(n, k) {
+            // Generate all binary strings of length n with exactly k ones
+            const results = [];
+            
+            function generate(current, onesLeft, zerosLeft) {
+                if (onesLeft === 0 && zerosLeft === 0) {
+                    results.push(current);
+                    return;
+                }
+                if (onesLeft > 0) {
+                    generate(current + '1', onesLeft - 1, zerosLeft);
+                }
+                if (zerosLeft > 0) {
+                    generate(current + '0', onesLeft, zerosLeft - 1);
+                }
+            }
+            
+            generate('', k, n - k);
+            return results;
+        }
+        
+        function applyTransposition(str, i) {
+            // Swap positions i and i+1
+            if (i < 0 || i >= str.length - 1) return str;
+            const arr = str.split('');
+            [arr[i], arr[i + 1]] = [arr[i + 1], arr[i]];
+            return arr.join('');
+        }
+        
+        function buildGraph() {
+            nodes = [];
+            edges = [];
+            
+            const allStrings = generateAllStrings(N, K);
+            const stringToIndex = new Map();
+            
+            const centerX = windowWidth / 2 + 100;
+            const centerY = windowHeight / 2;
+            
+            // First pass: create nodes with temporary positions
+            allStrings.forEach((str, i) => {
+                nodes.push(new Node(str, centerX, centerY, i % nodeColors.length));
+                stringToIndex.set(str, i);
+            });
+            
+            // Create edges and build adjacency list
+            const edgeSet = new Set();
+            const adjacency = new Map();
+            
+            // Initialize adjacency list
+            for (let i = 0; i < nodes.length; i++) {
+                adjacency.set(i, []);
+            }
+            
+            allStrings.forEach((str, fromIdx) => {
+                for (let i = 0; i < N - 1; i++) {
+                    // Only create edge if swapping would change the string
+                    if (str[i] !== str[i + 1]) {
+                        const newStr = applyTransposition(str, i);
+                        const toIdx = stringToIndex.get(newStr);
+                        
+                        if (toIdx !== undefined) {
+                            // Create unique edge key (smaller index first)
+                            const edgeKey = fromIdx < toIdx ? 
+                                `${fromIdx}-${toIdx}-${i}` : `${toIdx}-${fromIdx}-${i}`;
+                            
+                            if (!edgeSet.has(edgeKey)) {
+                                edgeSet.add(edgeKey);
+                                edges.push(new Edge(fromIdx, toIdx, i));
+                                adjacency.get(fromIdx).push(toIdx);
+                                adjacency.get(toIdx).push(fromIdx);
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Calculate degrees for all nodes
+            const degrees = nodes.map((_, i) => adjacency.get(i).length);
+            const maxDegree = Math.max(...degrees);
+            const minDegree = Math.min(...degrees);
+            
+            // Group nodes by degree
+            const degreeGroups = new Map();
+            for (let i = 0; i < nodes.length; i++) {
+                const deg = degrees[i];
+                if (!degreeGroups.has(deg)) {
+                    degreeGroups.set(deg, []);
+                }
+                degreeGroups.get(deg).push(i);
+            }
+            
+            // Get highest and lowest degree nodes
+            const highestDegreeNodes = degreeGroups.get(maxDegree) || [];
+            const lowestDegreeNodes = degreeGroups.get(minDegree) || [];
+            
+            // Sort degrees in descending order (excluding min and max which we handle specially)
+            const middleDegrees = Array.from(degreeGroups.keys())
+                .filter(d => d !== maxDegree && d !== minDegree)
+                .sort((a, b) => b - a);
+            
+            // Calculate layout dimensions
+            const maxRadiusX = (windowWidth - 450) * 0.45;
+            const maxRadiusY = (windowHeight - 150) * 0.4;
+            
+            // Sort nodes by label for consistent ordering
+            highestDegreeNodes.sort((a, b) => nodes[a].label.localeCompare(nodes[b].label));
+            lowestDegreeNodes.sort((a, b) => nodes[a].label.localeCompare(nodes[b].label));
+            
+            // Position highest degree nodes at center (symmetric around center point)
+            if (highestDegreeNodes.length === 1) {
+                // Single node at exact center
+                nodes[highestDegreeNodes[0]].x = centerX;
+                nodes[highestDegreeNodes[0]].y = centerY;
+            } else {
+                // Multiple highest degree nodes - arrange symmetrically around center
+                const count = highestDegreeNodes.length;
+                const innerRadius = Math.min(maxRadiusX, maxRadiusY) * 0.12;
+                highestDegreeNodes.forEach((nodeIdx, i) => {
+                    const angle = (i / count) * TWO_PI - HALF_PI;
+                    nodes[nodeIdx].x = centerX + innerRadius * Math.cos(angle);
+                    nodes[nodeIdx].y = centerY + innerRadius * Math.sin(angle);
+                });
+            }
+            
+            // Position lowest degree nodes (minimum connections) on the horizontal line, spread to sides
+            if (lowestDegreeNodes.length > 0) {
+                const count = lowestDegreeNodes.length;
+                // Split into left and right sides for symmetry
+                const leftNodes = lowestDegreeNodes.slice(0, Math.ceil(count / 2));
+                const rightNodes = lowestDegreeNodes.slice(Math.ceil(count / 2));
+                
+                // Left side - spread along horizontal line on the left
+                const leftStartX = centerX - maxRadiusX * 0.95;
+                const leftEndX = centerX - maxRadiusX * 0.5;
+                leftNodes.forEach((nodeIdx, i) => {
+                    const t = leftNodes.length > 1 ? i / (leftNodes.length - 1) : 0.5;
+                    nodes[nodeIdx].x = leftStartX + t * (leftEndX - leftStartX);
+                    nodes[nodeIdx].y = centerY;
+                });
+                
+                // Right side - spread along horizontal line on the right
+                const rightStartX = centerX + maxRadiusX * 0.5;
+                const rightEndX = centerX + maxRadiusX * 0.95;
+                rightNodes.forEach((nodeIdx, i) => {
+                    const t = rightNodes.length > 1 ? i / (rightNodes.length - 1) : 0.5;
+                    nodes[nodeIdx].x = rightStartX + t * (rightEndX - rightStartX);
+                    nodes[nodeIdx].y = centerY;
+                });
+            }
+            
+            // Position middle degree nodes in rings between center and edges
+            const numMiddleRings = middleDegrees.length;
+            middleDegrees.forEach((deg, ringIdx) => {
+                const nodesInRing = degreeGroups.get(deg);
+                nodesInRing.sort((a, b) => nodes[a].label.localeCompare(nodes[b].label));
+                
+                // Calculate ring position (inner rings for higher degree, outer for lower)
+                const ringProgress = (ringIdx + 1) / (numMiddleRings + 1);
+                const ringRadiusX = maxRadiusX * (0.2 + ringProgress * 0.6);
+                const ringRadiusY = maxRadiusY * (0.25 + ringProgress * 0.55);
+                
+                const nodeCount = nodesInRing.length;
+                nodesInRing.forEach((nodeIdx, i) => {
+                    // Distribute evenly, starting from top
+                    const angle = (i / nodeCount) * TWO_PI - HALF_PI;
+                    nodes[nodeIdx].x = centerX + ringRadiusX * Math.cos(angle);
+                    nodes[nodeIdx].y = centerY + ringRadiusY * Math.sin(angle);
+                });
+            });
+            
+            updateInfo();
+            updateLegend();
+        }
+        
+        function updateInfo() {
+            document.getElementById('infoZeros').textContent = N - K;
+            document.getElementById('infoStart').textContent = '0'.repeat(N - K) + '1'.repeat(K);
+            document.getElementById('infoNodes').textContent = nodes.length;
+        }
+        
+        function updateLegend() {
+            const legend = document.getElementById('legend');
+            let html = '<h3>Transpositions</h3>';
+            
+            for (let i = 0; i < N - 1; i++) {
+                html += `
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: ${transpositionColors[i]}"></div>
+                        <span>(${i}, ${i + 1})</span>
+                    </div>
+                `;
+            }
+            
+            legend.innerHTML = html;
+        }
+        
+        function applyForces() {
+            const centerX = windowWidth / 2 + 100;
+            const centerY = windowHeight / 2;
+            
+            // Reset forces
+            nodes.forEach(node => {
+                node.ax = 0;
+                node.ay = 0;
+            });
+            
+            // Repulsion between all nodes
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const dx = nodes[j].x - nodes[i].x;
+                    const dy = nodes[j].y - nodes[i].y;
+                    const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 1);
+                    const force = REPULSION / (dist * dist);
+                    
+                    const fx = (dx / dist) * force;
+                    const fy = (dy / dist) * force;
+                    
+                    nodes[i].vx -= fx;
+                    nodes[i].vy -= fy;
+                    nodes[j].vx += fx;
+                    nodes[j].vy += fy;
+                }
+            }
+            
+            // Attraction along edges
+            edges.forEach(edge => {
+                const from = nodes[edge.from];
+                const to = nodes[edge.to];
+                
+                const dx = to.x - from.x;
+                const dy = to.y - from.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                const force = dist * ATTRACTION;
+                
+                const fx = (dx / dist) * force;
+                const fy = (dy / dist) * force;
+                
+                from.vx += fx;
+                from.vy += fy;
+                to.vx -= fx;
+                to.vy -= fy;
+            });
+            
+            // Pull towards center
+            nodes.forEach(node => {
+                node.vx += (centerX - node.x) * CENTER_PULL;
+                node.vy += (centerY - node.y) * CENTER_PULL;
+            });
+            
+            // Update positions
+            nodes.forEach(node => {
+                node.vx *= DAMPING;
+                node.vy *= DAMPING;
+                node.x += node.vx;
+                node.y += node.vy;
+                
+                // Keep within bounds
+                node.x = constrain(node.x, 100, windowWidth - 50);
+                node.y = constrain(node.y, 50, windowHeight - 50);
+            });
+        }
+        
+        function setup() {
+            const canvas = createCanvas(windowWidth, windowHeight);
+            canvas.parent('canvas-container');
+            textFont('JetBrains Mono');
+            buildGraph();
+        }
+        
+        function draw() {
+            // Draw gradient background
+            for (let y = 0; y < height; y++) {
+                const inter = map(y, 0, height, 0, 1);
+                const c = lerpColor(color('#c8e6c9'), color('#b3e5fc'), inter);
+                stroke(c);
+                line(0, y, width, y);
+            }
+            
+            // Draw guide lines
+            const centerX = windowWidth / 2 + 100;
+            const centerY = windowHeight / 2;
+            
+            // Vertical guide line
+            stroke(100, 100, 100, 80);
+            strokeWeight(1);
+            drawingContext.setLineDash([8, 8]);
+            line(centerX, 50, centerX, windowHeight - 50);
+            
+            // Horizontal guide line
+            line(350, centerY, windowWidth - 50, centerY);
+            drawingContext.setLineDash([]);
+            
+            // Draw center crosshair
+            stroke(80, 80, 80, 120);
+            strokeWeight(2);
+            const crossSize = 15;
+            line(centerX - crossSize, centerY, centerX + crossSize, centerY);
+            line(centerX, centerY - crossSize, centerX, centerY + crossSize);
+            
+            // Apply physics simulation
+            applyForces();
+            
+            // Draw edges
+            strokeWeight(4);
+            edges.forEach(edge => {
+                const from = nodes[edge.from];
+                const to = nodes[edge.to];
+                
+                stroke(transpositionColors[edge.transposition]);
+                
+                // Calculate edge endpoints at node boundaries
+                const dx = to.x - from.x;
+                const dy = to.y - from.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist > 0) {
+                    const startX = from.x + (dx / dist) * from.radius;
+                    const startY = from.y + (dy / dist) * from.radius;
+                    const endX = to.x - (dx / dist) * to.radius;
+                    const endY = to.y - (dy / dist) * to.radius;
+                    
+                    line(startX, startY, endX, endY);
+                }
+            });
+            
+            // Draw nodes
+            nodes.forEach((node, idx) => {
+                const nodeColor = color(nodeColors[node.colorIndex]);
+                
+                // Node shadow
+                noStroke();
+                fill(0, 0, 0, 30);
+                ellipse(node.x + 4, node.y + 4, node.radius * 2 + 4);
+                
+                // Node outer glow
+                for (let i = 3; i > 0; i--) {
+                    fill(red(nodeColor), green(nodeColor), blue(nodeColor), 30);
+                    ellipse(node.x, node.y, node.radius * 2 + i * 8);
+                }
+                
+                // Node body with gradient effect
+                const gradientSteps = 10;
+                for (let i = gradientSteps; i >= 0; i--) {
+                    const t = i / gradientSteps;
+                    const size = node.radius * 2 * (0.5 + t * 0.5);
+                    const brightness = 255 - t * 60;
+                    fill(
+                        red(nodeColor) * (0.7 + t * 0.3) + brightness * 0.2,
+                        green(nodeColor) * (0.7 + t * 0.3) + brightness * 0.2,
+                        blue(nodeColor) * (0.7 + t * 0.3) + brightness * 0.2,
+                        255
+                    );
+                    noStroke();
+                    ellipse(node.x - t * 3, node.y - t * 3, size);
+                }
+                
+                // White highlight
+                fill(255, 255, 255, 80);
+                ellipse(node.x - node.radius * 0.3, node.y - node.radius * 0.3, node.radius * 0.6);
+                
+                // Node border
+                noFill();
+                stroke(red(nodeColor) * 0.7, green(nodeColor) * 0.7, blue(nodeColor) * 0.7, 200);
+                strokeWeight(3);
+                ellipse(node.x, node.y, node.radius * 2);
+                
+                // Node label with shadow
+                noStroke();
+                const fontSize = map(N, 2, 10, 22, 13);
+                textSize(fontSize);
+                textAlign(CENTER, CENTER);
+                textStyle(BOLD);
+                
+                // Text shadow
+                fill(0, 0, 0, 100);
+                text(node.label, node.x + 1, node.y + 1);
+                
+                // Text
+                fill(255, 255, 255);
+                text(node.label, node.x, node.y);
+                
+                textStyle(NORMAL);
+            });
+        }
+        
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+        
+        function rebuildGraph() {
+            const newN = parseInt(document.getElementById('inputN').value);
+            const newK = parseInt(document.getElementById('inputK').value);
+            
+            // Validation
+            if (newN < 2) {
+                alert('N must be at least 2');
+                return;
+            }
+            if (newN > 10) {
+                alert('N cannot exceed 10');
+                return;
+            }
+            if (newK < 1) {
+                alert('K must be at least 1');
+                return;
+            }
+            if (newK >= newN) {
+                alert('K must be less than N');
+                return;
+            }
+            
+            N = newN;
+            K = newK;
+            buildGraph();
+        }
+        
+        // Dragging functionality
+        let draggedNode = null;
+        
+        function mousePressed() {
+            // Check if clicking on a node
+            for (let node of nodes) {
+                const d = dist(mouseX, mouseY, node.x, node.y);
+                if (d < node.radius) {
+                    draggedNode = node;
+                    break;
+                }
+            }
+        }
+        
+        function mouseDragged() {
+            if (draggedNode) {
+                draggedNode.x = mouseX;
+                draggedNode.y = mouseY;
+                draggedNode.vx = 0;
+                draggedNode.vy = 0;
+            }
+        }
+        
+        function mouseReleased() {
+            draggedNode = null;
+        }
+        
+        // Slider update functions
+        function updateNodeSize(value) {
+            NODE_SIZE = parseInt(value);
+            document.getElementById('nodeSizeValue').textContent = value;
+        }
+        
+        function updateRepulsion(value) {
+            REPULSION = parseInt(value);
+            document.getElementById('repulsionValue').textContent = value;
+        }
+        
+        function updateAttraction(value) {
+            ATTRACTION = parseInt(value) / 1000;
+            document.getElementById('attractionValue').textContent = ATTRACTION.toFixed(3);
+        }
+        
+        function shakeNodes() {
+            const centerX = windowWidth / 2 + 100;
+            const centerY = windowHeight / 2;
+            const shakeRadius = Math.min(windowWidth, windowHeight) * 0.25;
+            
+            nodes.forEach((node, i) => {
+                // Add random displacement
+                const angle = random(TWO_PI);
+                const dist = random(shakeRadius * 0.5, shakeRadius);
+                node.x = centerX + cos(angle) * dist;
+                node.y = centerY + sin(angle) * dist;
+                
+                // Add random velocity for extra chaos
+                node.vx = random(-15, 15);
+                node.vy = random(-15, 15);
+            });
+        }
+    </script>
+</body>
+</html>
+
