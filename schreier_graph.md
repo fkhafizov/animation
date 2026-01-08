@@ -191,3 +191,77 @@ $|V|=\binom73=35$
 
 If you want, I can also give the **closed-form** count of vertices with degree $d$ in terms of compositions (runs) for general $(n,k)$.
 
+
+--------
+
+# Q
+
+yes, let's get the closed-form count of vertices with degree $d$ 
+
+# A
+
+Let $n\ge 1$ and $0\le k\le n$. Vertices are all binary strings $x\in{0,1}^n$ with exactly $k$ ones. Edges correspond to adjacent transpositions $(i,i+1)$, which change $x$ iff $x_i\ne x_{i+1}$.
+
+So the (loopless) degree of $x$ is
+$$\deg(x)=#{i\in{1,\dots,n-1}: x_i\ne x_{i+1}},$$
+the number of $0|1$ boundaries (equivalently: the number of run-changes).
+
+---
+
+## Closed-form count of vertices with degree $d$
+
+Let $N_{n,k}(d)$ be the number of length-$n$ weight-$k$ binary strings with degree $d$.
+
+### Special cases
+
+* If $k=0$ or $k=n$: there is only one vertex (all zeros or all ones), and
+  $$N_{n,k}(0)=1,\qquad N_{n,k}(d)=0\ \text{for }d\ge 1.$$
+* Assume now $0<k<n$. Then every string has at least one boundary, so
+  $$N_{n,k}(0)=0,\qquad d\ge 1.$$
+
+### Main formula ($0<k<n$)
+
+A string with degree $d$ has exactly $r=d+1$ runs. Runs alternate 0/1/0/1/…; the only choice is whether the string starts with 0 or with 1.
+
+Define
+$$a=\left\lceil\frac{r}{2}\right\rceil=\left\lceil\frac{d+1}{2}\right\rceil,\qquad
+b=\left\lfloor\frac{r}{2}\right\rfloor=\left\lfloor\frac{d+1}{2}\right\rfloor.$$
+
+* If the string starts with **1**, then it has $a$ one-runs and $b$ zero-runs.
+* If it starts with **0**, then it has $b$ one-runs and $a$ zero-runs.
+
+Counting positive run-length compositions gives
+$$
+N_{n,k}(d)
+==========
+
+\binom{k-1}{a-1}\binom{n-k-1}{b-1}
++
+\binom{k-1}{b-1}\binom{n-k-1}{a-1},
+\qquad (0<k<n).
+$$
+
+**Convention:** interpret $\binom{p}{q}=0$ if $q<0$ or $q>p$. With that convention, the formula automatically returns 0 when a run-count is impossible (e.g., too many runs for given $k$).
+
+### Feasible range for $d$ (when $0<k<n$)
+
+* Minimum: $d_{\min}=1$.
+* Maximum:
+  $$
+  d_{\max}=\min\bigl(n-1,\ 2\min(k,n-k)\bigr).
+  $$
+  Outside $[1,d_{\max}]$, $N_{n,k}(d)=0$.
+
+---
+
+## Quick check against your earlier examples
+
+Plugging the formula yields exactly the distributions we computed:
+
+* $(5,2)$: $N(d)$ for $d=1,2,3,4$ is $2,3,4,1$.
+* $(6,2)$: $2,4,6,3$ for $d=1,2,3,4$.
+* $(6,3)$: $2,4,8,4,2$ for $d=1,\dots,5$.
+* $(7,3)$: $2,5,12,9,6,1$ for $d=1,\dots,6$.
+
+If you want, I can also give a neat equivalent parameterization in terms of “number of 1-runs” $t$ (then $d$ is either $2t-1$ or $2t$ depending on endpoints).
+
