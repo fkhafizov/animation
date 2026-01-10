@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schreier Graph Visualizer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;600&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            overflow: hidden;
+            background: linear-gradient(180deg, #c8e6c9 0%, #b3e5fc 100%);
+        }
+        
+        #controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            padding: 14px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            z-index: 100;
+            width: 160px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            font-size: 0.85rem;
+        }
+        
+        h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            color: #2e7d32;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+        
+        .control-group {
+            margin-bottom: 10px;
+        }
+        
+        label {
+            display: block;
+            font-size: 0.65rem;
+            color: #546e7a;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 8px 10px;
+            font-size: 0.9rem;
+            font-family: 'JetBrains Mono', monospace;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fafafa;
+            color: #37474f;
+            transition: all 0.2s ease;
+        }
+        
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #66bb6a;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 187, 106, 0.15);
+        }
+        
+        .slider-group {
+            margin-bottom: 10px;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        
+        .slider-value {
+            font-size: 0.7rem;
+            color: #37474f;
+            font-weight: 600;
+            background: #e8f5e9;
+            padding: 1px 5px;
+            border-radius: 3px;
+        }
+        
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, #e0e0e0 0%, #e0e0e0 100%);
+            outline: none;
+            cursor: pointer;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #66bb6a 0%, #42a5f5 100%);
+            cursor: pointer;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(102, 187, 106, 0.4);
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #66bb6a 0%, #42a5f5 100%);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .section-divider {
+            margin: 10px 0 8px 0;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .section-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.6rem;
+            color: #78909c;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 8px;
+            font-size: 0.7rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            background: linear-gradient(135deg, #66bb6a 0%, #42a5f5 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 187, 106, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .shake-btn {
+            margin-top: 8px;
+            background: linear-gradient(135deg, #ff9800 0%, #ff5722 100%);
+        }
+        
+        .shake-btn:hover {
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+        }
+        
+        .grid-btn {
+            margin-top: 6px;
+            background: linear-gradient(135deg, #9c27b0 0%, #673ab7 100%);
+        }
+        
+        .grid-btn:hover {
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.4);
+        }
+        
+        .checkbox-group {
+            margin: 10px 0;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 0.65rem;
+            color: #37474f;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+        
+        .checkbox-label input[type="checkbox"] {
+            display: none;
+        }
+        
+        .checkbox-custom {
+            width: 16px;
+            height: 16px;
+            min-width: 16px;
+            border: 2px solid #66bb6a;
+            border-radius: 3px;
+            margin-right: 6px;
+            position: relative;
+            transition: all 0.2s ease;
+            background: #fafafa;
+        }
+        
+        .checkbox-label input[type="checkbox"]:checked + .checkbox-custom {
+            background: linear-gradient(135deg, #66bb6a 0%, #42a5f5 100%);
+            border-color: #66bb6a;
+        }
+        
+        .checkbox-label input[type="checkbox"]:checked + .checkbox-custom::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
+        .info {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 0.6rem;
+            color: #78909c;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        
+        .info-value {
+            color: #37474f;
+            font-weight: 600;
+            font-size: 0.6rem;
+        }
+        
+        #legend {
+            position: fixed;
+            bottom: 160px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            z-index: 100;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            width: 160px;
+        }
+        
+        #legend h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.7rem;
+            color: #2e7d32;
+            margin-bottom: 8px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+            font-size: 0.6rem;
+            color: #546e7a;
+        }
+        
+        .legend-color {
+            width: 18px;
+            height: 3px;
+            border-radius: 2px;
+            margin-right: 6px;
+        }
+        
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #stats-panel {
+            position: fixed;
+            top: 650px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            z-index: 100;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            width: 160px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        #stats-panel h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.75rem;
+            color: #2e7d32;
+            margin-bottom: 8px;
+        }
+        
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            font-size: 0.7rem;
+            color: #37474f;
+        }
+        
+        .stats-value {
+            font-weight: 600;
+            color: #1976d2;
+        }
+        
+        .degree-table {
+            width: 100%;
+            margin-top: 8px;
+            border-collapse: collapse;
+        }
+        
+        .degree-table th {
+            font-size: 0.6rem;
+            color: #546e7a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 4px 2px;
+            border-bottom: 1px solid #e0e0e0;
+            text-align: left;
+        }
+        
+        .degree-table td {
+            padding: 3px 2px;
+            font-size: 0.65rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .degree-table td:first-child {
+            font-weight: 600;
+            color: #37474f;
+        }
+        
+        .degree-table td:last-child {
+            color: #546e7a;
+        }
+        
+        .degree-table tr:hover {
+            background: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <h2>⬡ Schreier Graph</h2>
+        <div class="control-group">
+            <label>N (String Length: 2-10)</label>
+            <input type="number" id="inputN" value="5" min="2" max="10">
+        </div>
+        <div class="control-group">
+            <label>K (Number of Ones)</label>
+            <input type="number" id="inputK" value="2" min="1" max="9">
+        </div>
+        
+        <div class="control-group checkbox-group">
+            <label class="checkbox-label">
+                <input type="checkbox" id="wrappedCheckbox">
+                <span class="checkbox-custom"></span>
+                <span>WRAPPED (0,N-1)</span>
+            </label>
+        </div>
+        
+        <button onclick="rebuildGraph()">Generate Graph</button>
+        <button class="grid-btn" onclick="toggleGridLayout()">📐 GRID (K=2)</button>
+        
+        <div class="section-divider">
+            <div class="section-title">Physics & Appearance</div>
+        </div>
+        
+        <div class="slider-group">
+            <div class="slider-label">
+                <label>Node Size</label>
+                <span class="slider-value" id="nodeSizeValue">32</span>
+            </div>
+            <input type="range" id="nodeSizeSlider" min="20" max="100" value="32" oninput="updateNodeSize(this.value)">
+        </div>
+        
+        <div class="slider-group">
+            <div class="slider-label">
+                <label>Repulsion</label>
+                <span class="slider-value" id="repulsionValue">25000</span>
+            </div>
+            <input type="range" id="repulsionSlider" min="1000" max="80000" value="25000" oninput="updateRepulsion(this.value)">
+        </div>
+        
+        <div class="slider-group">
+            <div class="slider-label">
+                <label>Attraction</label>
+                <span class="slider-value" id="attractionValue">0.006</span>
+            </div>
+            <input type="range" id="attractionSlider" min="1" max="50" value="6" oninput="updateAttraction(this.value)">
+        </div>
+        
+        <button class="shake-btn" onclick="shakeNodes()">🔀 Shake &amp; Resettle</button>
+        
+        <div class="info">
+            <div class="info-row">
+                <span>Zeros:</span>
+                <span class="info-value" id="infoZeros">3</span>
+            </div>
+            <div class="info-row">
+                <span>Starting node:</span>
+                <span class="info-value" id="infoStart">00011</span>
+            </div>
+            <div class="info-row">
+                <span>Total nodes:</span>
+                <span class="info-value" id="infoNodes">10</span>
+            </div>
+        </div>
+    </div>
+    
+    <div id="legend"></div>
+    <div id="stats-panel">
+        <h3>📊 Graph Statistics</h3>
+        <div class="stats-row">
+            <span>Vertices |V|:</span>
+            <span class="stats-value" id="statVertices">10</span>
+        </div>
+        <div class="stats-row">
+            <span>Edges |E|:</span>
+            <span class="stats-value" id="statEdges">0</span>
+        </div>
+        <h3 style="margin-top: 16px;">Degree Distribution</h3>
+        <table class="degree-table">
+            <thead>
+                <tr>
+                    <th>Ds</th>
+                    <th>Vs</th>
+                </tr>
+            </thead>
+            <tbody id="degreeTableBody">
+            </tbody>
+        </table>
+    </div>
+    <div id="canvas-container"></div>
+
+    <script>
+        // Graph data structures
+        let nodes = [];
+        let edges = [];
+        let N = 5;
+        let K = 2;
+        let isWrapped = false;
+        let isGridLayout = false;
+        let adjacencyList = new Map();
+        
+        // Physics simulation parameters (configurable)
+        let REPULSION = 25000;
+        let ATTRACTION = 0.006;
+        const DAMPING = 0.85;
+        const CENTER_PULL = 0.008;
+        let NODE_SIZE = 32;
+        
+        
+        // Color palette for transpositions (i, i+1)
+        const transpositionColors = [
+            '#e53935', // (0,1) - Red
+            '#fb8c00', // (1,2) - Orange  
+            '#fdd835', // (2,3) - Yellow
+            '#43a047', // (3,4) - Green
+            '#00acc1', // (4,5) - Cyan
+            '#5c6bc0', // (5,6) - Indigo
+            '#8e24aa', // (6,7) - Purple
+            '#d81b60', // (7,8) - Pink
+            '#6d4c41', // (8,9) - Brown
+        ];
+        
+        class Node {
+            constructor(label, x, y) {
+                this.label = label;
+                this.x = x;
+                this.y = y;
+                this.vx = 0;
+                this.vy = 0;
+                this.degree = 0;
+            }
+            
+            get radius() {
+                return NODE_SIZE;
+            }
+        }
+        
+        // Color palette for node degrees (index = degree, or use modulo for high degrees)
+        const degreeColors = [
+            '#9E9E9E', // degree 0 - gray (shouldn't happen)
+            '#E91E63', // degree 1 - pink
+            '#F44336', // degree 2 - red
+            '#FF9800', // degree 3 - orange
+            '#FFEB3B', // degree 4 - yellow
+            '#8BC34A', // degree 5 - light green
+            '#4CAF50', // degree 6 - green
+            '#00BCD4', // degree 7 - cyan
+            '#2196F3', // degree 8 - blue
+            '#3F51B5', // degree 9 - indigo
+            '#9C27B0', // degree 10 - purple
+            '#673AB7', // degree 11 - deep purple
+        ];
+        
+        function getDegreeColor(degree) {
+            if (degree < degreeColors.length) {
+                return degreeColors[degree];
+            }
+            // For very high degrees, cycle through colors
+            return degreeColors[degree % degreeColors.length];
+        }
+        
+        class Edge {
+            constructor(from, to, transposition) {
+                this.from = from;
+                this.to = to;
+                this.transposition = transposition; // which (i, i+1)
+            }
+        }
+        
+        // Calculate distance from point (px, py) to line segment (x1,y1)-(x2,y2)
+        function pointToLineDistance(px, py, x1, y1, x2, y2) {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const lengthSq = dx * dx + dy * dy;
+            
+            if (lengthSq === 0) {
+                // Line segment is a point
+                return Math.sqrt((px - x1) * (px - x1) + (py - y1) * (py - y1));
+            }
+            
+            // Project point onto line, clamped to segment
+            let t = ((px - x1) * dx + (py - y1) * dy) / lengthSq;
+            t = Math.max(0, Math.min(1, t));
+            
+            // Closest point on segment
+            const closestX = x1 + t * dx;
+            const closestY = y1 + t * dy;
+            
+            // Distance from point to closest point on segment
+            return Math.sqrt((px - closestX) * (px - closestX) + (py - closestY) * (py - closestY));
+        }
+        
+        // Define canvas boundaries to avoid overlapping with UI panels
+        function getCanvasBounds() {
+            // Control panel + Stats panel: left:20, width:160 => ~200px wide
+            // Legend: bottom:15, left:15, max-width:130 => ~160px wide
+            const padding = 30;
+            return {
+                left: 220 + padding,                    // Clear of left panels
+                right: windowWidth - 50 - padding,     // Right side is now clear
+                top: 50 + padding,                     // Top margin
+                bottom: windowHeight - 100 - padding   // Clear of bottom legend
+            };
+        }
+        
+        function generateAllStrings(n, k) {
+            // Generate all binary strings of length n with exactly k ones
+            const results = [];
+            
+            function generate(current, onesLeft, zerosLeft) {
+                if (onesLeft === 0 && zerosLeft === 0) {
+                    results.push(current);
+                    return;
+                }
+                if (onesLeft > 0) {
+                    generate(current + '1', onesLeft - 1, zerosLeft);
+                }
+                if (zerosLeft > 0) {
+                    generate(current + '0', onesLeft, zerosLeft - 1);
+                }
+            }
+            
+            generate('', k, n - k);
+            return results;
+        }
+        
+        function applyTransposition(str, i) {
+            // Swap positions i and i+1
+            if (i < 0 || i >= str.length - 1) return str;
+            const arr = str.split('');
+            [arr[i], arr[i + 1]] = [arr[i + 1], arr[i]];
+            return arr.join('');
+        }
+        
+        function applyWrappedTransposition(str) {
+            // Swap positions 0 and N-1 (first and last)
+            const arr = str.split('');
+            [arr[0], arr[arr.length - 1]] = [arr[arr.length - 1], arr[0]];
+            return arr.join('');
+        }
+        
+        function buildGraph() {
+            nodes = [];
+            edges = [];
+            adjacencyList = new Map();
+            
+            // Check if wrapped is enabled
+            isWrapped = document.getElementById('wrappedCheckbox').checked;
+            
+            const allStrings = generateAllStrings(N, K);
+            const stringToIndex = new Map();
+            
+            const bounds = getCanvasBounds();
+            const centerX = (bounds.left + bounds.right) / 2;
+            const centerY = (bounds.top + bounds.bottom) / 2;
+            
+            // First pass: create nodes with temporary positions
+            allStrings.forEach((str, i) => {
+                nodes.push(new Node(str, centerX, centerY));
+                stringToIndex.set(str, i);
+            });
+            
+            // Create edges and build adjacency list
+            const edgeSet = new Set();
+            const adjacency = new Map();
+            
+            // Initialize adjacency list
+            for (let i = 0; i < nodes.length; i++) {
+                adjacency.set(i, []);
+            }
+            
+            allStrings.forEach((str, fromIdx) => {
+                // Standard adjacent transpositions (i, i+1)
+                for (let i = 0; i < N - 1; i++) {
+                    // Only create edge if swapping would change the string
+                    if (str[i] !== str[i + 1]) {
+                        const newStr = applyTransposition(str, i);
+                        const toIdx = stringToIndex.get(newStr);
+                        
+                        if (toIdx !== undefined) {
+                            // Create unique edge key (smaller index first)
+                            const edgeKey = fromIdx < toIdx ? 
+                                `${fromIdx}-${toIdx}-${i}` : `${toIdx}-${fromIdx}-${i}`;
+                            
+                            if (!edgeSet.has(edgeKey)) {
+                                edgeSet.add(edgeKey);
+                                edges.push(new Edge(fromIdx, toIdx, i));
+                                adjacency.get(fromIdx).push(toIdx);
+                                adjacency.get(toIdx).push(fromIdx);
+                            }
+                        }
+                    }
+                }
+                
+                // Wrapped transposition (0, N-1) if enabled
+                if (isWrapped && str[0] !== str[N - 1]) {
+                    const newStr = applyWrappedTransposition(str);
+                    const toIdx = stringToIndex.get(newStr);
+                    
+                    if (toIdx !== undefined) {
+                        // Use a distinct transposition index for wrapped edges
+                        // This should be different from standard (i, i+1) transpositions
+                        const transIdx = N - 1; // For N=5, this is index 4 (cyan color)
+                        const edgeKey = fromIdx < toIdx ? 
+                            `${fromIdx}-${toIdx}-wrap` : `${toIdx}-${fromIdx}-wrap`;
+                        
+                        if (!edgeSet.has(edgeKey)) {
+                            edgeSet.add(edgeKey);
+                            edges.push(new Edge(fromIdx, toIdx, transIdx));
+                            adjacency.get(fromIdx).push(toIdx);
+                            adjacency.get(toIdx).push(fromIdx);
+                        }
+                    }
+                }
+            });
+            
+            // Store adjacency list globally for stats
+            adjacencyList = adjacency;
+            
+            // Calculate degrees for all nodes and store in node objects
+            const degrees = nodes.map((node, i) => {
+                node.degree = adjacency.get(i).length;
+                return node.degree;
+            });
+            const maxDegree = Math.max(...degrees);
+            const minDegree = Math.min(...degrees);
+            
+            // Group nodes by degree
+            const degreeGroups = new Map();
+            for (let i = 0; i < nodes.length; i++) {
+                const deg = degrees[i];
+                if (!degreeGroups.has(deg)) {
+                    degreeGroups.set(deg, []);
+                }
+                degreeGroups.get(deg).push(i);
+            }
+            
+            // Get highest and lowest degree nodes
+            const highestDegreeNodes = degreeGroups.get(maxDegree) || [];
+            const lowestDegreeNodes = degreeGroups.get(minDegree) || [];
+            
+            // Sort degrees in descending order (excluding min and max which we handle specially)
+            const middleDegrees = Array.from(degreeGroups.keys())
+                .filter(d => d !== maxDegree && d !== minDegree)
+                .sort((a, b) => b - a);
+            
+            // Calculate layout dimensions based on canvas bounds
+            const maxRadiusX = (bounds.right - bounds.left) * 0.45;
+            const maxRadiusY = (bounds.bottom - bounds.top) * 0.45;
+            
+            // Sort nodes by label for consistent ordering
+            highestDegreeNodes.sort((a, b) => nodes[a].label.localeCompare(nodes[b].label));
+            lowestDegreeNodes.sort((a, b) => nodes[a].label.localeCompare(nodes[b].label));
+            
+            // Position highest degree nodes at center (symmetric around center point)
+            if (highestDegreeNodes.length === 1) {
+                // Single node at exact center
+                nodes[highestDegreeNodes[0]].x = centerX;
+                nodes[highestDegreeNodes[0]].y = centerY;
+            } else {
+                // Multiple highest degree nodes - arrange symmetrically around center
+                const count = highestDegreeNodes.length;
+                const innerRadius = Math.min(maxRadiusX, maxRadiusY) * 0.12;
+                highestDegreeNodes.forEach((nodeIdx, i) => {
+                    const angle = (i / count) * TWO_PI - HALF_PI;
+                    nodes[nodeIdx].x = centerX + innerRadius * Math.cos(angle);
+                    nodes[nodeIdx].y = centerY + innerRadius * Math.sin(angle);
+                });
+            }
+            
+            // Position lowest degree nodes (minimum connections) on the horizontal line, spread to sides
+            if (lowestDegreeNodes.length > 0) {
+                const count = lowestDegreeNodes.length;
+                // Split into left and right sides for symmetry
+                const leftNodes = lowestDegreeNodes.slice(0, Math.ceil(count / 2));
+                const rightNodes = lowestDegreeNodes.slice(Math.ceil(count / 2));
+                
+                // Left side - spread along horizontal line on the left
+                const leftStartX = centerX - maxRadiusX * 0.95;
+                const leftEndX = centerX - maxRadiusX * 0.5;
+                leftNodes.forEach((nodeIdx, i) => {
+                    const t = leftNodes.length > 1 ? i / (leftNodes.length - 1) : 0.5;
+                    nodes[nodeIdx].x = leftStartX + t * (leftEndX - leftStartX);
+                    nodes[nodeIdx].y = centerY;
+                });
+                
+                // Right side - spread along horizontal line on the right
+                const rightStartX = centerX + maxRadiusX * 0.5;
+                const rightEndX = centerX + maxRadiusX * 0.95;
+                rightNodes.forEach((nodeIdx, i) => {
+                    const t = rightNodes.length > 1 ? i / (rightNodes.length - 1) : 0.5;
+                    nodes[nodeIdx].x = rightStartX + t * (rightEndX - rightStartX);
+                    nodes[nodeIdx].y = centerY;
+                });
+            }
+            
+            // Position middle degree nodes in rings between center and edges
+            const numMiddleRings = middleDegrees.length;
+            middleDegrees.forEach((deg, ringIdx) => {
+                const nodesInRing = degreeGroups.get(deg);
+                nodesInRing.sort((a, b) => nodes[a].label.localeCompare(nodes[b].label));
+                
+                // Calculate ring position (inner rings for higher degree, outer for lower)
+                const ringProgress = (ringIdx + 1) / (numMiddleRings + 1);
+                const ringRadiusX = maxRadiusX * (0.2 + ringProgress * 0.6);
+                const ringRadiusY = maxRadiusY * (0.25 + ringProgress * 0.55);
+                
+                const nodeCount = nodesInRing.length;
+                nodesInRing.forEach((nodeIdx, i) => {
+                    // Distribute evenly, starting from top
+                    const angle = (i / nodeCount) * TWO_PI - HALF_PI;
+                    nodes[nodeIdx].x = centerX + ringRadiusX * Math.cos(angle);
+                    nodes[nodeIdx].y = centerY + ringRadiusY * Math.sin(angle);
+                });
+            });
+            
+            updateInfo();
+            updateLegend();
+            updateStats(adjacency);
+        }
+        
+        function updateStats(adjacency) {
+            // Update |V| and |E|
+            document.getElementById('statVertices').textContent = nodes.length;
+            document.getElementById('statEdges').textContent = edges.length;
+            
+            // Calculate degree distribution
+            const degreeCounts = new Map();
+            for (let i = 0; i < nodes.length; i++) {
+                const degree = adjacency.get(i).length;
+                degreeCounts.set(degree, (degreeCounts.get(degree) || 0) + 1);
+            }
+            
+            // Sort degrees and build table with color indicators
+            const sortedDegrees = Array.from(degreeCounts.keys()).sort((a, b) => a - b);
+            const tbody = document.getElementById('degreeTableBody');
+            tbody.innerHTML = '';
+            
+            sortedDegrees.forEach(degree => {
+                const count = degreeCounts.get(degree);
+                const degColor = getDegreeColor(degree);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${degColor};margin-right:6px;vertical-align:middle;"></span>${degree}</td>
+                    <td>${count} ${count === 1 ? 'vertex' : 'vertices'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        function updateInfo() {
+            document.getElementById('infoZeros').textContent = N - K;
+            document.getElementById('infoStart').textContent = '0'.repeat(N - K) + '1'.repeat(K);
+            document.getElementById('infoNodes').textContent = nodes.length;
+        }
+        
+        function updateLegend() {
+            const legend = document.getElementById('legend');
+            let html = '<h3>Transpositions</h3>';
+            
+            for (let i = 0; i < N - 1; i++) {
+                html += `
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: ${transpositionColors[i]}"></div>
+                        <span>(${i}, ${i + 1})</span>
+                    </div>
+                `;
+            }
+            
+            // Add wrapped transposition to legend if enabled
+            if (isWrapped) {
+                html += `
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: ${transpositionColors[N - 1] || '#ff00ff'}"></div>
+                        <span>(0, ${N - 1}) wrapped</span>
+                    </div>
+                `;
+            }
+            
+            legend.innerHTML = html;
+        }
+        
+        function drawGrid() {
+            const gridSize = N;
+            const bounds = getCanvasBounds();
+            
+            // Add internal padding for grid area (for labels and ticks)
+            const gridPadding = 40;
+            const canvasLeft = bounds.left + gridPadding;
+            const canvasRight = bounds.right - 20;
+            const canvasTop = bounds.top + 20;
+            const canvasBottom = bounds.bottom - gridPadding;
+            
+            const availableWidth = canvasRight - canvasLeft;
+            const availableHeight = canvasBottom - canvasTop;
+            
+            const cellWidth = availableWidth / (gridSize - 1);
+            const cellHeight = availableHeight / (gridSize - 1);
+            
+            // Draw grid lines
+            stroke(120, 120, 120, 80);
+            strokeWeight(1);
+            drawingContext.setLineDash([4, 4]);
+            
+            // Vertical lines
+            for (let i = 0; i < gridSize; i++) {
+                const x = canvasLeft + i * cellWidth;
+                line(x, canvasTop, x, canvasBottom);
+            }
+            
+            // Horizontal lines (Y=0 at bottom, Y=N-1 at top)
+            for (let j = 0; j < gridSize; j++) {
+                const y = canvasBottom - j * cellHeight;
+                line(canvasLeft, y, canvasRight, y);
+            }
+            
+            drawingContext.setLineDash([]);
+            
+            // Draw axes (solid lines)
+            stroke(60, 60, 60, 200);
+            strokeWeight(2);
+            
+            // X axis (at bottom of grid, Y=0)
+            line(canvasLeft, canvasBottom, canvasRight, canvasBottom);
+            // Y axis (at left of grid, X=0)
+            line(canvasLeft, canvasTop, canvasLeft, canvasBottom);
+            
+            // Draw axis labels
+            fill(60, 60, 60);
+            noStroke();
+            textSize(13);
+            textAlign(CENTER, CENTER);
+            textStyle(BOLD);
+            
+            // X axis label (below grid)
+            text('X (first 1 position)', (canvasLeft + canvasRight) / 2, canvasBottom + 30);
+            
+            // Y axis label (left of grid, rotated)
+            push();
+            translate(canvasLeft - 30, (canvasTop + canvasBottom) / 2);
+            rotate(-HALF_PI);
+            text('Y (second 1 position)', 0, 0);
+            pop();
+            
+            // Draw tick marks and numbers
+            textSize(10);
+            textStyle(NORMAL);
+            
+            // X axis ticks (0 to N-1) at bottom
+            textAlign(CENTER, CENTER);
+            for (let i = 0; i < gridSize; i++) {
+                const x = canvasLeft + i * cellWidth;
+                stroke(60, 60, 60, 200);
+                strokeWeight(2);
+                line(x, canvasBottom - 4, x, canvasBottom + 4);
+                noStroke();
+                fill(60, 60, 60);
+                text(i, x, canvasBottom + 14);
+            }
+            
+            // Y axis ticks (0 at bottom, N-1 at top)
+            textAlign(RIGHT, CENTER);
+            for (let j = 0; j < gridSize; j++) {
+                const y = canvasBottom - j * cellHeight;
+                stroke(60, 60, 60, 200);
+                strokeWeight(2);
+                line(canvasLeft - 4, y, canvasLeft + 4, y);
+                noStroke();
+                fill(60, 60, 60);
+                text(j, canvasLeft - 10, y);
+            }
+            
+            textStyle(NORMAL);
+        }
+        
+        function applyForces() {
+            const bounds = getCanvasBounds();
+            const centerX = (bounds.left + bounds.right) / 2;
+            const centerY = (bounds.top + bounds.bottom) / 2;
+            
+            // Reset forces
+            nodes.forEach(node => {
+                node.ax = 0;
+                node.ay = 0;
+            });
+            
+            // Repulsion between all nodes
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const dx = nodes[j].x - nodes[i].x;
+                    const dy = nodes[j].y - nodes[i].y;
+                    const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 1);
+                    const force = REPULSION / (dist * dist);
+                    
+                    const fx = (dx / dist) * force;
+                    const fy = (dy / dist) * force;
+                    
+                    nodes[i].vx -= fx;
+                    nodes[i].vy -= fy;
+                    nodes[j].vx += fx;
+                    nodes[j].vy += fy;
+                }
+            }
+            
+            // Attraction along edges
+            edges.forEach(edge => {
+                const from = nodes[edge.from];
+                const to = nodes[edge.to];
+                
+                const dx = to.x - from.x;
+                const dy = to.y - from.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                const force = dist * ATTRACTION;
+                
+                const fx = (dx / dist) * force;
+                const fy = (dy / dist) * force;
+                
+                from.vx += fx;
+                from.vy += fy;
+                to.vx -= fx;
+                to.vy -= fy;
+            });
+            
+            // Pull towards center
+            nodes.forEach(node => {
+                node.vx += (centerX - node.x) * CENTER_PULL;
+                node.vy += (centerY - node.y) * CENTER_PULL;
+            });
+            
+            // Update positions
+            nodes.forEach(node => {
+                node.vx *= DAMPING;
+                node.vy *= DAMPING;
+                node.x += node.vx;
+                node.y += node.vy;
+                
+                // Keep within defined bounds (clear of UI panels)
+                node.x = constrain(node.x, bounds.left, bounds.right);
+                node.y = constrain(node.y, bounds.top, bounds.bottom);
+            });
+        }
+        
+        function setup() {
+            const canvas = createCanvas(windowWidth, windowHeight);
+            canvas.parent('canvas-container');
+            textFont('JetBrains Mono');
+            buildGraph();
+        }
+        
+        function draw() {
+            // Draw gradient background
+            for (let y = 0; y < height; y++) {
+                const inter = map(y, 0, height, 0, 1);
+                const c = lerpColor(color('#c8e6c9'), color('#b3e5fc'), inter);
+                stroke(c);
+                line(0, y, width, y);
+            }
+            
+            // Draw guide lines within canvas bounds
+            const bounds = getCanvasBounds();
+            const centerX = (bounds.left + bounds.right) / 2;
+            const centerY = (bounds.top + bounds.bottom) / 2;
+            
+            // Vertical guide line
+            stroke(100, 100, 100, 80);
+            strokeWeight(1);
+            drawingContext.setLineDash([8, 8]);
+            line(centerX, bounds.top, centerX, bounds.bottom);
+            
+            // Horizontal guide line
+            line(bounds.left, centerY, bounds.right, centerY);
+            drawingContext.setLineDash([]);
+            
+            // Draw center crosshair (only if not in grid layout)
+            if (!isGridLayout) {
+                stroke(80, 80, 80, 120);
+                strokeWeight(2);
+                const crossSize = 15;
+                line(centerX - crossSize, centerY, centerX + crossSize, centerY);
+                line(centerX, centerY - crossSize, centerX, centerY + crossSize);
+            }
+            
+            // Draw boundary rectangle (subtle) to show canvas area
+            stroke(150, 150, 150, 40);
+            strokeWeight(1);
+            noFill();
+            rect(bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top, 8);
+            
+            // Draw grid if in grid layout mode and K=2
+            if (isGridLayout && K === 2) {
+                drawGrid();
+            }
+            
+            // Apply physics simulation (only if not in grid layout)
+            if (!isGridLayout) {
+                applyForces();
+            }
+            
+            // Draw edges
+            strokeWeight(3);
+            edges.forEach(edge => {
+                const from = nodes[edge.from];
+                const to = nodes[edge.to];
+                
+                stroke(transpositionColors[edge.transposition]);
+                noFill();
+                
+                // Calculate edge endpoints at node boundaries
+                const dx = to.x - from.x;
+                const dy = to.y - from.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist > 0) {
+                    const startX = from.x + (dx / dist) * from.radius;
+                    const startY = from.y + (dy / dist) * from.radius;
+                    const endX = to.x - (dx / dist) * to.radius;
+                    const endY = to.y - (dy / dist) * to.radius;
+                    
+                    // Check if this is a wrapped edge (transposition index === N-1)
+                    const isWrappedEdge = isWrapped && edge.transposition === N - 1;
+                    
+                    // Check if edge crosses through any other node
+                    let crossesNode = false;
+                    if (isWrappedEdge) {
+                        for (let i = 0; i < nodes.length; i++) {
+                            if (i === edge.from || i === edge.to) continue;
+                            
+                            const node = nodes[i];
+                            // Calculate distance from node center to line segment
+                            const distToLine = pointToLineDistance(
+                                node.x, node.y,
+                                from.x, from.y,
+                                to.x, to.y
+                            );
+                            
+                            // If any node is closer than its radius + margin, the edge crosses it
+                            if (distToLine < node.radius + 5) {
+                                crossesNode = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (isWrappedEdge && crossesNode) {
+                        // Draw curved line to avoid crossing through other nodes
+                        const midX = (startX + endX) / 2;
+                        const midY = (startY + endY) / 2;
+                        
+                        // Calculate perpendicular direction
+                        const perpX = -dy / dist;
+                        const perpY = dx / dist;
+                        
+                        // Curve amount proportional to distance
+                        const curveAmount = dist * 0.35;
+                        
+                        // Control point offset perpendicular to the line
+                        const ctrlX = midX + perpX * curveAmount;
+                        const ctrlY = midY + perpY * curveAmount;
+                        
+                        // Draw quadratic bezier curve
+                        beginShape();
+                        vertex(startX, startY);
+                        quadraticVertex(ctrlX, ctrlY, endX, endY);
+                        endShape();
+                    } else {
+                        // Draw straight line
+                        line(startX, startY, endX, endY);
+                    }
+                }
+            });
+            
+            // Draw nodes colored by degree
+            nodes.forEach((node, idx) => {
+                const nodeColor = color(getDegreeColor(node.degree));
+                
+                // Node shadow
+                noStroke();
+                fill(0, 0, 0, 25);
+                ellipse(node.x + 3, node.y + 3, node.radius * 2 + 2);
+                
+                // Node body - colored by degree
+                fill(nodeColor);
+                stroke(red(nodeColor) * 0.7, green(nodeColor) * 0.7, blue(nodeColor) * 0.7);
+                strokeWeight(2);
+                ellipse(node.x, node.y, node.radius * 2);
+                
+                // Node label - use white or black text based on color brightness
+                noStroke();
+                const fontSize = map(N, 2, 10, 20, 11);
+                textSize(fontSize);
+                textAlign(CENTER, CENTER);
+                textStyle(BOLD);
+                
+                // Calculate brightness to determine text color
+                const brightness = (red(nodeColor) * 299 + green(nodeColor) * 587 + blue(nodeColor) * 114) / 1000;
+                fill(brightness > 150 ? 30 : 255);
+                
+                text(node.label, node.x, node.y);
+                textStyle(NORMAL);
+            });
+        }
+        
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+        
+        function rebuildGraph() {
+            const newN = parseInt(document.getElementById('inputN').value);
+            const newK = parseInt(document.getElementById('inputK').value);
+            
+            // Validation
+            if (newN < 2) {
+                alert('N must be at least 2');
+                return;
+            }
+            if (newN > 10) {
+                alert('N cannot exceed 10');
+                return;
+            }
+            if (newK < 1) {
+                alert('K must be at least 1');
+                return;
+            }
+            if (newK >= newN) {
+                alert('K must be less than N');
+                return;
+            }
+            
+            N = newN;
+            K = newK;
+            isGridLayout = false;
+            buildGraph();
+        }
+        
+        // Dragging functionality
+        let draggedNode = null;
+        
+        function mousePressed() {
+            // Check if clicking on a node
+            for (let node of nodes) {
+                const d = dist(mouseX, mouseY, node.x, node.y);
+                if (d < node.radius) {
+                    draggedNode = node;
+                    break;
+                }
+            }
+        }
+        
+        function mouseDragged() {
+            if (draggedNode) {
+                draggedNode.x = mouseX;
+                draggedNode.y = mouseY;
+                draggedNode.vx = 0;
+                draggedNode.vy = 0;
+                // Dragging a node exits grid layout mode
+                if (isGridLayout) {
+                    isGridLayout = false;
+                }
+            }
+        }
+        
+        function mouseReleased() {
+            draggedNode = null;
+        }
+        
+        // Slider update functions
+        function updateNodeSize(value) {
+            NODE_SIZE = parseInt(value);
+            document.getElementById('nodeSizeValue').textContent = value;
+        }
+        
+        function updateRepulsion(value) {
+            REPULSION = parseInt(value);
+            document.getElementById('repulsionValue').textContent = value;
+        }
+        
+        function updateAttraction(value) {
+            ATTRACTION = parseInt(value) / 1000;
+            document.getElementById('attractionValue').textContent = ATTRACTION.toFixed(3);
+        }
+        
+        function shakeNodes() {
+            const bounds = getCanvasBounds();
+            const centerX = (bounds.left + bounds.right) / 2;
+            const centerY = (bounds.top + bounds.bottom) / 2;
+            const shakeRadiusX = (bounds.right - bounds.left) * 0.35;
+            const shakeRadiusY = (bounds.bottom - bounds.top) * 0.35;
+            
+            nodes.forEach((node, i) => {
+                // Add random displacement within bounds
+                const angle = random(TWO_PI);
+                node.x = centerX + cos(angle) * random(shakeRadiusX * 0.3, shakeRadiusX);
+                node.y = centerY + sin(angle) * random(shakeRadiusY * 0.3, shakeRadiusY);
+                
+                // Add random velocity for extra chaos
+                node.vx = random(-15, 15);
+                node.vy = random(-15, 15);
+            });
+            
+            isGridLayout = false;
+        }
+        
+        function getOnesPositions(str) {
+            // Return array of positions where there are 1s
+            const positions = [];
+            for (let i = 0; i < str.length; i++) {
+                if (str[i] === '1') {
+                    positions.push(i);
+                }
+            }
+            return positions;
+        }
+        
+        function toggleGridLayout() {
+            if (K !== 2) {
+                alert('Grid layout is only available when K=2 (exactly two ones per string)');
+                return;
+            }
+            
+            isGridLayout = true;
+            
+            // Calculate grid dimensions (must match drawGrid exactly)
+            const gridSize = N;
+            const bounds = getCanvasBounds();
+            
+            // Same padding as drawGrid
+            const gridPadding = 40;
+            const canvasLeft = bounds.left + gridPadding;
+            const canvasRight = bounds.right - 20;
+            const canvasTop = bounds.top + 20;
+            const canvasBottom = bounds.bottom - gridPadding;
+            
+            const availableWidth = canvasRight - canvasLeft;
+            const availableHeight = canvasBottom - canvasTop;
+            
+            // Cell size for the grid
+            const cellWidth = availableWidth / (gridSize - 1);
+            const cellHeight = availableHeight / (gridSize - 1);
+            
+            // Position each node based on its 1s positions
+            nodes.forEach(node => {
+                const positions = getOnesPositions(node.label);
+                if (positions.length === 2) {
+                    const x = positions[0]; // First 1 position
+                    const y = positions[1]; // Second 1 position
+                    
+                    // Map to canvas coordinates
+                    // X axis goes left to right (X=0 at left)
+                    // Y axis goes bottom to top (Y=0 at bottom, Y increases upward)
+                    node.x = canvasLeft + x * cellWidth;
+                    node.y = canvasBottom - y * cellHeight;
+                    
+                    // Reset velocity
+                    node.vx = 0;
+                    node.vy = 0;
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+
