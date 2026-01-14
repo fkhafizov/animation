@@ -5,6 +5,7 @@
 * [math berloga](https://web.telegram.org/k/#-2455889410)
 * [math in AI - fall 2025](https://web.telegram.org/k/#-3466473652)
 * [CC chat](https://web.telegram.org/k/#-3459573716)
+* [(sci) Berloga Science](https://web.telegram.org/k/)
 * [Demos](https://fkhafizov.github.io/animation)
   * [roc_aac_path_length](https://fkhafizov.github.io/animation/roc_aac_path_length.html):
     1. Select N (num samples)
