@@ -3,7 +3,7 @@
 * https://web.telegram.org/k/
 * [chervov](https://web.telegram.org/k/)
 * [math berloga](https://web.telegram.org/k/#-2455889410)
-* [math in AI - fall 2025](https://web.telegram.org/k/#-3466473652)
+* [ dls projects - math in AI - fall 2025](https://web.telegram.org/k/#-3466473652)
 * [CC chat](https://web.telegram.org/k/#-3459573716)
 * [(sci) Berloga Science](https://web.telegram.org/k/)
   * [RL](https://web.telegram.org/k/#@sberlogasci) 
