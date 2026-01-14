@@ -4,6 +4,8 @@
 
 * https://claude.ai/chat/f2f38a9b-5e5d-4020-9897-a1d3289a439c
 
+![schreier_graphs.png](schreier_graphs.png)
+
 # Schreier Graphs (Coset Graphs)
 
 ## Definition
