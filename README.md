@@ -6,6 +6,7 @@
 * [ dls projects - math in AI - fall 2025](https://web.telegram.org/k/#-3466473652)
 * [CC chat](https://web.telegram.org/k/#-3459573716)
 * [(sci) Berloga Science](https://web.telegram.org/k/)
+  * [Videos Webinars etc](https://web.telegram.org/k/#@sberlogasci)
   * [RL](https://web.telegram.org/k/#@sberlogasci) 
 * [Demos](https://fkhafizov.github.io/animation)
   * [roc_aac_path_length](https://fkhafizov.github.io/animation/roc_aac_path_length.html):
