@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pancake Sorting Visualization</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        h1 {
+            color: #8b4513;
+            text-shadow: 2px 2px 4px rgba(255,255,255,0.5);
+            margin-bottom: 10px;
+        }
+        
+        .controls {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            max-width: 800px;
+            width: 100%;
+        }
+        
+        .control-group {
+            margin: 15px 0;
+        }
+        
+        label {
+            display: inline-block;
+            margin-right: 10px;
+            font-weight: bold;
+            color: #8b4513;
+        }
+        
+        input[type="range"] {
+            width: 200px;
+            vertical-align: middle;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            color: #8b4513;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .manual-input {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        
+        .manual-input input {
+            width: 50px;
+            padding: 5px;
+            border: 2px solid #f6d365;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .info {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            color: #8b4513;
+        }
+        
+        .main-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            max-width: 1400px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        #canvas-container {
+            flex: 0 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        
+        #permutationHistory {
+            flex: 0 0 700px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-height: 1000px;
+            overflow-y: auto;
+        }
+        
+        #permutationHistory h3 {
+            color: #8b4513;
+            margin-top: 0;
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 0;
+            z-index: 10;
+            border-bottom: 2px solid #f6d365;
+        }
+        
+        .permutation-step {
+            margin: 3px 0;
+            padding: 4px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 4px;
+            border-left: 3px solid #f6d365;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        
+        .permutation-step.current {
+            background: rgba(246, 211, 101, 0.3);
+            border-left-color: #fda085;
+            font-weight: bold;
+        }
+        
+        .perm-number {
+            display: inline-block;
+            padding: 1px 4px;
+            margin: 0px 1px;
+            border-radius: 3px;
+            background: #fff;
+            border: 1px solid #ddd;
+            min-width: 20px;
+            text-align: center;
+            font-size: 12px;
+        }
+        
+        .perm-number.flipped {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            border-color: #ff6b9d;
+            font-weight: bold;
+            transform: scale(1.1);
+        }
+        
+        .step-label {
+            color: #8b4513;
+            font-weight: bold;
+            margin-right: 8px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🥞 Pancake Sorting Visualization 🥞</h1>
+    
+    <div class="controls">
+        <div class="control-group">
+            <label>Stack Size (N):</label>
+            <input type="range" id="stackSize" min="3" max="12" value="6" oninput="updateStackSize(this.value)">
+            <span id="stackSizeValue">6</span>
+        </div>
+        
+        <div class="control-group">
+            <label>Canvas Width:</label>
+            <input type="range" id="canvasWidth" min="300" max="600" value="400" step="50" oninput="updateCanvasWidth(this.value)">
+            <span id="canvasWidthValue">400px</span>
+        </div>
+        
+        <div class="control-group">
+            <button onclick="randomizeStack()">🎲 Randomize</button>
+            <button onclick="toggleManualMode()">✏️ Manual Entry</button>
+            <button onclick="resetStack()">🔄 Reset</button>
+        </div>
+        
+        <div id="manualContainer" style="display: none;">
+            <div class="control-group">
+                <label>Enter pancake sizes (space-separated):</label>
+                <div class="manual-input" id="manualInput"></div>
+                <button onclick="applyManualOrder()">Apply</button>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <label>
+                <input type="checkbox" id="showSteps" checked> Show Step-by-Step
+            </label>
+            <label style="margin-left: 20px;">
+                Animation Speed:
+                <input type="range" id="speedSlider" min="100" max="2000" value="800" step="100">
+                <span id="speedValue">800ms</span>
+            </label>
+        </div>
+        
+        <div class="control-group">
+            <button onclick="startSort()" id="sortBtn">🚀 Start Sorting</button>
+            <button onclick="nextStep()" id="stepBtn" disabled>➡️ Next Step</button>
+            <button onclick="stopSort()" id="stopBtn" disabled>⏹️ Stop</button>
+        </div>
+        
+        <div class="info" id="info">
+            Click "Randomize" to create a random stack, or use "Manual Entry" to set your own order. Then click "Start Sorting"!
+        </div>
+        
+        <div class="info" id="stats" style="margin-top: 10px; font-family: 'Courier New', monospace;">
+            <strong>Algorithm Performance:</strong><br>
+            <span id="statsContent">No data yet</span>
+        </div>
+    </div>
+    
+    <div class="main-container">
+        <div id="canvas-container"></div>
+        
+        <div id="permutationHistory">
+            <h3>Permutation History</h3>
+            <div id="historyContent" style="font-family: 'Courier New', monospace; line-height: 1.5; font-size: 12px;">
+                Ready to start...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let pancakes = [];
+        let n = 6;
+        let sorting = false;
+        let currentStep = 0;
+        let steps = [];
+        let animating = false;
+        let flipAnimation = null;
+        let showSteps = true;
+        let animationSpeed = 800;
+        let permutationHistory = [];
+        let flipIndices = [];
+        let canvasWidth = 400;
+        let canvasHeight = 500;
+        let pancakeHeight = 35;
+        let startY = 100;
+        
+        // Color palette - light, appetizing colors
+        const pancakeColors = [
+            '#FFE5B4', // Peach
+            '#FFDAB9', // Peach Puff
+            '#FFE4C4', // Bisque
+            '#FFEFD5', // Papaya Whip
+            '#FFF8DC', // Cornsilk
+            '#FFFACD', // Lemon Chiffon
+            '#FFE4E1', // Misty Rose
+            '#FFF0F5', // Lavender Blush
+            '#F0E68C', // Khaki
+            '#FAFAD2', // Light Goldenrod
+            '#FFE4B5', // Moccasin
+            '#FFDEAD', // Navajo White
+        ];
+        
+        function setup() {
+            updateCanvasHeight();
+            let canvas = createCanvas(canvasWidth, canvasHeight);
+            canvas.parent('canvas-container');
+            initializeStack();
+            updateInfo("Ready to sort! Click 'Randomize' or 'Start Sorting'");
+        }
+        
+        function updateCanvasHeight() {
+            // Calculate height needed for all pancakes plus margins
+            let neededHeight = startY + (n * pancakeHeight) + 50;
+            // Ensure minimum height
+            canvasHeight = Math.max(400, neededHeight);
+        }
+        
+        function draw() {
+            background(255, 250, 240);
+            
+            // Draw title
+            fill(139, 69, 19);
+            textAlign(CENTER);
+            textSize(18);
+            text("Current Stack", width/2, 30);
+            
+            if (flipAnimation) {
+                drawFlipAnimation();
+            } else {
+                drawPancakes();
+            }
+            
+            // Draw step counter
+            if (steps.length > 0 && currentStep < steps.length) {
+                fill(139, 69, 19);
+                textSize(14);
+                text(`Step ${currentStep + 1} of ${steps.length}`, width/2, height - 20);
+            }
+        }
+        
+        function drawPancakes() {
+            let maxWidth = canvasWidth * 0.7;
+            
+            for (let i = 0; i < pancakes.length; i++) {
+                let w = map(pancakes[i], 1, n, maxWidth * 0.3, maxWidth);
+                let x = width / 2 - w / 2;
+                let y = startY + i * pancakeHeight;
+                
+                // Pancake shadow
+                fill(0, 0, 0, 30);
+                ellipse(width/2, y + pancakeHeight - 2, w * 0.95, 15);
+                
+                // Pancake body
+                fill(pancakeColors[pancakes[i] - 1]);
+                stroke(210, 180, 140);
+                strokeWeight(2);
+                rect(x, y, w, pancakeHeight - 5, 15);
+                
+                // Pancake highlights
+                noStroke();
+                fill(255, 255, 255, 80);
+                ellipse(x + w * 0.3, y + 10, w * 0.2, 8);
+                
+                // Size label
+                fill(139, 69, 19);
+                textAlign(CENTER, CENTER);
+                textSize(16);
+                text(pancakes[i], width/2, y + pancakeHeight/2);
+            }
+        }
+        
+        function drawFlipAnimation() {
+            let progress = (millis() - flipAnimation.startTime) / flipAnimation.duration;
+            if (progress >= 1) {
+                // Animation complete
+                pancakes = flipAnimation.targetStack.slice();
+                flipAnimation = null;
+                currentStep++;
+                displayPermutationHistory();
+                
+                if (sorting && showSteps && currentStep < steps.length) {
+                    setTimeout(() => {
+                        performNextStep();
+                    }, 300);
+                } else if (sorting && !showSteps && currentStep < steps.length) {
+                    performNextStep();
+                } else if (currentStep >= steps.length) {
+                    sorting = false;
+                    document.getElementById('sortBtn').disabled = false;
+                    document.getElementById('stepBtn').disabled = true;
+                    document.getElementById('stopBtn').disabled = true;
+                    updateInfo("Sorting complete! 🎉");
+                }
+                return;
+            }
+            
+            let maxWidth = canvasWidth * 0.7;
+            let flipIndex = flipAnimation.flipIndex;
+            
+            // Calculate center of flip group
+            let flipCenterY = startY + (flipIndex * pancakeHeight) / 2;
+            
+            for (let i = 0; i < pancakes.length; i++) {
+                let w = map(pancakes[i], 1, n, maxWidth * 0.3, maxWidth);
+                let x = width / 2 - w / 2;
+                let y = startY + i * pancakeHeight;
+                
+                if (i <= flipIndex) {
+                    // Flipping pancakes - create a vertical flip effect
+                    push();
+                    
+                    // Calculate the flipped position
+                    let distanceFromCenter = y - flipCenterY;
+                    let angle = progress * PI;
+                    let scaleY = cos(angle);
+                    
+                    // Move to position
+                    translate(width/2, y + pancakeHeight/2);
+                    
+                    // Apply vertical scale for flip effect
+                    scale(1, abs(scaleY));
+                    
+                    // Pancake shadow (reduced during flip)
+                    fill(0, 0, 0, 30 * abs(scaleY));
+                    ellipse(0, pancakeHeight/2 - 2, w * 0.95, 15);
+                    
+                    // Pancake body with shading during flip
+                    let brightness = map(abs(scaleY), 0, 1, 0.6, 1);
+                    let c = color(pancakeColors[pancakes[i] - 1]);
+                    fill(red(c) * brightness, green(c) * brightness, blue(c) * brightness);
+                    stroke(210, 180, 140);
+                    strokeWeight(2);
+                    rect(-w/2, -pancakeHeight/2, w, pancakeHeight - 5, 15);
+                    
+                    // Highlight
+                    noStroke();
+                    fill(255, 255, 255, 80 * abs(scaleY));
+                    ellipse(-w * 0.2, -pancakeHeight/2 + 10, w * 0.2, 8);
+                    
+                    // Label (flip text when back side is showing)
+                    fill(139, 69, 19);
+                    textAlign(CENTER, CENTER);
+                    textSize(16);
+                    if (scaleY < 0) {
+                        scale(1, -1);
+                    }
+                    text(pancakes[i], 0, 0);
+                    
+                    pop();
+                } else {
+                    // Non-flipping pancakes - draw normally
+                    fill(0, 0, 0, 30);
+                    ellipse(width/2, y + pancakeHeight - 2, w * 0.95, 15);
+                    
+                    fill(pancakeColors[pancakes[i] - 1]);
+                    stroke(210, 180, 140);
+                    strokeWeight(2);
+                    rect(x, y, w, pancakeHeight - 5, 15);
+                    
+                    noStroke();
+                    fill(255, 255, 255, 80);
+                    ellipse(x + w * 0.3, y + 10, w * 0.2, 8);
+                    
+                    fill(139, 69, 19);
+                    textAlign(CENTER, CENTER);
+                    textSize(16);
+                    text(pancakes[i], width/2, y + pancakeHeight/2);
+                }
+            }
+        }
+        
+        function initializeStack() {
+            pancakes = [];
+            for (let i = 1; i <= n; i++) {
+                pancakes.push(i);
+            }
+        }
+        
+        function randomizeStack() {
+            pancakes = [];
+            for (let i = 1; i <= n; i++) {
+                pancakes.push(i);
+            }
+            // Fisher-Yates shuffle
+            for (let i = pancakes.length - 1; i > 0; i--) {
+                let j = Math.floor(Math.random() * (i + 1));
+                [pancakes[i], pancakes[j]] = [pancakes[j], pancakes[i]];
+            }
+            permutationHistory = [];
+            flipIndices = [];
+            document.getElementById('historyContent').innerHTML = 'Ready to start...';
+            document.getElementById('statsContent').innerHTML = 'No data yet';
+            updateInfo("Stack randomized! Ready to sort.");
+        }
+        
+        function updateStackSize(value) {
+            n = parseInt(value);
+            document.getElementById('stackSizeValue').textContent = n;
+            updateCanvasHeight();
+            resizeCanvas(canvasWidth, canvasHeight);
+            initializeStack();
+            updateManualInputs();
+            permutationHistory = [];
+            flipIndices = [];
+            document.getElementById('historyContent').innerHTML = 'Ready to start...';
+            document.getElementById('statsContent').innerHTML = 'No data yet';
+            updateInfo(`Stack size set to ${n}`);
+        }
+        
+        function updateCanvasWidth(value) {
+            canvasWidth = parseInt(value);
+            document.getElementById('canvasWidthValue').textContent = canvasWidth + 'px';
+            resizeCanvas(canvasWidth, canvasHeight);
+            updateInfo(`Canvas width set to ${canvasWidth}px`);
+        }
+        
+        function toggleManualMode() {
+            let container = document.getElementById('manualContainer');
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                updateManualInputs();
+            } else {
+                container.style.display = 'none';
+            }
+        }
+        
+        function updateManualInputs() {
+            let container = document.getElementById('manualInput');
+            container.innerHTML = '';
+            for (let i = 0; i < n; i++) {
+                let input = document.createElement('input');
+                input.type = 'number';
+                input.min = 1;
+                input.max = n;
+                input.value = pancakes[i] || (i + 1);
+                input.id = `manual-${i}`;
+                container.appendChild(input);
+            }
+        }
+        
+        function applyManualOrder() {
+            let newStack = [];
+            let valid = true;
+            let used = new Set();
+            
+            for (let i = 0; i < n; i++) {
+                let val = parseInt(document.getElementById(`manual-${i}`).value);
+                if (val < 1 || val > n || used.has(val) || isNaN(val)) {
+                    valid = false;
+                    break;
+                }
+                used.add(val);
+                newStack.push(val);
+            }
+            
+            if (valid && newStack.length === n) {
+                pancakes = newStack;
+                updateInfo("Manual order applied!");
+            } else {
+                updateInfo("Invalid input! Each number from 1 to " + n + " must appear exactly once.");
+            }
+        }
+        
+        function resetStack() {
+            initializeStack();
+            currentStep = 0;
+            steps = [];
+            sorting = false;
+            flipAnimation = null;
+            permutationHistory = [];
+            flipIndices = [];
+            document.getElementById('sortBtn').disabled = false;
+            document.getElementById('stepBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('historyContent').innerHTML = 'Ready to start...';
+            document.getElementById('statsContent').innerHTML = 'No data yet';
+            updateInfo("Stack reset to sorted order.");
+        }
+        
+        function startSort() {
+            showSteps = document.getElementById('showSteps').checked;
+            animationSpeed = parseInt(document.getElementById('speedSlider').value);
+            
+            steps = calculatePancakeSort(pancakes.slice());
+            currentStep = 0;
+            sorting = true;
+            
+            // Initialize permutation history
+            permutationHistory = [pancakes.slice()];
+            flipIndices = steps.slice();
+            
+            // Pre-calculate all permutation states
+            let tempStack = pancakes.slice();
+            for (let i = 0; i < steps.length; i++) {
+                tempStack = flip(tempStack, steps[i]);
+                permutationHistory.push(tempStack.slice());
+            }
+            
+            displayPermutationHistory();
+            
+            // Display algorithm statistics
+            let actualFlips = steps.length;
+            let theoreticalMax = 2 * (n - 1);
+            let percentage = ((actualFlips / theoreticalMax) * 100).toFixed(1);
+            let efficiency = theoreticalMax - actualFlips;
+            
+            let statsHTML = `
+                <strong>N = ${n}</strong><br>
+                Flips used: ${actualFlips}<br>
+                Theoretical maximum: ${theoreticalMax} (= 2(n-1))<br>
+                Efficiency: ${efficiency} flips saved (${percentage}% of max)<br>
+                Lower bound: ${n-1} flips (best possible for any algorithm)
+            `;
+            document.getElementById('statsContent').innerHTML = statsHTML;
+            
+            document.getElementById('sortBtn').disabled = true;
+            document.getElementById('stepBtn').disabled = !showSteps;
+            document.getElementById('stopBtn').disabled = false;
+            
+            updateInfo(`Starting pancake sort... ${steps.length} flips needed.`);
+            
+            if (!showSteps) {
+                performNextStep();
+            }
+        }
+        
+        function nextStep() {
+            if (!animating && currentStep < steps.length) {
+                performNextStep();
+            }
+        }
+        
+        function stopSort() {
+            sorting = false;
+            flipAnimation = null;
+            document.getElementById('sortBtn').disabled = false;
+            document.getElementById('stepBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = true;
+            updateInfo("Sorting stopped.");
+        }
+        
+        function performNextStep() {
+            if (!sorting || currentStep >= steps.length) {
+                sorting = false;
+                document.getElementById('sortBtn').disabled = false;
+                document.getElementById('stepBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = true;
+                updateInfo("Sorting complete! 🎉");
+                return;
+            }
+            
+            animating = true;
+            let flipIndex = steps[currentStep];
+            let targetStack = flip(pancakes.slice(), flipIndex);
+            
+            flipAnimation = {
+                flipIndex: flipIndex,
+                startTime: millis(),
+                duration: showSteps ? animationSpeed : 200,
+                targetStack: targetStack
+            };
+            
+            updateInfo(`Step ${currentStep + 1}/${steps.length}: Flipping top ${flipIndex + 1} pancake${flipIndex > 0 ? 's' : ''}...`);
+        }
+        
+        function flip(arr, k) {
+            let result = arr.slice();
+            let left = 0;
+            let right = k;
+            while (left < right) {
+                [result[left], result[right]] = [result[right], result[left]];
+                left++;
+                right--;
+            }
+            return result;
+        }
+        
+        function calculatePancakeSort(arr) {
+            let steps = [];
+            let stack = arr.slice();
+            
+            for (let currSize = stack.length; currSize > 1; currSize--) {
+                // Find index of maximum in stack[0...currSize-1]
+                let maxIndex = 0;
+                for (let i = 0; i < currSize; i++) {
+                    if (stack[i] > stack[maxIndex]) {
+                        maxIndex = i;
+                    }
+                }
+                
+                // If max is not already at the bottom
+                if (maxIndex !== currSize - 1) {
+                    // First flip to bring max to top (if not already there)
+                    if (maxIndex !== 0) {
+                        steps.push(maxIndex);
+                        stack = flip(stack, maxIndex);
+                    }
+                    
+                    // Then flip to bring max to its correct position
+                    steps.push(currSize - 1);
+                    stack = flip(stack, currSize - 1);
+                }
+            }
+            
+            return steps;
+        }
+        
+        function updateInfo(message) {
+            document.getElementById('info').textContent = message;
+        }
+        
+        function displayPermutationHistory() {
+            let html = '';
+            
+            for (let i = 0; i < permutationHistory.length; i++) {
+                let isCurrent = (i === currentStep);
+                let stepClass = isCurrent ? 'permutation-step current' : 'permutation-step';
+                
+                html += `<div class="${stepClass}">`;
+                
+                if (i === 0) {
+                    html += `<span class="step-label">Initial:</span>`;
+                } else {
+                    html += `<span class="step-label">Step ${i}:</span>`;
+                    html += `<span style="color: #666; font-size: 0.9em;">(flip ${flipIndices[i-1] + 1})</span> `;
+                }
+                
+                html += '<span style="margin-left: 10px;">';
+                for (let j = 0; j < permutationHistory[i].length; j++) {
+                    let isFlipped = (i > 0 && j <= flipIndices[i-1]);
+                    let numClass = isFlipped ? 'perm-number flipped' : 'perm-number';
+                    html += `<span class="${numClass}">${permutationHistory[i][j]}</span>`;
+                }
+                html += '</span>';
+                
+                html += '</div>';
+            }
+            
+            if (html === '') {
+                html = 'Ready to start...';
+            }
+            
+            document.getElementById('historyContent').innerHTML = html;
+            
+            // Auto-scroll to current step
+            if (permutationHistory.length > 0) {
+                let historyDiv = document.getElementById('permutationHistory');
+                let currentSteps = historyDiv.querySelectorAll('.permutation-step.current');
+                if (currentSteps.length > 0) {
+                    currentSteps[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }
+        }
+        
+        // Speed slider update
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            animationSpeed = parseInt(this.value);
+            document.getElementById('speedValue').textContent = animationSpeed + 'ms';
+        });
+    </script>
+</body>
+</html>
