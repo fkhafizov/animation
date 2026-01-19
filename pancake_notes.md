@@ -1,6 +1,130 @@
 2026.01.19
 
-Excellent notebook! This is a sophisticated approach to pancake sorting using **machine learning-guided beam search** on **Cayley graphs**. Let me break down how it works:
+# Pancake problem demo description
+
+Demo uses the **classic greedy pancake sorting algorithm** (also known as "sorting by prefix reversals"). Let me explain the algorithm and its complexity bounds:
+
+## The Algorithm
+
+The algorithm works by repeatedly:
+1. Find the largest unsorted pancake
+2. Flip it to the top (if not already there)
+3. Flip it to its final position at the bottom of the unsorted portion
+4. Repeat for remaining unsorted pancakes
+
+## Theoretical Bounds
+
+**For this specific greedy algorithm:**
+- **Upper bound:** $2(n-1) = 2n - 2$ flips
+  - Worst case: each of $(n-1)$ pancakes requires 2 flips
+  - One flip to bring it to the top, one to place it in position
+
+**For optimal pancake sorting (general problem):**
+- **Lower bound:** At least $n - 1$ flips needed for some permutations
+- **Best known upper bound:** $\frac{18n}{11} + O(1)$ (Chitturi et al., 2009)
+- **Tight lower bound:** $\lceil\frac{15n}{14}\rceil$ (Gates & Papadimitriou, 1979)
+
+The exact pancake number $P(n)$ (maximum flips needed for any permutation of size $n$) is only known for small values:
+- $P(3) = 3$
+- $P(4) = 4$
+- $P(5) = 5$
+- $P(6) = 7$
+- $P(7) = 8$
+
+## Let me add a flip counter to show how the algorithm performs:I'm using the **classic greedy pancake sorting algorithm**. Here's the complete analysis:
+
+## Algorithm Description
+
+The greedy algorithm works by selection sort with flips:
+1. Find the largest unsorted pancake
+2. If not at top: flip to bring it to position 0
+3. Flip to move it to its final position at the bottom
+4. Repeat for remaining $(n-1), (n-2), ..., 2$ positions
+
+## Complexity Bounds
+
+### Upper Bound (This Algorithm)
+**$2(n-1)$ flips maximum**
+
+In the worst case, each of the $(n-1)$ pancakes needs exactly 2 flips:
+- 1 flip to bring it to the top
+- 1 flip to place it in final position
+
+This gives: $2(n-1) = 2n - 2$ flips
+
+### Lower Bound (Any Algorithm)
+**At least $(n-1)$ flips required**
+
+Some permutations require at least $(n-1)$ flips. The theoretical lower bound for worst-case pancake sorting is $\lceil\frac{15n}{14}\rceil$ (Gates & Papadimitriou, 1979).
+
+### Known Pancake Numbers $P(n)$
+The maximum flips needed for **any** permutation of size $n$:
+- $P(1) = 0$
+- $P(2) = 1$
+- $P(3) = 3$
+- $P(4) = 4$
+- $P(5) = 5$
+- $P(6) = 7$
+- $P(7) = 8$
+- $P(8) = 9$
+- $P(9) = 10$
+- $P(10) = 11$
+
+For larger $n$, we know: $\frac{15n}{14} \leq P(n) \leq \frac{18n}{11} + O(1)$
+
+## Performance Visualization
+
+I've added an **Algorithm Performance** panel that shows:
+- Actual flips used for your permutation
+- Theoretical maximum (2(n-1))
+- How many flips were saved
+- Percentage of maximum used
+- Lower bound comparison
+
+## Example Analysis
+
+For a random permutation of size $n=6$:
+- **Theoretical max**: $2(6-1) = 10$ flips
+- **Known optimal**: $P(6) = 7$ flips (some permutations need exactly 7)
+- **My algorithm**: Typically uses 8-10 flips depending on the permutation
+- **Lower bound**: At least 5 flips needed
+
+The greedy algorithm isn't optimal but guarantees a solution within $2n-2$ flips, which is practical and easy to understand!
+
+Try sorting different permutations to see how the algorithm performs on various inputs! 🥞
+### Current Stack Window (Canvas):
+**Dynamic Height Calculation:**
+- Canvas height now automatically adjusts based on stack size $N$
+- Formula: `height = startY + (N × pancakeHeight) + 50`
+- Minimum height of 400px, expands as needed
+- For N=12: Canvas grows to ~570px to fit all pancakes comfortably
+- Updates automatically when you change stack size
+
+### Permutation History Window:
+**Much More Compact Display:**
+- **Font size**: Reduced to 12px (from 13px)
+- **Line height**: Reduced to 1.5 (from 1.7)
+- **Step margins**: 3px (from 6px)
+- **Step padding**: 4px (from 6px)
+- **Number boxes**: 20px min-width (from 22px), 1px padding (from 2px)
+- **Max height**: Increased to 1000px to show more steps
+- **Step labels**: 12px font (from 13px)
+
+### Results:
+With these compact sizes:
+- **Each permutation line**: ~25-28px total height (including margins)
+- **Visible steps**: ~35-40 steps visible at once in the 1000px window
+- **Maximum steps for N=12**: ~22 steps worst case (2(12-1) = 22)
+- **All steps fit**: Even worst-case scenarios for N=12 now fit without scrolling!
+
+The canvas dynamically grows taller as you increase N, and the permutation history is now compact enough to show all sorting steps for any value of N up to 12 without needing to scroll! 🥞
+
+
+# ML/RL approach for estimating $ P(N)$
+
+* [Cayley_Pancake_Initial_state_distance.ipynb](https://colab.research.google.com/drive/1k3-CapxAf9nf4AldyE9dk1B_HHeRluNM?usp=sharing)
+
+This is a sophisticated approach to pancake sorting using **machine learning-guided beam search** on **Cayley graphs**. 
 
 ## Overview: ML-Guided Search on Cayley Graphs
 
