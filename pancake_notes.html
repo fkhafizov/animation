@@ -157,12 +157,22 @@ The algorithm works by repeatedly:
 - **Best known upper bound:** $\\frac{18n}{11} + O(1)$ (Chitturi et al., 2009)
 - **Tight lower bound:** $\\lceil\\frac{15n}{14}\\rceil$ (Gates & Papadimitriou, 1979)
 
-The exact pancake number $P(n)$ (maximum flips needed for any permutation of size $n$) is only known for small values:
+
+### Known Pancake Numbers $P(n)$
+The exact pancake number $P(n)$ (maximum flips needed for any permutation of size $n$) is only known for small values.
+The maximum flips needed for **any** permutation of size $n$:
+- $P(1) = 0$
+- $P(2) = 1$
 - $P(3) = 3$
 - $P(4) = 4$
 - $P(5) = 5$
 - $P(6) = 7$
 - $P(7) = 8$
+- $P(8) = 9$
+- $P(9) = 10$
+- $P(10) = 11$
+
+For larger $n$, we know: $\\frac{15n}{14} \\leq P(n) \\leq \\frac{18n}{11} + O(1)$
 
 ## Here's the complete algorithm analysis:
 
@@ -188,20 +198,8 @@ This gives: $2(n-1) = 2n - 2$ flips
 
 Some permutations require at least $(n-1)$ flips. The theoretical lower bound for worst-case pancake sorting is $\\lceil\\frac{15n}{14}\\rceil$ (Gates & Papadimitriou, 1979).
 
-### Known Pancake Numbers $P(n)$
-The maximum flips needed for **any** permutation of size $n$:
-- $P(1) = 0$
-- $P(2) = 1$
-- $P(3) = 3$
-- $P(4) = 4$
-- $P(5) = 5$
-- $P(6) = 7$
-- $P(7) = 8$
-- $P(8) = 9$
-- $P(9) = 10$
-- $P(10) = 11$
 
-For larger $n$, we know: $\\frac{15n}{14} \\leq P(n) \\leq \\frac{18n}{11} + O(1)$
+
 
 ## Performance Visualization
 
