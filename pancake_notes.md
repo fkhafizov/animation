@@ -120,7 +120,7 @@ With these compact sizes:
 The canvas dynamically grows taller as you increase N, and the permutation history is now compact enough to show all sorting steps for any value of N up to 12 without needing to scroll! 🥞
 
 
-# ML/RL approach for estimating $ P(N)$
+# ML/RL approach for estimating $P(N)$
 
 * [Cayley_Pancake_Initial_state_distance.ipynb](https://colab.research.google.com/drive/1k3-CapxAf9nf4AldyE9dk1B_HHeRluNM?usp=sharing)
 
