@@ -338,6 +338,16 @@
             <button id="triangleBtn">TRIANGLES</button>
             <button id="lehmerChartBtn" class="secondary" style="display: none;">LEHMER CHART</button>
             <button id="aggregateBtn" class="secondary" style="display: none;">AGGREGATE</button>
+            <button id="helpBtn" class="secondary">HELP</button>
+        </div>
+        
+        <div id="help-section" style="display: none; background: rgba(255,253,245,0.95); padding: 18px 30px; border-radius: 16px; box-shadow: 0 8px 32px rgba(80,70,50,0.1); border: 1px solid rgba(220,200,150,0.3); font-family: 'Fira Code', monospace; font-size: 0.9rem; color: #3d5a6e; line-height: 1.8; max-width: 600px;">
+            <strong>Required input:</strong><br>
+            N = permutation length,<br>
+            P1 and P2 (entered manually or randomly).<br><br>
+            Note that "P1: 3 2 1 04" and "P2: 0 3 1 22" are valid entries,<br>
+            ie "04" and "22" are read as "0 4" and "2 2", respectively.<br>
+            This is done for convenience and could be safely ignored.
         </div>
         
         <div class="main-area">
@@ -481,9 +491,19 @@
             document.getElementById('triangleBtn').addEventListener('click', toggleTriangle);
             document.getElementById('lehmerChartBtn').addEventListener('click', showLehmerChart);
             document.getElementById('aggregateBtn').addEventListener('click', showAggregate);
+            document.getElementById('helpBtn').addEventListener('click', toggleHelp);
             document.getElementById('showP1Btn').addEventListener('click', () => selectTriangleVector('P1'));
             document.getElementById('showP2Btn').addEventListener('click', () => selectTriangleVector('P2'));
             document.getElementById('showBothBtn').addEventListener('click', () => selectTriangleVector('both'));
+        }
+        
+        function toggleHelp() {
+            let helpSection = document.getElementById('help-section');
+            if (helpSection.style.display === 'none') {
+                helpSection.style.display = 'block';
+            } else {
+                helpSection.style.display = 'none';
+            }
         }
         
         // Initialize p5 without drawing
