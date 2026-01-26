@@ -13,9 +13,9 @@ The Lehmer code for a permutation $P = (\sigma_0, \sigma_1, \ldots, \sigma_{n-1}
 
 $$d_i = \text{number of indices } j > i \text{ such that } \sigma_j < \sigma_i$$
 
-For the last position $i = n$, we're counting elements **to the right** of position $n$ that are smaller than $\sigma_n$. But there are no positions to the right of $n$! Therefore:
+For the last position $i = n-1$, we're counting elements **to the right** of position $n$ that are smaller than $\sigma_{n-1}$. But there are no positions to the right of $n$! Therefore:
 
-$$d_n = 0 \text{ (always)}$$
+$$d_{n-1} = 0 \text{ (always)}$$
 
 ## Quick Example
 
