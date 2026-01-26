@@ -147,6 +147,100 @@ Total: $8 + 7 + 6 + 5 + 4 = 30$ inversions = 30 bubble sort swaps
 
 
 
+# Q
+let s=[222 11 0000] show all bubble sort steps for sort(s)
+
+# A
+
+# Bubble Sort: s = [2, 2, 2, 1, 1, 0, 0, 0, 0]
+
+Starting: `[2, 2, 2, 1, 1, 0, 0, 0, 0]`  
+Target: `[0, 0, 0, 0, 1, 1, 2, 2, 2]`
+
+## Pass 1: Largest element bubbles to end
+
+```
+[2, 2, 2, 1, 1, 0, 0, 0, 0]
+[2, 2, 2, 1, 1, 0, 0, 0, 0]  (2 = 2, no swap)
+[2, 2, 2, 1, 1, 0, 0, 0, 0]  (2 = 2, no swap)
+[2, 2, 1, 2, 1, 0, 0, 0, 0]  swap 1  (2 > 1)
+[2, 2, 1, 1, 2, 0, 0, 0, 0]  swap 2  (2 > 1)
+[2, 2, 1, 1, 0, 2, 0, 0, 0]  swap 3  (2 > 0)
+[2, 2, 1, 1, 0, 0, 2, 0, 0]  swap 4  (2 > 0)
+[2, 2, 1, 1, 0, 0, 0, 2, 0]  swap 5  (2 > 0)
+[2, 2, 1, 1, 0, 0, 0, 0, 2]  swap 6  (2 > 0)
+```
+
+## Pass 2: Next largest to position 7
+
+```
+[2, 2, 1, 1, 0, 0, 0, 0, 2]
+[2, 2, 1, 1, 0, 0, 0, 0, 2]  (2 = 2, no swap)
+[2, 1, 2, 1, 0, 0, 0, 0, 2]  swap 7  (2 > 1)
+[2, 1, 1, 2, 0, 0, 0, 0, 2]  swap 8  (2 > 1)
+[2, 1, 1, 0, 2, 0, 0, 0, 2]  swap 9  (2 > 0)
+[2, 1, 1, 0, 0, 2, 0, 0, 2]  swap 10 (2 > 0)
+[2, 1, 1, 0, 0, 0, 2, 0, 2]  swap 11 (2 > 0)
+[2, 1, 1, 0, 0, 0, 0, 2, 2]  swap 12 (2 > 0)
+```
+
+## Pass 3: Next largest to position 6
+
+```
+[2, 1, 1, 0, 0, 0, 0, 2, 2]
+[1, 2, 1, 0, 0, 0, 0, 2, 2]  swap 13 (2 > 1)
+[1, 1, 2, 0, 0, 0, 0, 2, 2]  swap 14 (2 > 1)
+[1, 1, 0, 2, 0, 0, 0, 2, 2]  swap 15 (2 > 0)
+[1, 1, 0, 0, 2, 0, 0, 2, 2]  swap 16 (2 > 0)
+[1, 1, 0, 0, 0, 2, 0, 2, 2]  swap 17 (2 > 0)
+[1, 1, 0, 0, 0, 0, 2, 2, 2]  swap 18 (2 > 0)
+```
+
+## Pass 4: Bubble 1 to position 5
+
+```
+[1, 1, 0, 0, 0, 0, 2, 2, 2]
+[1, 1, 0, 0, 0, 0, 2, 2, 2]  (1 = 1, no swap)
+[1, 0, 1, 0, 0, 0, 2, 2, 2]  swap 19 (1 > 0)
+[1, 0, 0, 1, 0, 0, 2, 2, 2]  swap 20 (1 > 0)
+[1, 0, 0, 0, 1, 0, 2, 2, 2]  swap 21 (1 > 0)
+[1, 0, 0, 0, 0, 1, 2, 2, 2]  swap 22 (1 > 0)
+```
+
+## Pass 5: Bubble remaining 1 to position 4
+
+```
+[1, 0, 0, 0, 0, 1, 2, 2, 2]
+[0, 1, 0, 0, 0, 1, 2, 2, 2]  swap 23 (1 > 0)
+[0, 0, 1, 0, 0, 1, 2, 2, 2]  swap 24 (1 > 0)
+[0, 0, 0, 1, 0, 1, 2, 2, 2]  swap 25 (1 > 0)
+[0, 0, 0, 0, 1, 1, 2, 2, 2]  swap 26 (1 > 0) ✓
+```
+
+## Summary
+
+**Total swaps: 26**
+
+This equals the **inversion count**:
+- Each 2 is greater than: 2 ones + 4 zeros = 6 inversions × 3 twos = 18
+- Each 1 is greater than: 4 zeros = 4 inversions × 2 ones = 8
+
+**Total: 18 + 8 = 26 inversions = 26 bubble sort swaps**
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # 2026.01.04
 
 ## is it true that the last digit in lehmer code is always 0?
