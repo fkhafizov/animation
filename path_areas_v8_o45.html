@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lattice points in a triangle = d(P,e)</title>
+    <title>Lattice points in a triangle = d(P,E)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Sora:wght@300;500;700&display=swap');
@@ -317,7 +317,7 @@
     </style>
 </head>
 <body>
-    <h1>Lattice points in a triangle = d(P,e)</h1>
+    <h1>Lattice points in a triangle = d(P,E)</h1>
     
     <div class="container">
         <div class="controls">
@@ -367,12 +367,12 @@
                 <h3>📊 Results</h3>
                 
                 <div class="result-row">
-                    <span class="result-label">d(e,P1)</span>
+                    <span class="result-label">d(P1,E)</span>
                     <span class="result-value red" id="distEP1Value">—</span>
                 </div>
                 
                 <div class="result-row">
-                    <span class="result-label">d(e,P2)</span>
+                    <span class="result-label">d(P2,E)</span>
                     <span class="result-value green" id="distEP2Value">—</span>
                 </div>
                 
@@ -393,7 +393,7 @@
                 </div>
                 
                 <div class="path-info">
-                    <div class="label">Identity e</div>
+                    <div class="label">E = sort(P1) = sort(P2)</div>
                     <div id="eDisplay">—</div>
                     
                     <div class="label" style="margin-top: 8px;">P1</div>
@@ -414,10 +414,10 @@
                     <div class="label" style="margin-top: 8px;">VDCode(P2)</div>
                     <div id="vdCodeP2Display">—</div>
                     
-                    <div class="label" style="margin-top: 8px;">Inv(P1→e) length</div>
+                    <div class="label" style="margin-top: 8px;">Inv(P1→E) length</div>
                     <div id="invP1LenDisplay">—</div>
                     
-                    <div class="label" style="margin-top: 8px;">Inv(P2→e) length</div>
+                    <div class="label" style="margin-top: 8px;">Inv(P2→E) length</div>
                     <div id="invP2LenDisplay">—</div>
                 </div>
                 
@@ -471,8 +471,8 @@
         let p2Array = [];
         let eArray = []; // Identity permutation
         
-        let invP1 = []; // Inversion vector P1 -> e
-        let invP2 = []; // Inversion vector P2 -> e
+        let invP1 = []; // Inversion vector P1 -> E
+        let invP2 = []; // Inversion vector P2 -> E
         let lehmerInvP1 = [];
         let lehmerInvP2 = [];
         let vdCodeP1 = []; // VDCode for P1
@@ -791,21 +791,26 @@
             p1Array = parseInput(document.getElementById('p1Input').value);
             p2Array = parseInput(document.getElementById('p2Input').value);
             
-            // Create identity
-            eArray = [];
-            for (let i = 0; i < N; i++) {
-                eArray.push(i);
-            }
-            
             // Validate
             if (p1Array.length !== N || p2Array.length !== N) {
                 addLog(`Error: P1 and P2 must have length N=${N}`, 'info');
                 return false;
             }
             
+            // Compute E = sort(P1) - the sorted version is the "identity" for this graph
+            eArray = [...p1Array].sort((a, b) => a - b);
+            
+            // Verify P1 and P2 have the same multiset (same sorted array)
+            let sortedP2 = [...p2Array].sort((a, b) => a - b);
+            let sameMultiset = eArray.length === sortedP2.length && 
+                               eArray.every((val, idx) => val === sortedP2[idx]);
+            
             clearLogs();
-            addLog(`<strong>Starting computation for S<sub>${N}</sub></strong>`, 'info');
-            addLog(`e = [${eArray.join(', ')}]`, 'info');
+            addLog(`<strong>Starting computation (length ${N})</strong>`, 'info');
+            addLog(`E = sort(P1) = [${eArray.join(', ')}]`, 'info');
+            if (!sameMultiset) {
+                addLog(`Warning: P1 and P2 have different multisets!`, 'info');
+            }
             addLog(`P1 = [${p1Array.join(', ')}]`, 'p1');
             addLog(`P2 = [${p2Array.join(', ')}]`, 'p2');
             
@@ -816,12 +821,12 @@
             
             // Compute distances using count_inv(P, Q) = inversions of P relative to Q
             addLog(`<strong>Computing distances...</strong>`, 'step');
-            distEP1 = countInv(p1Array, eArray);   // count_inv(P1, e)
-            distEP2 = countInv(p2Array, eArray);   // count_inv(P2, e)
+            distEP1 = countInv(p1Array, eArray);   // count_inv(P1, E)
+            distEP2 = countInv(p2Array, eArray);   // count_inv(P2, E)
             distP1P2 = countInv(p1Array, p2Array); // count_inv(P1, P2)
             
-            addLog(`d(e, P1) = count_inv(P1, e) = ${distEP1}`, 'p1');
-            addLog(`d(e, P2) = count_inv(P2, e) = ${distEP2}`, 'p2');
+            addLog(`d(P1, E) = count_inv(P1, E) = ${distEP1}`, 'p1');
+            addLog(`d(P2, E) = count_inv(P2, E) = ${distEP2}`, 'p2');
             addLog(`d(P1, P2) = count_inv(P1, P2) = ${distP1P2}`, 'result');
             
             // Geometry case detection
@@ -831,9 +836,9 @@
             
             addLog(`—————————————`, 'info');
             addLog(`<strong>Geometry Case Detection:</strong>`, 'step');
-            addLog(`d(e,P1) + d(e,P2) + d(P1,P2) = ${distEP1} + ${distEP2} + ${distP1P2} = ${sum}`, 'info');
+            addLog(`d(P1,E) + d(P2,E) + d(P1,P2) = ${distEP1} + ${distEP2} + ${distP1P2} = ${sum}`, 'info');
             addLog(`${sum} mod ${diameter} = ${modResult}`, 'info');
-            addLog(`|d(e,P1) - d(e,P2)| = |${distEP1} - ${distEP2}| = ${diffCheck}`, 'info');
+            addLog(`|d(P1,E) - d(P2,E)| = |${distEP1} - ${distEP2}| = ${diffCheck}`, 'info');
             addLog(`d(P1,P2) = ${distP1P2}`, 'info');
             
             // Check both conditions
@@ -843,29 +848,29 @@
             // Case 3: Both conditions hold simultaneously
             if (triangleCondition && geodesicCondition) {
                 addLog(`✓ <strong>Case 3:</strong> Both conditions hold`, 'result');
-                addLog(`  sum ≡ 0 (mod D) AND |d(e,P1) - d(e,P2)| = d(P1,P2)`, 'result');
+                addLog(`  sum ≡ 0 (mod D) AND |d(P1,E) - d(P2,E)| = d(P1,P2)`, 'result');
                 if (distEP1 > distEP2) {
-                    addLog(`  P2 is on path from P1 to e`, 'result');
+                    addLog(`  P2 is on path from P1 to E`, 'result');
                 } else if (distEP2 > distEP1) {
-                    addLog(`  P1 is on path from P2 to e`, 'result');
+                    addLog(`  P1 is on path from P2 to E`, 'result');
                 } else {
-                    addLog(`  P1 = P2 (same permutation)`, 'result');
+                    addLog(`  P1 = P2 (same word)`, 'result');
                 }
             }
             // Case 1: Triangle condition only
             else if (triangleCondition) {
-                addLog(`✓ <strong>Case 1:</strong> d(e,P1) + d(e,P2) + d(P1,P2) ≡ 0 (mod D)`, 'result');
-                addLog(`  Triangle: e, P1, P2 form a cycle`, 'result');
+                addLog(`✓ <strong>Case 1:</strong> d(P1,E) + d(P2,E) + d(P1,P2) ≡ 0 (mod D)`, 'result');
+                addLog(`  Triangle: E, P1, P2 form a cycle`, 'result');
             }
             // Case 2: Geodesic condition only
             else if (geodesicCondition) {
-                addLog(`✓ <strong>Case 2:</strong> |d(e,P1) - d(e,P2)| = d(P1,P2)`, 'result');
+                addLog(`✓ <strong>Case 2:</strong> |d(P1,E) - d(P2,E)| = d(P1,P2)`, 'result');
                 if (distEP1 > distEP2) {
-                    addLog(`  Geodesic: P2 is on path from P1 to e`, 'result');
+                    addLog(`  Geodesic: P2 is on path from P1 to E`, 'result');
                 } else if (distEP2 > distEP1) {
-                    addLog(`  Geodesic: P1 is on path from P2 to e`, 'result');
+                    addLog(`  Geodesic: P1 is on path from P2 to E`, 'result');
                 } else {
-                    addLog(`  P1 = P2 (same permutation)`, 'result');
+                    addLog(`  P1 = P2 (same word)`, 'result');
                 }
             }
             // Case 4: General case
@@ -880,8 +885,8 @@
             invP1 = computeInversionVector(p1Array);
             invP2 = computeInversionVector(p2Array);
             
-            addLog(`Inv(P1→e): length = ${invP1.length}`, 'p1');
-            addLog(`Inv(P2→e): length = ${invP2.length}`, 'p2');
+            addLog(`Inv(P1→E): length = ${invP1.length}`, 'p1');
+            addLog(`Inv(P2→E): length = ${invP2.length}`, 'p2');
             addLog(`—————————————`, 'info');
             
             // Compute Lehmer inversion codes
@@ -955,9 +960,9 @@
                 caseEl.textContent = 'Case 2: Geodesic';
                 caseEl.style.color = '#0d6efd';
                 if (distEP1 > distEP2) {
-                    detailEl.textContent = `P2 on path e↔P1`;
+                    detailEl.textContent = `P2 on path E↔P1`;
                 } else if (distEP2 > distEP1) {
-                    detailEl.textContent = `P1 on path e↔P2`;
+                    detailEl.textContent = `P1 on path E↔P2`;
                 } else {
                     detailEl.textContent = `P1 = P2`;
                 }
@@ -970,8 +975,8 @@
             addLog(`<strong>Computation complete!</strong>`, 'result');
             addLog(`Area = ${area.toFixed(1)}`, 'result');
             addLog(`d(P1, P2) = ${distP1P2}`, 'result');
-            addLog(`d(e, P1) = ${distEP1}`, 'p1');
-            addLog(`d(e, P2) = ${distEP2}`, 'p2');
+            addLog(`d(P1, E) = ${distEP1}`, 'p1');
+            addLog(`d(P2, E) = ${distEP2}`, 'p2');
             
             dataComputed = true;
             return true;
@@ -1113,7 +1118,7 @@
                 addLog(`Showing circles at positions 0 to ${distEP1 - 1} (P1) and 0 to ${distEP2 - 1} (P2)`, 'step');
             } else {
                 addLog(`Showing circles at positions 0 to ${dist - 1}`, 'step');
-                addLog(`d(e,${triangleVector}) = ${dist}`, 'step');
+                addLog(`d(${triangleVector},E) = ${dist}`, 'step');
             }
             
             let numPoints = (triangleSize + 1) * (triangleSize + 2) / 2;
@@ -1145,7 +1150,7 @@
                 addLog(`Lehmer_inv(P2) = [${lehmerInvP2.join(', ')}]`, 'p2');
             } else {
                 addLog(`Lehmer_inv(${triangleVector}) = [${lehmerInvCode.join(', ')}]`, 'step');
-                addLog(`Sum = ${lehmerInvCode.reduce((a, b) => a + b, 0)} = d(e,${triangleVector})`, 'step');
+                addLog(`Sum = ${lehmerInvCode.reduce((a, b) => a + b, 0)} = d(${triangleVector},E)`, 'step');
             }
             
             let numPoints = (triangleSize + 1) * (triangleSize + 2) / 2;
@@ -1290,7 +1295,7 @@
                         p.textStyle(p.NORMAL);
                         p.fill(100, 80, 60);
                         p.textSize(12);
-                        p.text(`Lehmer_inv(${vData.name}) = ${lehmerInvStr}     d(${vData.name},e) = ${vData.dist}`, p.width / 2, rowOffsetY + 22);
+                        p.text(`Lehmer_inv(${vData.name}) = ${lehmerInvStr}     d(${vData.name},E) = ${vData.dist}`, p.width / 2, rowOffsetY + 22);
                         p.text(`VDCode(${vData.name}) = ${vdCodeStr} (sum = ${vdCodeSum})`, p.width / 2, rowOffsetY + 38);
                         
                         // Draw triangles (a) oBubSortTrace and (b) LEHMER_INV - standard size
