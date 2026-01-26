@@ -91,12 +91,22 @@ $$d_{n-1} = 0 \text{ (always)}$$
 
 Consider the permutation $P=[3, 1, 4, 2]$:
 
-- Position 0: $P[0]=3: L(P)[0] = 2$ (elements 1 and 2 are smaller and to the right) 
-- Position 1: $P[1]=1: L(P)[1] = 0$ (no elements to the right are smaller than 1) 
-- Position 2: $P[2]=4: L(P)[2] = 1$ (element 2 is smaller and to the right) 
-- Position 3: $P[3]=2: L(P)[3] = 0$ (no elements to the right at all) 
+- Position 0: $P[0]=3: L(P)[0] = 2$ (elements 1 and 2 are smaller and to the right)
+- Position 1: $P[1]=1: L(P)[1] = 0$ (no elements to the right are smaller than 1)
+- Position 2: $P[2]=4: L(P)[2] = 1$ (element 2 is smaller and to the right)
+- Position 3: $P[3]=2: L(P)[3] = 0$ (no elements to the right at all)
 
 Lehmer code: $L(P)=[2, 0, 1, 0]$
+
+
+
+
+
+
+
+
+
+
 
 ## Practical Implication
 
