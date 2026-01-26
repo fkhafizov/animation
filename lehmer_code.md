@@ -68,12 +68,15 @@ a_i=#{\text{координат справа от }i\text{ со значение�
 
 # 2026.01.24
 
-# Bubble Sort: P1 to Sorted
+# Q
+count bubble sort steps for converting P1=[5, 4, 3, 2, 1, 0, 0, 0, 0]  to E=[0, 0, 0, 0, 1, 2, 3, 4, 5]. Show each step here
+
+### Bubble Sort: P1 to Sorted
 
 Starting with: `P1 = [5, 4, 3, 2, 1, 0, 0, 0, 0]`  
 Target: `E = [0, 0, 0, 0, 1, 2, 3, 4, 5]`
 
-## Pass 1: Bubble the 5 to the end
+### Pass 1: Bubble the 5 to the end
 ```
 [5, 4, 3, 2, 1, 0, 0, 0, 0]
 [4, 5, 3, 2, 1, 0, 0, 0, 0]  swap 1
@@ -86,7 +89,7 @@ Target: `E = [0, 0, 0, 0, 1, 2, 3, 4, 5]`
 [4, 3, 2, 1, 0, 0, 0, 0, 5]  swap 8
 ```
 
-## Pass 2: Bubble the 4 to position 7
+### Pass 2: Bubble the 4 to position 7
 ```
 [4, 3, 2, 1, 0, 0, 0, 0, 5]
 [3, 4, 2, 1, 0, 0, 0, 0, 5]  swap 9
@@ -98,7 +101,7 @@ Target: `E = [0, 0, 0, 0, 1, 2, 3, 4, 5]`
 [3, 2, 1, 0, 0, 0, 0, 4, 5]  swap 15
 ```
 
-## Pass 3: Bubble the 3 to position 6
+### Pass 3: Bubble the 3 to position 6
 ```
 [3, 2, 1, 0, 0, 0, 0, 4, 5]
 [2, 3, 1, 0, 0, 0, 0, 4, 5]  swap 16
@@ -109,7 +112,7 @@ Target: `E = [0, 0, 0, 0, 1, 2, 3, 4, 5]`
 [2, 1, 0, 0, 0, 0, 3, 4, 5]  swap 21
 ```
 
-## Pass 4: Bubble the 2 to position 5
+### Pass 4: Bubble the 2 to position 5
 ```
 [2, 1, 0, 0, 0, 0, 3, 4, 5]
 [1, 2, 0, 0, 0, 0, 3, 4, 5]  swap 22
@@ -119,7 +122,7 @@ Target: `E = [0, 0, 0, 0, 1, 2, 3, 4, 5]`
 [1, 0, 0, 0, 0, 2, 3, 4, 5]  swap 26
 ```
 
-## Pass 5: Bubble the 1 to position 4
+### Pass 5: Bubble the 1 to position 4
 ```
 [1, 0, 0, 0, 0, 2, 3, 4, 5]
 [0, 1, 0, 0, 0, 2, 3, 4, 5]  swap 27
@@ -128,7 +131,7 @@ Target: `E = [0, 0, 0, 0, 1, 2, 3, 4, 5]`
 [0, 0, 0, 0, 1, 2, 3, 4, 5]  swap 30 ✓
 ```
 
-## Summary
+### Summary
 
 **Total swaps: 30**
 
@@ -146,7 +149,7 @@ Total: $8 + 7 + 6 + 5 + 4 = 30$ inversions = 30 bubble sort swaps
 
 # 2026.01.04
 
-# is it true that the last digit in lehmer code is always 0?
+## is it true that the last digit in lehmer code is always 0?
 
 
 Yes, that's absolutely correct! The last digit in a Lehmer code is **always 0**.
