@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schreier Graph - Diagonal Projection</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;600&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        }
+        
+        #controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            padding: 14px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+            width: 175px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            font-size: 0.85rem;
+        }
+        
+        h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            color: #1976d2;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+        
+        .control-group {
+            margin-bottom: 10px;
+        }
+        
+        label {
+            display: block;
+            font-size: 0.65rem;
+            color: #546e7a;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 8px 10px;
+            font-size: 0.9rem;
+            font-family: 'JetBrains Mono', monospace;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fafafa;
+            color: #37474f;
+            transition: all 0.2s ease;
+        }
+        
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #1976d2;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.15);
+        }
+        
+        .slider-group {
+            margin-bottom: 10px;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        
+        .slider-value {
+            font-size: 0.7rem;
+            color: #37474f;
+            font-weight: 600;
+            background: #e3f2fd;
+            padding: 1px 5px;
+            border-radius: 3px;
+        }
+        
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, #e0e0e0 0%, #e0e0e0 100%);
+            outline: none;
+            cursor: pointer;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1976d2 0%, #7c4dff 100%);
+            cursor: pointer;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(25, 118, 210, 0.4);
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1976d2 0%, #7c4dff 100%);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .section-divider {
+            margin: 10px 0 8px 0;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .section-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.6rem;
+            color: #78909c;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 8px;
+            font-size: 0.7rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            background: linear-gradient(135deg, #1976d2 0%, #7c4dff 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(25, 118, 210, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .shake-btn {
+            margin-top: 8px;
+            background: linear-gradient(135deg, #ff9800 0%, #ff5722 100%);
+        }
+        
+        .shake-btn:hover {
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+        }
+        
+        .grid-btn {
+            margin-top: 6px;
+            background: linear-gradient(135deg, #00bcd4 0%, #009688 100%);
+        }
+        
+        .grid-btn:hover {
+            box-shadow: 0 4px 12px rgba(0, 188, 212, 0.4);
+        }
+        
+        .checkbox-group {
+            margin: 10px 0;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 0.65rem;
+            color: #37474f;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+        
+        .checkbox-label input[type="checkbox"] {
+            display: none;
+        }
+        
+        .checkbox-custom {
+            width: 16px;
+            height: 16px;
+            min-width: 16px;
+            border: 2px solid #1976d2;
+            border-radius: 3px;
+            margin-right: 6px;
+            position: relative;
+            transition: all 0.2s ease;
+            background: #fafafa;
+        }
+        
+        .checkbox-label input[type="checkbox"]:checked + .checkbox-custom {
+            background: linear-gradient(135deg, #1976d2 0%, #7c4dff 100%);
+            border-color: #1976d2;
+        }
+        
+        .checkbox-label input[type="checkbox"]:checked + .checkbox-custom::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
+        .info {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 0.6rem;
+            color: #78909c;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        
+        .info-value {
+            color: #37474f;
+            font-weight: 600;
+            font-size: 0.6rem;
+        }
+        
+        #legend {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            z-index: 100;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            width: 175px;
+        }
+        
+        #legend h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.7rem;
+            color: #1976d2;
+            margin-bottom: 8px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+            font-size: 0.6rem;
+            color: #546e7a;
+        }
+        
+        .legend-color {
+            width: 18px;
+            height: 3px;
+            border-radius: 2px;
+            margin-right: 6px;
+        }
+        
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #stats-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            z-index: 100;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            width: 180px;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+        
+        #stats-panel h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.75rem;
+            color: #1976d2;
+            margin-bottom: 8px;
+        }
+        
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            font-size: 0.7rem;
+            color: #37474f;
+        }
+        
+        .stats-value {
+            font-weight: 600;
+            color: #7c4dff;
+        }
+        
+        .degree-table {
+            width: 100%;
+            margin-top: 8px;
+            border-collapse: collapse;
+        }
+        
+        .degree-table th {
+            font-size: 0.6rem;
+            color: #546e7a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 4px 2px;
+            border-bottom: 1px solid #e0e0e0;
+            text-align: left;
+        }
+        
+        .degree-table td {
+            padding: 3px 2px;
+            font-size: 0.65rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .degree-table td:first-child {
+            font-weight: 600;
+            color: #37474f;
+        }
+        
+        .degree-table td:last-child {
+            color: #546e7a;
+        }
+        
+        .degree-table tr:hover {
+            background: #f5f5f5;
+        }
+        
+        #projection-info {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            z-index: 100;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            width: 220px;
+        }
+        
+        #projection-info h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.7rem;
+            color: #1976d2;
+            margin-bottom: 8px;
+        }
+        
+        .projection-desc {
+            font-size: 0.6rem;
+            color: #546e7a;
+            line-height: 1.4;
+        }
+        
+        .formula {
+            font-family: 'JetBrains Mono', monospace;
+            background: #e3f2fd;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin: 6px 0;
+            font-size: 0.65rem;
+            color: #1565c0;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <h2>◇ Diagonal Projection</h2>
+        <div class="control-group">
+            <label>N (String Length: 2-10)</label>
+            <input type="number" id="inputN" value="6" min="2" max="10">
+        </div>
+        <div class="control-group">
+            <label>K (Number of Ones)</label>
+            <input type="number" id="inputK" value="3" min="1" max="9">
+        </div>
+        
+        <div class="control-group checkbox-group">
+            <label class="checkbox-label">
+                <input type="checkbox" id="wrappedCheckbox">
+                <span class="checkbox-custom"></span>
+                <span>WRAPPED (0, N-1)</span>
+            </label>
+        </div>
+        
+        <button onclick="rebuildGraph()">Generate Graph</button>
+        <button class="grid-btn" onclick="toggleGridLayout()">◇ Diagonal Grid</button>
+        
+        <div class="section-divider">
+            <div class="section-title">Physics & Appearance</div>
+        </div>
+        
+        <div class="slider-group">
+            <div class="slider-label">
+                <label>Node Size</label>
+                <span class="slider-value" id="nodeSizeValue">28</span>
+            </div>
+            <input type="range" id="nodeSizeSlider" min="15" max="60" value="28" oninput="updateNodeSize(this.value)">
+        </div>
+        
+        <div class="slider-group">
+            <div class="slider-label">
+                <label>Repulsion</label>
+                <span class="slider-value" id="repulsionValue">25000</span>
+            </div>
+            <input type="range" id="repulsionSlider" min="1000" max="80000" value="25000" oninput="updateRepulsion(this.value)">
+        </div>
+        
+        <div class="slider-group">
+            <div class="slider-label">
+                <label>Attraction</label>
+                <span class="slider-value" id="attractionValue">0.006</span>
+            </div>
+            <input type="range" id="attractionSlider" min="1" max="50" value="6" oninput="updateAttraction(this.value)">
+        </div>
+        
+        <button class="shake-btn" onclick="shakeNodes()">🔀 Shake &amp; Resettle</button>
+        
+        <div class="info">
+            <div class="info-row">
+                <span>Zeros:</span>
+                <span class="info-value" id="infoZeros">3</span>
+            </div>
+            <div class="info-row">
+                <span>Starting node:</span>
+                <span class="info-value" id="infoStart">000111</span>
+            </div>
+            <div class="info-row">
+                <span>Total nodes:</span>
+                <span class="info-value" id="infoNodes">20</span>
+            </div>
+        </div>
+    </div>
+    
+    <div id="legend"></div>
+    
+    <div id="stats-panel">
+        <h3>📊 Graph Statistics</h3>
+        <div class="stats-row">
+            <span>Vertices |V|:</span>
+            <span class="stats-value" id="statVertices">20</span>
+        </div>
+        <div class="stats-row">
+            <span>Edges |E|:</span>
+            <span class="stats-value" id="statEdges">0</span>
+        </div>
+        <div class="stats-row">
+            <span>Sum range:</span>
+            <span class="stats-value" id="statSumRange">3-12</span>
+        </div>
+        <div class="stats-row">
+            <span>Spread range:</span>
+            <span class="stats-value" id="statSpreadRange">2-5</span>
+        </div>
+        <h3 style="margin-top: 12px;">Degree Distribution</h3>
+        <table class="degree-table">
+            <thead>
+                <tr>
+                    <th>Deg</th>
+                    <th>Count</th>
+                </tr>
+            </thead>
+            <tbody id="degreeTableBody">
+            </tbody>
+        </table>
+    </div>
+    
+    <div id="projection-info">
+        <h3>📐 Projection Method</h3>
+        <div class="projection-desc">
+            Maps K ones at positions (p₀, p₁, ..., pₖ₋₁) to 2D:
+        </div>
+        <div class="formula">
+            x = spread = pₖ₋₁ - p₀
+        </div>
+        <div class="formula">
+            y = sum = Σpᵢ
+        </div>
+        <div class="projection-desc">
+            Creates a diamond shape where nodes with similar position sums are on the same horizontal level.
+        </div>
+    </div>
+    
+    <div id="canvas-container"></div>
+
+    <script>
+        // Graph data structures
+        let nodes = [];
+        let edges = [];
+        let N = 6;
+        let K = 3;
+        let isWrapped = false;
+        let isGridLayout = true;
+        let adjacencyList = new Map();
+        
+        // Physics simulation parameters
+        let REPULSION = 25000;
+        let ATTRACTION = 0.006;
+        const DAMPING = 0.85;
+        const CENTER_PULL = 0.008;
+        let NODE_SIZE = 28;
+        
+        // Cached background
+        let bgGraphics;
+        
+        // Color palette for transpositions
+        const transpositionColors = [
+            '#e53935', // (0,1) - Red
+            '#fb8c00', // (1,2) - Orange  
+            '#fdd835', // (2,3) - Yellow
+            '#43a047', // (3,4) - Green
+            '#00acc1', // (4,5) - Cyan
+            '#5c6bc0', // (5,6) - Indigo
+            '#8e24aa', // (6,7) - Purple
+            '#d81b60', // (7,8) - Pink
+            '#6d4c41', // (8,9) - Brown
+        ];
+        
+        // Degree colors for nodes
+        const degreeColors = [
+            '#9E9E9E', // degree 0
+            '#E91E63', // degree 1
+            '#F44336', // degree 2
+            '#FF9800', // degree 3
+            '#FFEB3B', // degree 4
+            '#8BC34A', // degree 5
+            '#4CAF50', // degree 6
+            '#00BCD4', // degree 7
+            '#2196F3', // degree 8
+            '#3F51B5', // degree 9
+            '#9C27B0', // degree 10
+            '#673AB7', // degree 11
+        ];
+        
+        function getDegreeColor(degree) {
+            if (degree < degreeColors.length) {
+                return degreeColors[degree];
+            }
+            return degreeColors[degree % degreeColors.length];
+        }
+        
+        class Node {
+            constructor(label, x, y) {
+                this.label = label;
+                this.x = x || 0;
+                this.y = y || 0;
+                this.vx = 0;
+                this.vy = 0;
+                this.degree = 0;
+                this.onesPositions = this.getOnesPositions();
+                this.sum = this.onesPositions.reduce((a, b) => a + b, 0);
+                this.spread = this.onesPositions.length > 0 ? 
+                    this.onesPositions[this.onesPositions.length - 1] - this.onesPositions[0] : 0;
+            }
+            
+            getOnesPositions() {
+                const positions = [];
+                for (let i = 0; i < this.label.length; i++) {
+                    if (this.label[i] === '1') {
+                        positions.push(i);
+                    }
+                }
+                return positions;
+            }
+            
+            get radius() {
+                return NODE_SIZE;
+            }
+        }
+        
+        class Edge {
+            constructor(from, to, transposition) {
+                this.from = from;
+                this.to = to;
+                this.transposition = transposition;
+            }
+        }
+        
+        function getCanvasBounds() {
+            const padding = 40;
+            return {
+                left: 220 + padding,
+                right: windowWidth - 220 - padding,
+                top: 60 + padding,
+                bottom: windowHeight - 80 - padding
+            };
+        }
+        
+        function generateAllStrings(n, k) {
+            const results = [];
+            
+            function generate(current, onesLeft, zerosLeft) {
+                if (onesLeft === 0 && zerosLeft === 0) {
+                    results.push(current);
+                    return;
+                }
+                if (onesLeft > 0) {
+                    generate(current + '1', onesLeft - 1, zerosLeft);
+                }
+                if (zerosLeft > 0) {
+                    generate(current + '0', onesLeft, zerosLeft - 1);
+                }
+            }
+            
+            generate('', k, n - k);
+            return results;
+        }
+        
+        function applyTransposition(str, i) {
+            if (i < 0 || i >= str.length - 1) return str;
+            const arr = str.split('');
+            [arr[i], arr[i + 1]] = [arr[i + 1], arr[i]];
+            return arr.join('');
+        }
+        
+        function applyWrappedTransposition(str) {
+            const arr = str.split('');
+            [arr[0], arr[arr.length - 1]] = [arr[arr.length - 1], arr[0]];
+            return arr.join('');
+        }
+        
+        function buildGraph() {
+            nodes = [];
+            edges = [];
+            adjacencyList = new Map();
+            
+            isWrapped = document.getElementById('wrappedCheckbox').checked;
+            
+            const allStrings = generateAllStrings(N, K);
+            const stringToIndex = new Map();
+            
+            // Create nodes
+            allStrings.forEach((str, i) => {
+                nodes.push(new Node(str, 0, 0));
+                stringToIndex.set(str, i);
+            });
+            
+            // Create edges
+            const edgeSet = new Set();
+            const adjacency = new Map();
+            
+            for (let i = 0; i < nodes.length; i++) {
+                adjacency.set(i, []);
+            }
+            
+            allStrings.forEach((str, fromIdx) => {
+                // Standard adjacent transpositions
+                for (let i = 0; i < N - 1; i++) {
+                    if (str[i] !== str[i + 1]) {
+                        const newStr = applyTransposition(str, i);
+                        const toIdx = stringToIndex.get(newStr);
+                        
+                        if (toIdx !== undefined) {
+                            const edgeKey = fromIdx < toIdx ? 
+                                `${fromIdx}-${toIdx}-${i}` : `${toIdx}-${fromIdx}-${i}`;
+                            
+                            if (!edgeSet.has(edgeKey)) {
+                                edgeSet.add(edgeKey);
+                                edges.push(new Edge(fromIdx, toIdx, i));
+                                adjacency.get(fromIdx).push(toIdx);
+                                adjacency.get(toIdx).push(fromIdx);
+                            }
+                        }
+                    }
+                }
+                
+                // Wrapped transposition
+                if (isWrapped && str[0] !== str[N - 1]) {
+                    const newStr = applyWrappedTransposition(str);
+                    const toIdx = stringToIndex.get(newStr);
+                    
+                    if (toIdx !== undefined) {
+                        const transIdx = N - 1;
+                        const edgeKey = fromIdx < toIdx ? 
+                            `${fromIdx}-${toIdx}-wrap` : `${toIdx}-${fromIdx}-wrap`;
+                        
+                        if (!edgeSet.has(edgeKey)) {
+                            edgeSet.add(edgeKey);
+                            edges.push(new Edge(fromIdx, toIdx, transIdx));
+                            adjacency.get(fromIdx).push(toIdx);
+                            adjacency.get(toIdx).push(fromIdx);
+                        }
+                    }
+                }
+            });
+            
+            adjacencyList = adjacency;
+            
+            // Calculate degrees
+            nodes.forEach((node, i) => {
+                node.degree = adjacency.get(i).length;
+            });
+            
+            // Apply initial layout
+            if (isGridLayout) {
+                applyDiagonalGridLayout();
+            } else {
+                applyRandomLayout();
+            }
+            
+            updateInfo();
+            updateLegend();
+            updateStats(adjacency);
+        }
+        
+        function applyDiagonalGridLayout() {
+            const bounds = getCanvasBounds();
+            const centerX = (bounds.left + bounds.right) / 2;
+            const centerY = (bounds.top + bounds.bottom) / 2;
+            
+            // Calculate sum and spread ranges
+            let minSum = Infinity, maxSum = -Infinity;
+            let minSpread = Infinity, maxSpread = -Infinity;
+            
+            nodes.forEach(node => {
+                minSum = Math.min(minSum, node.sum);
+                maxSum = Math.max(maxSum, node.sum);
+                minSpread = Math.min(minSpread, node.spread);
+                maxSpread = Math.max(maxSpread, node.spread);
+            });
+            
+            // Update stats display
+            document.getElementById('statSumRange').textContent = `${minSum}-${maxSum}`;
+            document.getElementById('statSpreadRange').textContent = `${minSpread}-${maxSpread}`;
+            
+            // Calculate available space
+            const availableWidth = bounds.right - bounds.left;
+            const availableHeight = bounds.bottom - bounds.top;
+            
+            // Cell sizes based on ranges
+            const spreadRange = maxSpread - minSpread || 1;
+            const sumRange = maxSum - minSum || 1;
+            
+            const cellWidth = availableWidth / (spreadRange + 1);
+            const cellHeight = availableHeight / (sumRange + 1);
+            
+            // Group nodes by (sum, spread) to handle collisions
+            const gridCells = new Map();
+            
+            nodes.forEach((node, idx) => {
+                const key = `${node.sum}-${node.spread}`;
+                if (!gridCells.has(key)) {
+                    gridCells.set(key, []);
+                }
+                gridCells.get(key).push(idx);
+            });
+            
+            // Position nodes
+            gridCells.forEach((nodeIndices, key) => {
+                const [sum, spread] = key.split('-').map(Number);
+                
+                // Base position
+                const baseX = bounds.left + (spread - minSpread + 0.5) * cellWidth;
+                const baseY = bounds.bottom - (sum - minSum + 0.5) * cellHeight;
+                
+                // If multiple nodes in same cell, spread them horizontally
+                const count = nodeIndices.length;
+                const offsetStep = Math.min(cellWidth * 0.8, NODE_SIZE * 2.5);
+                const totalOffset = (count - 1) * offsetStep;
+                
+                nodeIndices.forEach((nodeIdx, i) => {
+                    const offset = -totalOffset / 2 + i * offsetStep;
+                    nodes[nodeIdx].x = baseX + offset;
+                    nodes[nodeIdx].y = baseY;
+                    nodes[nodeIdx].vx = 0;
+                    nodes[nodeIdx].vy = 0;
+                });
+            });
+        }
+        
+        function applyRandomLayout() {
+            const bounds = getCanvasBounds();
+            const centerX = (bounds.left + bounds.right) / 2;
+            const centerY = (bounds.top + bounds.bottom) / 2;
+            const radiusX = (bounds.right - bounds.left) * 0.4;
+            const radiusY = (bounds.bottom - bounds.top) * 0.4;
+            
+            nodes.forEach(node => {
+                const angle = Math.random() * TWO_PI;
+                const r = Math.random();
+                node.x = centerX + Math.cos(angle) * radiusX * r;
+                node.y = centerY + Math.sin(angle) * radiusY * r;
+                node.vx = 0;
+                node.vy = 0;
+            });
+        }
+        
+        function applyForces() {
+            if (isGridLayout) return;
+            
+            const bounds = getCanvasBounds();
+            const centerX = (bounds.left + bounds.right) / 2;
+            const centerY = (bounds.top + bounds.bottom) / 2;
+            
+            // Repulsion between all nodes
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const dx = nodes[j].x - nodes[i].x;
+                    const dy = nodes[j].y - nodes[i].y;
+                    const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 1);
+                    const force = REPULSION / (dist * dist);
+                    
+                    const fx = (dx / dist) * force;
+                    const fy = (dy / dist) * force;
+                    
+                    nodes[i].vx -= fx;
+                    nodes[i].vy -= fy;
+                    nodes[j].vx += fx;
+                    nodes[j].vy += fy;
+                }
+            }
+            
+            // Attraction along edges
+            edges.forEach(edge => {
+                const from = nodes[edge.from];
+                const to = nodes[edge.to];
+                
+                const dx = to.x - from.x;
+                const dy = to.y - from.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist > 0.001) {
+                    const force = dist * ATTRACTION;
+                    
+                    const fx = (dx / dist) * force;
+                    const fy = (dy / dist) * force;
+                    
+                    from.vx += fx;
+                    from.vy += fy;
+                    to.vx -= fx;
+                    to.vy -= fy;
+                }
+            });
+            
+            // Pull towards center
+            nodes.forEach(node => {
+                node.vx += (centerX - node.x) * CENTER_PULL;
+                node.vy += (centerY - node.y) * CENTER_PULL;
+            });
+            
+            // Update positions
+            nodes.forEach(node => {
+                node.vx *= DAMPING;
+                node.vy *= DAMPING;
+                node.x += node.vx;
+                node.y += node.vy;
+                
+                node.x = constrain(node.x, bounds.left, bounds.right);
+                node.y = constrain(node.y, bounds.top, bounds.bottom);
+            });
+        }
+        
+        function updateInfo() {
+            document.getElementById('infoZeros').textContent = N - K;
+            document.getElementById('infoStart').textContent = '0'.repeat(N - K) + '1'.repeat(K);
+            document.getElementById('infoNodes').textContent = nodes.length;
+        }
+        
+        function updateLegend() {
+            const legend = document.getElementById('legend');
+            let html = '<h3>Transpositions</h3>';
+            
+            for (let i = 0; i < N - 1; i++) {
+                html += `
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: ${transpositionColors[i]}"></div>
+                        <span>(${i}, ${i + 1})</span>
+                    </div>
+                `;
+            }
+            
+            if (isWrapped) {
+                html += `
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: ${transpositionColors[N - 1] || '#ff00ff'}"></div>
+                        <span>(0, ${N - 1}) wrapped</span>
+                    </div>
+                `;
+            }
+            
+            legend.innerHTML = html;
+        }
+        
+        function updateStats(adjacency) {
+            document.getElementById('statVertices').textContent = nodes.length;
+            document.getElementById('statEdges').textContent = edges.length;
+            
+            const degreeCounts = new Map();
+            for (let i = 0; i < nodes.length; i++) {
+                const degree = adjacency.get(i).length;
+                degreeCounts.set(degree, (degreeCounts.get(degree) || 0) + 1);
+            }
+            
+            const sortedDegrees = Array.from(degreeCounts.keys()).sort((a, b) => a - b);
+            const tbody = document.getElementById('degreeTableBody');
+            tbody.innerHTML = '';
+            
+            sortedDegrees.forEach(degree => {
+                const count = degreeCounts.get(degree);
+                const degColor = getDegreeColor(degree);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${degColor};margin-right:4px;vertical-align:middle;"></span>${degree}</td>
+                    <td>${count}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        function drawBackground() {
+            // Create gradient background only once
+            if (!bgGraphics || bgGraphics.width !== width || bgGraphics.height !== height) {
+                bgGraphics = createGraphics(width, height);
+                for (let y = 0; y < height; y++) {
+                    const inter = map(y, 0, height, 0, 1);
+                    const c = bgGraphics.lerpColor(
+                        bgGraphics.color('#1a1a2e'), 
+                        bgGraphics.color('#0f3460'), 
+                        inter
+                    );
+                    bgGraphics.stroke(c);
+                    bgGraphics.line(0, y, width, y);
+                }
+            }
+            image(bgGraphics, 0, 0);
+        }
+        
+        function drawDiagonalGrid() {
+            if (!isGridLayout) return;
+            
+            const bounds = getCanvasBounds();
+            
+            // Calculate ranges
+            let minSum = Infinity, maxSum = -Infinity;
+            let minSpread = Infinity, maxSpread = -Infinity;
+            
+            nodes.forEach(node => {
+                minSum = Math.min(minSum, node.sum);
+                maxSum = Math.max(maxSum, node.sum);
+                minSpread = Math.min(minSpread, node.spread);
+                maxSpread = Math.max(maxSpread, node.spread);
+            });
+            
+            const availableWidth = bounds.right - bounds.left;
+            const availableHeight = bounds.bottom - bounds.top;
+            const spreadRange = maxSpread - minSpread || 1;
+            const sumRange = maxSum - minSum || 1;
+            const cellWidth = availableWidth / (spreadRange + 1);
+            const cellHeight = availableHeight / (sumRange + 1);
+            
+            // Draw grid lines
+            stroke(255, 255, 255, 30);
+            strokeWeight(1);
+            drawingContext.setLineDash([4, 4]);
+            
+            // Vertical lines (spread)
+            for (let s = minSpread; s <= maxSpread; s++) {
+                const x = bounds.left + (s - minSpread + 0.5) * cellWidth;
+                line(x, bounds.top, x, bounds.bottom);
+            }
+            
+            // Horizontal lines (sum)
+            for (let sum = minSum; sum <= maxSum; sum++) {
+                const y = bounds.bottom - (sum - minSum + 0.5) * cellHeight;
+                line(bounds.left, y, bounds.right, y);
+            }
+            
+            drawingContext.setLineDash([]);
+            
+            // Draw axes
+            stroke(255, 255, 255, 80);
+            strokeWeight(2);
+            
+            // X axis (spread)
+            line(bounds.left - 10, bounds.bottom + 20, bounds.right + 10, bounds.bottom + 20);
+            // Y axis (sum)
+            line(bounds.left - 30, bounds.top - 10, bounds.left - 30, bounds.bottom + 10);
+            
+            // Axis labels
+            fill(255, 255, 255, 200);
+            noStroke();
+            textSize(11);
+            textAlign(CENTER, CENTER);
+            textStyle(BOLD);
+            
+            // X axis label
+            text('SPREAD (max pos - min pos)', (bounds.left + bounds.right) / 2, bounds.bottom + 45);
+            
+            // Y axis label
+            push();
+            translate(bounds.left - 55, (bounds.top + bounds.bottom) / 2);
+            rotate(-HALF_PI);
+            text('SUM (Σ positions)', 0, 0);
+            pop();
+            
+            // Tick marks and values
+            textSize(9);
+            textStyle(NORMAL);
+            
+            // X axis ticks
+            for (let s = minSpread; s <= maxSpread; s++) {
+                const x = bounds.left + (s - minSpread + 0.5) * cellWidth;
+                stroke(255, 255, 255, 80);
+                strokeWeight(1);
+                line(x, bounds.bottom + 15, x, bounds.bottom + 25);
+                noStroke();
+                fill(255, 255, 255, 180);
+                text(s, x, bounds.bottom + 33);
+            }
+            
+            // Y axis ticks
+            textAlign(RIGHT, CENTER);
+            for (let sum = minSum; sum <= maxSum; sum++) {
+                const y = bounds.bottom - (sum - minSum + 0.5) * cellHeight;
+                stroke(255, 255, 255, 80);
+                strokeWeight(1);
+                line(bounds.left - 35, y, bounds.left - 25, y);
+                noStroke();
+                fill(255, 255, 255, 180);
+                text(sum, bounds.left - 40, y);
+            }
+            
+            textStyle(NORMAL);
+        }
+        
+        function setup() {
+            const canvas = createCanvas(windowWidth, windowHeight);
+            canvas.parent('canvas-container');
+            textFont('JetBrains Mono');
+            buildGraph();
+        }
+        
+        function draw() {
+            drawBackground();
+            
+            // Draw grid if in grid layout mode
+            drawDiagonalGrid();
+            
+            // Apply physics
+            applyForces();
+            
+            // Draw edges
+            strokeWeight(3);
+            edges.forEach(edge => {
+                const from = nodes[edge.from];
+                const to = nodes[edge.to];
+                
+                stroke(transpositionColors[edge.transposition] || '#ffffff');
+                
+                const dx = to.x - from.x;
+                const dy = to.y - from.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist > 0) {
+                    const startX = from.x + (dx / dist) * from.radius;
+                    const startY = from.y + (dy / dist) * from.radius;
+                    const endX = to.x - (dx / dist) * to.radius;
+                    const endY = to.y - (dy / dist) * to.radius;
+                    
+                    line(startX, startY, endX, endY);
+                }
+            });
+            
+            // Draw nodes
+            nodes.forEach((node, idx) => {
+                const nodeColor = color(getDegreeColor(node.degree));
+                
+                // Node shadow
+                noStroke();
+                fill(0, 0, 0, 40);
+                ellipse(node.x + 3, node.y + 3, node.radius * 2 + 2);
+                
+                // Node body
+                fill(nodeColor);
+                stroke(red(nodeColor) * 0.7, green(nodeColor) * 0.7, blue(nodeColor) * 0.7);
+                strokeWeight(2);
+                ellipse(node.x, node.y, node.radius * 2);
+                
+                // Node label
+                noStroke();
+                const fontSize = map(N, 2, 10, 16, 9);
+                textSize(fontSize);
+                textAlign(CENTER, CENTER);
+                textStyle(BOLD);
+                
+                const brightness = (red(nodeColor) * 299 + green(nodeColor) * 587 + blue(nodeColor) * 114) / 1000;
+                fill(brightness > 150 ? 30 : 255);
+                
+                text(node.label, node.x, node.y);
+                textStyle(NORMAL);
+            });
+        }
+        
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+            bgGraphics = null; // Force redraw of background
+            if (isGridLayout) {
+                applyDiagonalGridLayout();
+            }
+        }
+        
+        function rebuildGraph() {
+            const newN = parseInt(document.getElementById('inputN').value);
+            const newK = parseInt(document.getElementById('inputK').value);
+            
+            if (newN < 2) {
+                alert('N must be at least 2');
+                return;
+            }
+            if (newN > 10) {
+                alert('N cannot exceed 10');
+                return;
+            }
+            if (newK < 1) {
+                alert('K must be at least 1');
+                return;
+            }
+            if (newK >= newN) {
+                alert('K must be less than N');
+                return;
+            }
+            
+            N = newN;
+            K = newK;
+            buildGraph();
+        }
+        
+        // Dragging functionality
+        let draggedNode = null;
+        
+        function mousePressed() {
+            for (let node of nodes) {
+                const d = dist(mouseX, mouseY, node.x, node.y);
+                if (d < node.radius) {
+                    draggedNode = node;
+                    break;
+                }
+            }
+        }
+        
+        function mouseDragged() {
+            if (draggedNode) {
+                draggedNode.x = mouseX;
+                draggedNode.y = mouseY;
+                draggedNode.vx = 0;
+                draggedNode.vy = 0;
+                if (isGridLayout) {
+                    isGridLayout = false;
+                }
+            }
+        }
+        
+        function mouseReleased() {
+            draggedNode = null;
+        }
+        
+        function updateNodeSize(value) {
+            NODE_SIZE = parseInt(value);
+            document.getElementById('nodeSizeValue').textContent = value;
+            if (isGridLayout) {
+                applyDiagonalGridLayout();
+            }
+        }
+        
+        function updateRepulsion(value) {
+            REPULSION = parseInt(value);
+            document.getElementById('repulsionValue').textContent = value;
+        }
+        
+        function updateAttraction(value) {
+            ATTRACTION = parseInt(value) / 1000;
+            document.getElementById('attractionValue').textContent = ATTRACTION.toFixed(3);
+        }
+        
+        function shakeNodes() {
+            isGridLayout = false;
+            applyRandomLayout();
+            
+            // Add random velocity
+            nodes.forEach(node => {
+                node.vx = random(-15, 15);
+                node.vy = random(-15, 15);
+            });
+        }
+        
+        function toggleGridLayout() {
+            isGridLayout = !isGridLayout;
+            if (isGridLayout) {
+                applyDiagonalGridLayout();
+            }
+        }
+    </script>
+</body>
+</html>

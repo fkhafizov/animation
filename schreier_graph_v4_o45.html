@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schreier Graph 3D Visualizer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;600&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            overflow: hidden;
+            background: #1a1a2e;
+        }
+        
+        #controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(30, 30, 50, 0.95);
+            backdrop-filter: blur(12px);
+            padding: 14px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            z-index: 100;
+            width: 180px;
+            border: 1px solid rgba(100, 100, 150, 0.3);
+            font-size: 0.85rem;
+        }
+        
+        h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            color: #64b5f6;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+        
+        .control-group {
+            margin-bottom: 10px;
+        }
+        
+        label {
+            display: block;
+            font-size: 0.65rem;
+            color: #90a4ae;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 8px 10px;
+            font-size: 0.9rem;
+            font-family: 'JetBrains Mono', monospace;
+            border: 2px solid #37474f;
+            border-radius: 8px;
+            background: #263238;
+            color: #eceff1;
+            transition: all 0.2s ease;
+        }
+        
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #64b5f6;
+            background: #37474f;
+            box-shadow: 0 0 0 3px rgba(100, 181, 246, 0.15);
+        }
+        
+        .slider-group {
+            margin-bottom: 10px;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        
+        .slider-value {
+            font-size: 0.7rem;
+            color: #eceff1;
+            font-weight: 600;
+            background: #37474f;
+            padding: 1px 5px;
+            border-radius: 3px;
+        }
+        
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, #37474f 0%, #37474f 100%);
+            outline: none;
+            cursor: pointer;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #64b5f6 0%, #ce93d8 100%);
+            cursor: pointer;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(100, 181, 246, 0.4);
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #64b5f6 0%, #ce93d8 100%);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .section-divider {
+            margin: 10px 0 8px 0;
+            padding-top: 10px;
+            border-top: 1px solid #37474f;
+        }
+        
+        .section-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.6rem;
+            color: #78909c;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 8px;
+            font-size: 0.7rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            background: linear-gradient(135deg, #64b5f6 0%, #ce93d8 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(100, 181, 246, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .shake-btn {
+            margin-top: 8px;
+            background: linear-gradient(135deg, #ff9800 0%, #ff5722 100%);
+        }
+        
+        .shake-btn:hover {
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+        }
+        
+        .grid-btn {
+            margin-top: 6px;
+            background: linear-gradient(135deg, #4caf50 0%, #00bcd4 100%);
+        }
+        
+        .grid-btn:hover {
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+        }
+        
+        .reset-btn {
+            margin-top: 6px;
+            background: linear-gradient(135deg, #9c27b0 0%, #673ab7 100%);
+        }
+        
+        .reset-btn:hover {
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.4);
+        }
+        
+        .checkbox-group {
+            margin: 10px 0;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 0.65rem;
+            color: #b0bec5;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+        
+        .checkbox-label input[type="checkbox"] {
+            display: none;
+        }
+        
+        .checkbox-custom {
+            width: 16px;
+            height: 16px;
+            min-width: 16px;
+            border: 2px solid #64b5f6;
+            border-radius: 3px;
+            margin-right: 6px;
+            position: relative;
+            transition: all 0.2s ease;
+            background: #263238;
+        }
+        
+        .checkbox-label input[type="checkbox"]:checked + .checkbox-custom {
+            background: linear-gradient(135deg, #64b5f6 0%, #ce93d8 100%);
+            border-color: #64b5f6;
+        }
+        
+        .checkbox-label input[type="checkbox"]:checked + .checkbox-custom::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
+        .info {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #37474f;
+            font-size: 0.6rem;
+            color: #78909c;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        
+        .info-value {
+            color: #eceff1;
+            font-weight: 600;
+            font-size: 0.6rem;
+        }
+        
+        #legend {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(30, 30, 50, 0.95);
+            backdrop-filter: blur(12px);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+            border: 1px solid rgba(100, 100, 150, 0.3);
+            width: 180px;
+        }
+        
+        #legend h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.7rem;
+            color: #64b5f6;
+            margin-bottom: 8px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+            font-size: 0.6rem;
+            color: #90a4ae;
+        }
+        
+        .legend-color {
+            width: 18px;
+            height: 3px;
+            border-radius: 2px;
+            margin-right: 6px;
+        }
+        
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #stats-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(30, 30, 50, 0.95);
+            backdrop-filter: blur(12px);
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+            border: 1px solid rgba(100, 100, 150, 0.3);
+            width: 180px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        #stats-panel h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.75rem;
+            color: #64b5f6;
+            margin-bottom: 8px;
+        }
+        
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            font-size: 0.7rem;
+            color: #b0bec5;
+        }
+        
+        .stats-value {
+            font-weight: 600;
+            color: #ce93d8;
+        }
+        
+        .degree-table {
+            width: 100%;
+            margin-top: 8px;
+            border-collapse: collapse;
+        }
+        
+        .degree-table th {
+            font-size: 0.6rem;
+            color: #78909c;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 4px 2px;
+            border-bottom: 1px solid #37474f;
+            text-align: left;
+        }
+        
+        .degree-table td {
+            padding: 3px 2px;
+            font-size: 0.65rem;
+            border-bottom: 1px solid #263238;
+            color: #b0bec5;
+        }
+        
+        .degree-table td:first-child {
+            font-weight: 600;
+            color: #eceff1;
+        }
+        
+        .degree-table tr:hover {
+            background: rgba(100, 181, 246, 0.1);
+        }
+        
+        #help-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(30, 30, 50, 0.95);
+            backdrop-filter: blur(12px);
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+            border: 1px solid rgba(100, 100, 150, 0.3);
+            width: 200px;
+        }
+        
+        #help-panel h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.7rem;
+            color: #64b5f6;
+            margin-bottom: 8px;
+        }
+        
+        .help-item {
+            font-size: 0.6rem;
+            color: #90a4ae;
+            margin-bottom: 4px;
+        }
+        
+        .help-key {
+            display: inline-block;
+            background: #37474f;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #eceff1;
+            font-weight: 600;
+            margin-right: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <h2>⬡ Schreier Graph 3D</h2>
+        <div class="control-group">
+            <label>N (String Length: 2-10)</label>
+            <input type="number" id="inputN" value="6" min="2" max="10">
+        </div>
+        <div class="control-group">
+            <label>K (Number of Ones)</label>
+            <input type="number" id="inputK" value="3" min="1" max="9">
+        </div>
+        
+        <div class="control-group checkbox-group">
+            <label class="checkbox-label">
+                <input type="checkbox" id="wrappedCheckbox">
+                <span class="checkbox-custom"></span>
+                <span>WRAPPED (0, N-1)</span>
+            </label>
+        </div>
+        
+        <div class="control-group checkbox-group">
+            <label class="checkbox-label">
+                <input type="checkbox" id="autoRotateCheckbox" checked>
+                <span class="checkbox-custom"></span>
+                <span>Auto-rotate</span>
+            </label>
+        </div>
+        
+        <div class="control-group checkbox-group">
+            <label class="checkbox-label">
+                <input type="checkbox" id="showLabelsCheckbox" checked>
+                <span class="checkbox-custom"></span>
+                <span>Show labels</span>
+            </label>
+        </div>
+        
+        <button onclick="rebuildGraph()">Generate Graph</button>
+        <button class="grid-btn" onclick="toggleGridLayout()">📐 3D Grid Layout</button>
+        <button class="reset-btn" onclick="resetCamera()">🎯 Reset Camera</button>
+        
+        <div class="section-divider">
+            <div class="section-title">Appearance</div>
+        </div>
+        
+        <div class="slider-group">
+            <div class="slider-label">
+                <label>Node Size</label>
+                <span class="slider-value" id="nodeSizeValue">12</span>
+            </div>
+            <input type="range" id="nodeSizeSlider" min="5" max="30" value="12" oninput="updateNodeSize(this.value)">
+        </div>
+        
+        <div class="slider-group">
+            <div class="slider-label">
+                <label>Spacing</label>
+                <span class="slider-value" id="spacingValue">80</span>
+            </div>
+            <input type="range" id="spacingSlider" min="40" max="200" value="80" oninput="updateSpacing(this.value)">
+        </div>
+        
+        <div class="slider-group">
+            <div class="slider-label">
+                <label>Edge Thickness</label>
+                <span class="slider-value" id="edgeThicknessValue">2</span>
+            </div>
+            <input type="range" id="edgeThicknessSlider" min="1" max="6" value="2" oninput="updateEdgeThickness(this.value)">
+        </div>
+        
+        <button class="shake-btn" onclick="shakeNodes()">🔀 Randomize</button>
+        
+        <div class="info">
+            <div class="info-row">
+                <span>Zeros:</span>
+                <span class="info-value" id="infoZeros">3</span>
+            </div>
+            <div class="info-row">
+                <span>Starting node:</span>
+                <span class="info-value" id="infoStart">000111</span>
+            </div>
+            <div class="info-row">
+                <span>Total nodes:</span>
+                <span class="info-value" id="infoNodes">20</span>
+            </div>
+        </div>
+    </div>
+    
+    <div id="legend"></div>
+    
+    <div id="stats-panel">
+        <h3>📊 Graph Statistics</h3>
+        <div class="stats-row">
+            <span>Vertices |V|:</span>
+            <span class="stats-value" id="statVertices">20</span>
+        </div>
+        <div class="stats-row">
+            <span>Edges |E|:</span>
+            <span class="stats-value" id="statEdges">0</span>
+        </div>
+        <h3 style="margin-top: 12px;">Degree Distribution</h3>
+        <table class="degree-table">
+            <thead>
+                <tr>
+                    <th>Deg</th>
+                    <th>Count</th>
+                </tr>
+            </thead>
+            <tbody id="degreeTableBody">
+            </tbody>
+        </table>
+    </div>
+    
+    <div id="help-panel">
+        <h3>🎮 Controls</h3>
+        <div class="help-item"><span class="help-key">Drag</span> Rotate view</div>
+        <div class="help-item"><span class="help-key">Scroll</span> Zoom in/out</div>
+        <div class="help-item"><span class="help-key">Shift+Drag</span> Pan view</div>
+        <div class="help-item"><span class="help-key">R</span> Reset camera</div>
+        <div class="help-item"><span class="help-key">G</span> Toggle grid layout</div>
+        <div class="help-item"><span class="help-key">Space</span> Toggle auto-rotate</div>
+    </div>
+    
+    <div id="canvas-container"></div>
+
+    <script>
+        // Graph data structures
+        let nodes = [];
+        let edges = [];
+        let N = 6;
+        let K = 3;
+        let isWrapped = false;
+        let isGridLayout = true;
+        let adjacencyList = new Map();
+        
+        // 3D camera controls
+        let rotationX = -0.4;
+        let rotationY = 0.5;
+        let rotationZ = 0;
+        let zoom = 1;
+        let panX = 0;
+        let panY = 0;
+        let autoRotate = true;
+        let showLabels = true;
+        
+        // Appearance settings
+        let NODE_SIZE = 12;
+        let SPACING = 80;
+        let EDGE_THICKNESS = 2;
+        
+        // Color palette for transpositions (i, i+1)
+        const transpositionColors = [
+            '#e53935', // (0,1) - Red
+            '#fb8c00', // (1,2) - Orange  
+            '#fdd835', // (2,3) - Yellow
+            '#43a047', // (3,4) - Green
+            '#00acc1', // (4,5) - Cyan
+            '#5c6bc0', // (5,6) - Indigo
+            '#8e24aa', // (6,7) - Purple
+            '#d81b60', // (7,8) - Pink
+            '#6d4c41', // (8,9) - Brown
+        ];
+        
+        // Degree colors for nodes
+        const degreeColors = [
+            '#9E9E9E', // degree 0 - gray
+            '#E91E63', // degree 1 - pink
+            '#F44336', // degree 2 - red
+            '#FF9800', // degree 3 - orange
+            '#FFEB3B', // degree 4 - yellow
+            '#8BC34A', // degree 5 - light green
+            '#4CAF50', // degree 6 - green
+            '#00BCD4', // degree 7 - cyan
+            '#2196F3', // degree 8 - blue
+            '#3F51B5', // degree 9 - indigo
+            '#9C27B0', // degree 10 - purple
+            '#673AB7', // degree 11 - deep purple
+        ];
+        
+        function getDegreeColor(degree) {
+            if (degree < degreeColors.length) {
+                return degreeColors[degree];
+            }
+            return degreeColors[degree % degreeColors.length];
+        }
+        
+        class Node {
+            constructor(label, x, y, z) {
+                this.label = label;
+                this.x = x || 0;
+                this.y = y || 0;
+                this.z = z || 0;
+                this.degree = 0;
+                this.onesPositions = this.getOnesPositions();
+            }
+            
+            getOnesPositions() {
+                const positions = [];
+                for (let i = 0; i < this.label.length; i++) {
+                    if (this.label[i] === '1') {
+                        positions.push(i);
+                    }
+                }
+                return positions;
+            }
+        }
+        
+        class Edge {
+            constructor(from, to, transposition) {
+                this.from = from;
+                this.to = to;
+                this.transposition = transposition;
+            }
+        }
+        
+        function generateAllStrings(n, k) {
+            const results = [];
+            
+            function generate(current, onesLeft, zerosLeft) {
+                if (onesLeft === 0 && zerosLeft === 0) {
+                    results.push(current);
+                    return;
+                }
+                if (onesLeft > 0) {
+                    generate(current + '1', onesLeft - 1, zerosLeft);
+                }
+                if (zerosLeft > 0) {
+                    generate(current + '0', onesLeft, zerosLeft - 1);
+                }
+            }
+            
+            generate('', k, n - k);
+            return results;
+        }
+        
+        function applyTransposition(str, i) {
+            if (i < 0 || i >= str.length - 1) return str;
+            const arr = str.split('');
+            [arr[i], arr[i + 1]] = [arr[i + 1], arr[i]];
+            return arr.join('');
+        }
+        
+        function applyWrappedTransposition(str) {
+            const arr = str.split('');
+            [arr[0], arr[arr.length - 1]] = [arr[arr.length - 1], arr[0]];
+            return arr.join('');
+        }
+        
+        function buildGraph() {
+            nodes = [];
+            edges = [];
+            adjacencyList = new Map();
+            
+            isWrapped = document.getElementById('wrappedCheckbox').checked;
+            
+            const allStrings = generateAllStrings(N, K);
+            const stringToIndex = new Map();
+            
+            // Create nodes
+            allStrings.forEach((str, i) => {
+                nodes.push(new Node(str, 0, 0, 0));
+                stringToIndex.set(str, i);
+            });
+            
+            // Create edges and build adjacency list
+            const edgeSet = new Set();
+            const adjacency = new Map();
+            
+            for (let i = 0; i < nodes.length; i++) {
+                adjacency.set(i, []);
+            }
+            
+            allStrings.forEach((str, fromIdx) => {
+                // Standard adjacent transpositions
+                for (let i = 0; i < N - 1; i++) {
+                    if (str[i] !== str[i + 1]) {
+                        const newStr = applyTransposition(str, i);
+                        const toIdx = stringToIndex.get(newStr);
+                        
+                        if (toIdx !== undefined) {
+                            const edgeKey = fromIdx < toIdx ? 
+                                `${fromIdx}-${toIdx}-${i}` : `${toIdx}-${fromIdx}-${i}`;
+                            
+                            if (!edgeSet.has(edgeKey)) {
+                                edgeSet.add(edgeKey);
+                                edges.push(new Edge(fromIdx, toIdx, i));
+                                adjacency.get(fromIdx).push(toIdx);
+                                adjacency.get(toIdx).push(fromIdx);
+                            }
+                        }
+                    }
+                }
+                
+                // Wrapped transposition
+                if (isWrapped && str[0] !== str[N - 1]) {
+                    const newStr = applyWrappedTransposition(str);
+                    const toIdx = stringToIndex.get(newStr);
+                    
+                    if (toIdx !== undefined) {
+                        const transIdx = N - 1;
+                        const edgeKey = fromIdx < toIdx ? 
+                            `${fromIdx}-${toIdx}-wrap` : `${toIdx}-${fromIdx}-wrap`;
+                        
+                        if (!edgeSet.has(edgeKey)) {
+                            edgeSet.add(edgeKey);
+                            edges.push(new Edge(fromIdx, toIdx, transIdx));
+                            adjacency.get(fromIdx).push(toIdx);
+                            adjacency.get(toIdx).push(fromIdx);
+                        }
+                    }
+                }
+            });
+            
+            adjacencyList = adjacency;
+            
+            // Calculate degrees
+            nodes.forEach((node, i) => {
+                node.degree = adjacency.get(i).length;
+            });
+            
+            // Position nodes
+            if (isGridLayout) {
+                applyGridLayout();
+            } else {
+                applyRandomLayout();
+            }
+            
+            updateInfo();
+            updateLegend();
+            updateStats(adjacency);
+        }
+        
+        function applyGridLayout() {
+            // Position nodes based on their ones positions
+            const centerOffset = (N - 1) / 2;
+            
+            nodes.forEach(node => {
+                const pos = node.onesPositions;
+                
+                if (K === 2) {
+                    // 2D grid for K=2
+                    node.x = (pos[0] - centerOffset) * SPACING;
+                    node.y = (pos[1] - centerOffset) * SPACING;
+                    node.z = 0;
+                } else if (K === 3) {
+                    // 3D grid for K=3
+                    node.x = (pos[0] - centerOffset) * SPACING;
+                    node.y = (pos[1] - centerOffset) * SPACING;
+                    node.z = (pos[2] - centerOffset) * SPACING;
+                } else if (K === 1) {
+                    // 1D line for K=1
+                    node.x = (pos[0] - centerOffset) * SPACING;
+                    node.y = 0;
+                    node.z = 0;
+                } else {
+                    // For K > 3, use first 3 dimensions and spread others
+                    node.x = (pos[0] - centerOffset) * SPACING;
+                    node.y = (pos[1] - centerOffset) * SPACING;
+                    node.z = (pos[2] - centerOffset) * SPACING;
+                    
+                    // Add slight offsets for additional dimensions
+                    if (pos.length > 3) {
+                        const extraOffset = pos.slice(3).reduce((a, b) => a + b, 0);
+                        node.x += (extraOffset - (K - 3) * centerOffset) * SPACING * 0.3;
+                    }
+                }
+            });
+        }
+        
+        function applyRandomLayout() {
+            const spread = SPACING * 3;
+            nodes.forEach(node => {
+                node.x = (Math.random() - 0.5) * spread;
+                node.y = (Math.random() - 0.5) * spread;
+                node.z = (Math.random() - 0.5) * spread;
+            });
+        }
+        
+        function updateInfo() {
+            document.getElementById('infoZeros').textContent = N - K;
+            document.getElementById('infoStart').textContent = '0'.repeat(N - K) + '1'.repeat(K);
+            document.getElementById('infoNodes').textContent = nodes.length;
+        }
+        
+        function updateLegend() {
+            const legend = document.getElementById('legend');
+            let html = '<h3>Transpositions</h3>';
+            
+            for (let i = 0; i < N - 1; i++) {
+                html += `
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: ${transpositionColors[i]}"></div>
+                        <span>(${i}, ${i + 1})</span>
+                    </div>
+                `;
+            }
+            
+            if (isWrapped) {
+                html += `
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: ${transpositionColors[N - 1] || '#ff00ff'}"></div>
+                        <span>(0, ${N - 1}) wrapped</span>
+                    </div>
+                `;
+            }
+            
+            legend.innerHTML = html;
+        }
+        
+        function updateStats(adjacency) {
+            document.getElementById('statVertices').textContent = nodes.length;
+            document.getElementById('statEdges').textContent = edges.length;
+            
+            const degreeCounts = new Map();
+            for (let i = 0; i < nodes.length; i++) {
+                const degree = adjacency.get(i).length;
+                degreeCounts.set(degree, (degreeCounts.get(degree) || 0) + 1);
+            }
+            
+            const sortedDegrees = Array.from(degreeCounts.keys()).sort((a, b) => a - b);
+            const tbody = document.getElementById('degreeTableBody');
+            tbody.innerHTML = '';
+            
+            sortedDegrees.forEach(degree => {
+                const count = degreeCounts.get(degree);
+                const degColor = getDegreeColor(degree);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${degColor};margin-right:4px;vertical-align:middle;"></span>${degree}</td>
+                    <td>${count}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        function setup() {
+            const canvas = createCanvas(windowWidth, windowHeight, WEBGL);
+            canvas.parent('canvas-container');
+            textFont('JetBrains Mono');
+            buildGraph();
+        }
+        
+        function draw() {
+            background(26, 26, 46);
+            
+            // Apply camera transformations
+            translate(panX, panY, 0);
+            scale(zoom);
+            
+            // Auto-rotation
+            if (autoRotate) {
+                rotationY += 0.003;
+            }
+            
+            rotateX(rotationX);
+            rotateY(rotationY);
+            rotateZ(rotationZ);
+            
+            // Draw coordinate axes (subtle)
+            drawAxes();
+            
+            // Draw edges
+            strokeWeight(EDGE_THICKNESS);
+            edges.forEach(edge => {
+                const from = nodes[edge.from];
+                const to = nodes[edge.to];
+                
+                const col = color(transpositionColors[edge.transposition] || '#ffffff');
+                stroke(col);
+                
+                line(from.x, from.y, from.z, to.x, to.y, to.z);
+            });
+            
+            // Draw nodes
+            noStroke();
+            nodes.forEach((node, idx) => {
+                push();
+                translate(node.x, node.y, node.z);
+                
+                // Billboard rotation (face camera) for labels
+                if (showLabels) {
+                    rotateZ(-rotationZ);
+                    rotateY(-rotationY);
+                    rotateX(-rotationX);
+                }
+                
+                // Node sphere
+                const nodeColor = color(getDegreeColor(node.degree));
+                fill(nodeColor);
+                sphere(NODE_SIZE);
+                
+                // Label
+                if (showLabels) {
+                    fill(255);
+                    textSize(10);
+                    textAlign(CENTER, CENTER);
+                    text(node.label, 0, -NODE_SIZE - 8);
+                }
+                
+                pop();
+            });
+            
+            // Draw info overlay
+            drawOverlay();
+        }
+        
+        function drawAxes() {
+            const axisLength = SPACING * (N - 1) * 0.6;
+            strokeWeight(1);
+            
+            // X axis - red
+            stroke(255, 100, 100, 100);
+            line(-axisLength, 0, 0, axisLength, 0, 0);
+            
+            // Y axis - green
+            stroke(100, 255, 100, 100);
+            line(0, -axisLength, 0, 0, axisLength, 0);
+            
+            // Z axis - blue
+            stroke(100, 100, 255, 100);
+            line(0, 0, -axisLength, 0, 0, axisLength);
+            
+            // Draw axis labels
+            push();
+            fill(255, 100, 100, 150);
+            noStroke();
+            textSize(12);
+            
+            // Position labels at axis ends (need to counter-rotate for readability)
+            rotateZ(-rotationZ);
+            rotateY(-rotationY);
+            rotateX(-rotationX);
+            
+            // These won't be perfectly positioned but give a hint
+            pop();
+        }
+        
+        function drawOverlay() {
+            // Reset transformations for 2D overlay
+            push();
+            resetMatrix();
+            
+            // Position info (2D text doesn't work well in WEBGL, using DOM instead)
+            pop();
+        }
+        
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+        
+        // Mouse controls
+        let isDragging = false;
+        let lastMouseX, lastMouseY;
+        
+        function mousePressed() {
+            if (mouseX > 200 && mouseX < width - 200) {
+                isDragging = true;
+                lastMouseX = mouseX;
+                lastMouseY = mouseY;
+            }
+        }
+        
+        function mouseDragged() {
+            if (isDragging) {
+                const dx = mouseX - lastMouseX;
+                const dy = mouseY - lastMouseY;
+                
+                if (keyIsDown(SHIFT)) {
+                    // Pan
+                    panX += dx;
+                    panY += dy;
+                } else {
+                    // Rotate
+                    rotationY += dx * 0.01;
+                    rotationX += dy * 0.01;
+                }
+                
+                lastMouseX = mouseX;
+                lastMouseY = mouseY;
+            }
+        }
+        
+        function mouseReleased() {
+            isDragging = false;
+        }
+        
+        function mouseWheel(event) {
+            // Zoom
+            zoom *= event.delta > 0 ? 0.95 : 1.05;
+            zoom = constrain(zoom, 0.1, 5);
+            return false;
+        }
+        
+        function keyPressed() {
+            if (key === 'r' || key === 'R') {
+                resetCamera();
+            } else if (key === 'g' || key === 'G') {
+                toggleGridLayout();
+            } else if (key === ' ') {
+                autoRotate = !autoRotate;
+                document.getElementById('autoRotateCheckbox').checked = autoRotate;
+            }
+        }
+        
+        // Control functions
+        function rebuildGraph() {
+            const newN = parseInt(document.getElementById('inputN').value);
+            const newK = parseInt(document.getElementById('inputK').value);
+            
+            if (newN < 2) {
+                alert('N must be at least 2');
+                return;
+            }
+            if (newN > 10) {
+                alert('N cannot exceed 10');
+                return;
+            }
+            if (newK < 1) {
+                alert('K must be at least 1');
+                return;
+            }
+            if (newK >= newN) {
+                alert('K must be less than N');
+                return;
+            }
+            
+            // Warn about large graphs
+            const numNodes = factorial(newN) / (factorial(newK) * factorial(newN - newK));
+            if (numNodes > 500) {
+                if (!confirm(`This will create ${numNodes} nodes. Continue?`)) {
+                    return;
+                }
+            }
+            
+            N = newN;
+            K = newK;
+            buildGraph();
+        }
+        
+        function factorial(n) {
+            if (n <= 1) return 1;
+            return n * factorial(n - 1);
+        }
+        
+        function toggleGridLayout() {
+            isGridLayout = !isGridLayout;
+            if (isGridLayout) {
+                applyGridLayout();
+            } else {
+                applyRandomLayout();
+            }
+        }
+        
+        function resetCamera() {
+            rotationX = -0.4;
+            rotationY = 0.5;
+            rotationZ = 0;
+            zoom = 1;
+            panX = 0;
+            panY = 0;
+        }
+        
+        function updateNodeSize(value) {
+            NODE_SIZE = parseInt(value);
+            document.getElementById('nodeSizeValue').textContent = value;
+        }
+        
+        function updateSpacing(value) {
+            SPACING = parseInt(value);
+            document.getElementById('spacingValue').textContent = value;
+            if (isGridLayout) {
+                applyGridLayout();
+            }
+        }
+        
+        function updateEdgeThickness(value) {
+            EDGE_THICKNESS = parseInt(value);
+            document.getElementById('edgeThicknessValue').textContent = value;
+        }
+        
+        function shakeNodes() {
+            isGridLayout = false;
+            applyRandomLayout();
+        }
+        
+        // Checkbox event listeners
+        document.getElementById('autoRotateCheckbox').addEventListener('change', function() {
+            autoRotate = this.checked;
+        });
+        
+        document.getElementById('showLabelsCheckbox').addEventListener('change', function() {
+            showLabels = this.checked;
+        });
+    </script>
+</body>
+</html>
