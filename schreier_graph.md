@@ -1,13 +1,13 @@
-2026.01.26
+# 2026.01.26
 
-# Q
+## Q
 
 review schreier_graph_opus_v3.html.
 in this code you know how to build a grid representation for a shreier graph 
 with N=5 and K=2 for both wrapped and unwrapped version. 
 Can you suggest how to build a grid when N=6 and K=3? Give me your suggestions.
 
-# A
+## A
 
 Great question! The K=2 grid works because two positions (x, y) naturally map to 2D coordinates. For K=3, you have three positions (a, b, c) where a < b < c, which naturally lives in 3D. Here are several approaches to visualize it:
 
@@ -191,10 +191,10 @@ The diagonal projection has nice properties:
 
 Would you like me to implement one of these approaches in your existing code?
 
-2026.01.07
+# 2026.01.07
 
 
-# **граф Шрайера** = **Schreier graph** (also written **Schreier coset graph**).
+## **граф Шрайера** = **Schreier graph** (also written **Schreier coset graph**).
 
 Give the standard  usage in group theory, plus a one-sentence definition and common synonyms/spellings so you can use it in papers.
 
@@ -205,7 +205,7 @@ In group theory: given a group action (often of $G$ on cosets $G/H$) and a gener
 
 
 
-# useful?
+## useful?
 
 
 Schreier graphs are useful because they let you study a **group action** (often huge) using a **finite, concrete graph** that still preserves the algebraic structure.
