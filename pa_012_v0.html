@@ -144,6 +144,7 @@
                 <button id="genBtn">GEN</button>
             </span>
             <label style="font-size: 0.8rem; cursor: pointer;">fix k,n,m<input type="checkbox" id="fixKNMChk" style="cursor: pointer; margin: 0; padding: 0;" checked></label>
+            <label style="font-size: 0.8rem; cursor: pointer; margin-left: 10px;">Lattice<input type="checkbox" id="latticeChk" style="cursor: pointer; margin: 0; padding: 0;" checked></label>
         </span>
     </div>
     
@@ -428,8 +429,9 @@
             let largeW = dispM * cellSize;
             let largeH = dispKN * cellSize;
             
-            // Canvas needs to fit: large rect + small rect horizontally, and large rect + small rect overlap vertically
-            let canvasW = Math.max(700, padding + largeW + smallW + padding + 50);
+            // Canvas needs to fit: large rect + small rect horizontally + two lattice grids on right
+            let latticeSpace = Math.max(150, (m + n) * 18 + 80);
+            let canvasW = Math.max(800, padding + largeW + smallW + padding + latticeSpace);
             let canvasH = Math.max(550, padding + 100 + smallH + largeH + 50);
             
             mainSketch = new p5(function(p) {
@@ -510,11 +512,85 @@
                     p.textSize(12);
                     p.textAlign(p.RIGHT, p.TOP);
                     p.fill(220, 53, 69);
-                    p.text('━━ E path (red solid)', canvasW - 20, 15);
+                    p.text('━━ E path (red solid)', canvasW - latticeSpace - 10, 15);
                     p.fill(25, 135, 84);
-                    p.text('┅┅ P path (green dashed)', canvasW - 20, 35);
+                    p.text('┅┅ P path (green dashed)', canvasW - latticeSpace - 10, 35);
                     p.fill(111, 66, 193);
-                    p.text('▓ Area between paths', canvasW - 20, 55);
+                    p.text('▓ Area between paths', canvasW - latticeSpace - 10, 55);
+                    
+                    // Lattice on the right side - two grids side by side
+                    if (document.getElementById('latticeChk').checked) {
+                        let latticeStartY = 120;
+                        let circleR = 12;
+                        let circleSpacing = 18;
+                        let gridGap = 30;
+                        
+                        // Helper: get y-value of path at given x (before moving to x+1)
+                        function getPathYatX(path, x) {
+                            let y = 0;
+                            for (let pt of path) {
+                                if (pt.x > x) break;
+                                y = pt.y;
+                            }
+                            return y;
+                        }
+                        
+                        // Calculate positions for both grids
+                        let grid1Width = m * circleSpacing;
+                        let grid2Width = n * circleSpacing;
+                        let lattice1X = canvasW - grid1Width/2 - gridGap/2 - grid2Width - 20;
+                        let lattice2X = canvasW - grid2Width/2 - 20;
+                        
+                        // First lattice: m × (k+n) grid
+                        p.textAlign(p.CENTER, p.BOTTOM);
+                        p.fill(80, 80, 100);
+                        p.textSize(9);
+                        p.noStroke();
+                        p.text('m×(k+n)', lattice1X, latticeStartY - 8);
+                        for (let row = 0; row < k + n; row++) {
+                            for (let col = 0; col < m; col++) {
+                                // Check if this cell is between the paths
+                                let pY = getPathYatX(pPathLarge, col);
+                                let eY = getPathYatX(ePathLarge, col);
+                                let cellY = (k + n) - 1 - row; // convert row to y (row 0 = top = max y)
+                                let inArea = (cellY >= eY && cellY < pY) || (cellY >= pY && cellY < eY);
+                                
+                                p.stroke(220, 53, 69);
+                                p.strokeWeight(1);
+                                if (inArea) {
+                                    p.fill(25, 135, 84, 150); // green for area
+                                } else {
+                                    p.fill(255, 245, 220);
+                                }
+                                p.ellipse(lattice1X - (m-1)*circleSpacing/2 + col * circleSpacing, 
+                                         latticeStartY + row * circleSpacing, circleR);
+                            }
+                        }
+                        
+                        // Second lattice: n × k grid (same starting Y, to the right)
+                        p.noStroke();
+                        p.fill(80, 80, 100);
+                        p.text('n×k', lattice2X, latticeStartY - 8);
+                        for (let row = 0; row < k; row++) {
+                            for (let col = 0; col < n; col++) {
+                                // Check if this cell is between the paths
+                                let pY = getPathYatX(pPathSmall, col);
+                                let eY = getPathYatX(ePathSmall, col);
+                                let cellY = k - 1 - row; // convert row to y
+                                let inArea = (cellY >= eY && cellY < pY) || (cellY >= pY && cellY < eY);
+                                
+                                p.stroke(220, 53, 69);
+                                p.strokeWeight(1);
+                                if (inArea) {
+                                    p.fill(25, 135, 84, 150); // green for area
+                                } else {
+                                    p.fill(255, 245, 220);
+                                }
+                                p.ellipse(lattice2X - (n-1)*circleSpacing/2 + col * circleSpacing, 
+                                         latticeStartY + row * circleSpacing, circleR);
+                            }
+                        }
+                    }
                     
                     // Animation
                     if (isAnimating) {
