@@ -182,11 +182,11 @@
                 <div class="info-value" id="smallRectDisplay">—</div>
             </div>
             <div class="info-row">
-                <div class="info-label">Area (Large)</div>
+                <div class="info-label">A₁ = Area (Large)</div>
                 <div class="info-value purple" id="areaLargeDisplay">—</div>
             </div>
             <div class="info-row">
-                <div class="info-label">Area (Small)</div>
+                <div class="info-label">A₂ = Area (Small)</div>
                 <div class="info-value purple" id="areaSmallDisplay">—</div>
             </div>
             <div class="info-row">
@@ -210,6 +210,9 @@
         let isAnimating = false;
         let animPhase = 0;
         let mainSketch = null;
+        let totalDist = 0;
+        let areaLarge = 0;
+        let areaSmall = 0;
         
         document.getElementById('drawBtn').addEventListener('click', startDraw);
         document.getElementById('randBtn').addEventListener('click', randomizeInput);
@@ -379,12 +382,13 @@
             document.getElementById('largeRectDisplay').textContent = `${m} × ${k+n}`;
             document.getElementById('smallRectDisplay').textContent = `${n} × ${k}`;
             
-            let areaLarge = calcArea(pPathLarge, ePathLarge);
-            let areaSmall = calcArea(pPathSmall, ePathSmall);
+            areaLarge = calcArea(pPathLarge, ePathLarge);
+            areaSmall = calcArea(pPathSmall, ePathSmall);
+            totalDist = areaLarge + areaSmall;
             
             document.getElementById('areaLargeDisplay').textContent = areaLarge;
             document.getElementById('areaSmallDisplay').textContent = areaSmall;
-            document.getElementById('totalDistDisplay').textContent = areaLarge + areaSmall;
+            document.getElementById('totalDistDisplay').textContent = totalDist;
             
             animProgress = 0;
             animPhase = 0;
@@ -474,17 +478,19 @@
                     
                     // Labels at top
                     p.noStroke();
-                    p.textSize(14);
+                    p.textSize(13);
                     p.textAlign(p.LEFT, p.TOP);
-                    p.fill(220, 53, 69);
-                    p.textStyle(p.BOLD);
-                    p.text('P = [' + pArray.join(', ') + ']', 20, 15);
-                    p.fill(25, 135, 84);
-                    p.text('E = [' + eArray.join(', ') + ']', 20, 38);
                     p.fill(80, 80, 100);
                     p.textStyle(p.NORMAL);
-                    p.textSize(13);
-                    p.text('k=' + k + ' zeros, n=' + n + ' ones, m=' + m + ' twos', 20, 62);
+                    p.text('k=' + k + ' zeros, n=' + n + ' ones, m=' + m + ' twos', 20, 15);
+                    p.textSize(14);
+                    p.fill(220, 53, 69);
+                    p.textStyle(p.BOLD);
+                    p.text('P = [' + pArray.join(', ') + ']', 20, 38);
+                    p.fill(25, 135, 84);
+                    p.text('E = [' + eArray.join(', ') + ']', 20, 62);
+                    p.fill(111, 66, 193);
+                    p.text('d(P, E) = ' + areaLarge + ' + ' + areaSmall + ' = ' + totalDist, 20, 85);
                     
                     // Legend at top right
                     p.textSize(12);
