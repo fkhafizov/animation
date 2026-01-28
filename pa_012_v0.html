@@ -163,11 +163,11 @@
             <h3>📊 Info</h3>
             <div class="info-row">
                 <div class="info-label">P (permutation)</div>
-                <div class="info-value red" id="pDisplay">—</div>
+                <div class="info-value green" id="pDisplay">—</div>
             </div>
             <div class="info-row">
-                <div class="info-label">E = sort(P)</div>
-                <div class="info-value green" id="eDisplay">—</div>
+                <div class="info-label" style="color: #dc3545;">E = sort(P)</div>
+                <div class="info-value red" id="eDisplay">—</div>
             </div>
             <div class="info-row">
                 <div class="info-label">Counts</div>
@@ -460,27 +460,31 @@
                     if (m > 0 && (k + n) > 0) {
                         drawRect(p, largeX, largeY, m, k + n, cellSize,
                                  pPathLarge, ePathLarge, pProg, eProg,
-                                 'Large rect (m×(k+n)): 2s among {0,1}s', animPhase >= 2);
+                                 'Large rect (m×(k+n)): 2s among {0,1}s', animPhase >= 2,
+                                 'A₁', areaLarge);
                     }
                     
                     // Draw small rectangle (1s among 0s) - RIGHT
                     if (n > 0 && k > 0) {
                         drawRect(p, smallX, smallY, n, k, cellSize, 
                                  pPathSmall, ePathSmall, pProg, eProg, 
-                                 'Small rect (n×k): 1s among 0s', animPhase >= 2);
+                                 'Small rect (n×k): 1s among 0s', animPhase >= 2,
+                                 'A₂', areaSmall);
                     }
                     
                     // Draw connection line between large rect's top-right and small rect's bottom-left
-                    // This connects the red P paths
+                    // This connects the green P paths
                     if (n > 0 && k > 0 && m > 0 && (k + n) > 0) {
-                        p.stroke(220, 53, 69);
-                        p.strokeWeight(4);
+                        p.stroke(25, 135, 84);
+                        p.strokeWeight(3);
+                        p.drawingContext.setLineDash([6, 4]);
                         // Large rect top-right: (largeX + largeW, largeY)
                         // Small rect bottom-left: (smallX, smallY + smallH)
                         p.line(largeX + largeW, largeY, smallX, smallY + smallH);
+                        p.drawingContext.setLineDash([]);
                         
                         // Draw corner markers
-                        p.fill(220, 53, 69);
+                        p.fill(25, 135, 84);
                         p.noStroke();
                         p.ellipse(largeX + largeW, largeY, 10);
                         p.ellipse(smallX, smallY + smallH, 10);
@@ -494,10 +498,10 @@
                     p.textStyle(p.NORMAL);
                     p.text('k=' + k + ' zeros, n=' + n + ' ones, m=' + m + ' twos', 20, 15);
                     p.textSize(14);
-                    p.fill(220, 53, 69);
+                    p.fill(25, 135, 84);
                     p.textStyle(p.BOLD);
                     p.text('P = [' + pArray.join(', ') + ']', 20, 38);
-                    p.fill(25, 135, 84);
+                    p.fill(220, 53, 69);
                     p.text('E = [' + eArray.join(', ') + ']', 20, 62);
                     p.fill(111, 66, 193);
                     p.text('d(P, E) = ' + areaLarge + ' + ' + areaSmall + ' = ' + totalDist, 20, 85);
@@ -506,9 +510,9 @@
                     p.textSize(12);
                     p.textAlign(p.RIGHT, p.TOP);
                     p.fill(220, 53, 69);
-                    p.text('━━ P path (red solid)', canvasW - 20, 15);
+                    p.text('━━ E path (red solid)', canvasW - 20, 15);
                     p.fill(25, 135, 84);
-                    p.text('┅┅ E path (green dashed)', canvasW - 20, 35);
+                    p.text('┅┅ P path (green dashed)', canvasW - 20, 35);
                     p.fill(111, 66, 193);
                     p.text('▓ Area between paths', canvasW - 20, 55);
                     
@@ -525,7 +529,7 @@
                     }
                 };
                 
-                function drawRect(p, originX, originY, rectW, rectH, cs, pPath, ePath, pProg, eProg, label, showArea) {
+                function drawRect(p, originX, originY, rectW, rectH, cs, pPath, ePath, pProg, eProg, label, showArea, areaLabel, areaVal) {
                     let w = rectW * cs;
                     let h = rectH * cs;
                     
@@ -564,14 +568,14 @@
                         p.endShape(p.CLOSE);
                     }
                     
-                    // E path (green dashed) - draw first
+                    // E path (red solid) - draw first
                     if (ePath.length > 1 && eProg > 0) {
-                        drawAnimPath(p, originX, originY + h, cs, ePath, p.color(25, 135, 84), 3, true, eProg);
+                        drawAnimPath(p, originX, originY + h, cs, ePath, p.color(220, 53, 69), 4, false, eProg);
                     }
                     
-                    // P path (red solid)
+                    // P path (green dashed)
                     if (pPath.length > 1 && pProg > 0) {
-                        drawAnimPath(p, originX, originY + h, cs, pPath, p.color(220, 53, 69), 4, false, pProg);
+                        drawAnimPath(p, originX, originY + h, cs, pPath, p.color(25, 135, 84), 3, true, pProg);
                     }
                     
                     // Label - split on colon if present
@@ -583,10 +587,20 @@
                         let parts = label.split(':');
                         p.text(parts[0].trim(), originX + w/2, originY + h + 5);
                         p.text(parts[1].trim(), originX + w/2, originY + h + 18);
-                        p.text(rectW + ' × ' + rectH, originX + w/2, originY + h + 31);
+                        // Combine dimension and area on one line
+                        let dimAreaLine = rectW + '×' + rectH;
+                        if (areaLabel) {
+                            dimAreaLine += '; ' + areaLabel + '=' + areaVal;
+                        }
+                        p.text(dimAreaLine, originX + w/2, originY + h + 31);
                     } else {
                         p.text(label, originX + w/2, originY + h + 5);
-                        p.text(rectW + ' × ' + rectH, originX + w/2, originY + h + 18);
+                        // Combine dimension and area on one line
+                        let dimAreaLine = rectW + '×' + rectH;
+                        if (areaLabel) {
+                            dimAreaLine += '; ' + areaLabel + '=' + areaVal;
+                        }
+                        p.text(dimAreaLine, originX + w/2, originY + h + 18);
                     }
                 }
                 
