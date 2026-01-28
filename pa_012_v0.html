@@ -132,6 +132,7 @@
         <input type="text" id="pInput" value="2 2 2 1 1 0 0 0 0">
         <button id="drawBtn">DRAW</button>
         <button id="randBtn">RAND</button>
+        <button id="helpBtn">HELP</button>
         <span style="margin-left: 15px; border-left: 2px solid #ccc; padding-left: 15px; display: inline-flex; flex-direction: column; align-items: flex-start; gap: 5px;">
             <span>
                 <label>k:</label>
@@ -142,10 +143,12 @@
                 <input type="number" id="mInput" value="3" min="0" max="10" style="width: 50px;">
                 <button id="genBtn">GEN</button>
             </span>
-            <label style="font-size: 0.8rem; cursor: pointer;">
-                <input type="checkbox" id="fixKNMChk" style="cursor: pointer;"> fix k,n,m
-            </label>
+            <label style="font-size: 0.8rem; cursor: pointer;">fix k,n,m<input type="checkbox" id="fixKNMChk" style="cursor: pointer; margin: 0; padding: 0;" checked></label>
         </span>
+    </div>
+    
+    <div id="helpText" style="display: none; background: #fffde7; padding: 10px 20px; border-radius: 8px; border: 1px solid #ffc107; margin-bottom: 10px; font-size: 0.9rem; color: #5d4037;">
+        P must have k 0s, n 1s, m 2s. Press DRAW to see paths. Use RAND to shuffle P.
     </div>
     
     <div class="info-text">
@@ -211,6 +214,12 @@
         document.getElementById('drawBtn').addEventListener('click', startDraw);
         document.getElementById('randBtn').addEventListener('click', randomizeInput);
         document.getElementById('genBtn').addEventListener('click', generateFromKNM);
+        document.getElementById('helpBtn').addEventListener('click', toggleHelp);
+        
+        function toggleHelp() {
+            let helpDiv = document.getElementById('helpText');
+            helpDiv.style.display = helpDiv.style.display === 'none' ? 'block' : 'none';
+        }
         
         function generateFromKNM() {
             // Get k, n, m from input fields
@@ -405,9 +414,9 @@
             let largeW = dispM * cellSize;
             let largeH = dispKN * cellSize;
             
-            // Canvas needs to fit: small rect + gap + large rect + padding on both sides
-            let canvasW = Math.max(700, padding + smallW + gap + largeW + padding + 50);
-            let canvasH = Math.max(550, padding + 100 + smallH + largeH + 80);
+            // Canvas needs to fit: large rect + small rect horizontally, and large rect + small rect overlap vertically
+            let canvasW = Math.max(700, padding + largeW + smallW + padding + 50);
+            let canvasH = Math.max(550, padding + 100 + smallH + largeH + 50);
             
             mainSketch = new p5(function(p) {
                 p.setup = function() {
@@ -418,46 +427,49 @@
                 p.draw = function() {
                     p.background(255, 252, 245);
                     
-                    // Small rectangle position (left side, upper)
-                    let smallX = padding;
-                    let smallY = padding + 100;
+                    // Large rectangle position (LEFT side, lower)
+                    let largeX = padding;
+                    let largeY = padding + 100 + smallH;
                     
-                    // Large rectangle position (to the right, with small rect's bottom-right
-                    // connecting to large rect's top-left)
-                    let largeX = smallX + smallW + gap;
-                    let largeY = smallY + smallH;
+                    // Small rectangle position (RIGHT side, upper)
+                    // Connect large rect's top-right to small rect's bottom-left
+                    // Large rect's top-right is at (largeX + largeW, largeY)
+                    // Small rect's bottom-left is at (smallX, smallY + smallH)
+                    let smallX = largeX + largeW;
+                    let smallY = largeY - smallH;
                     
                     // Animation progress
                     let pProg = isAnimating ? (animPhase === 0 ? animProgress : 1) : 1;
                     let eProg = isAnimating ? (animPhase === 1 ? animProgress : (animPhase > 1 ? 1 : 0)) : 1;
                     
-                    // Draw small rectangle (1s among 0s) - always draw if n > 0 and k > 0
-                    if (n > 0 && k > 0) {
-                        drawRect(p, smallX, smallY, n, k, cellSize, 
-                                 pPathSmall, ePathSmall, pProg, eProg, 
-                                 'Small rect (n×k): 1s among 0s', animPhase >= 2);
-                    }
-                    
-                    // Draw large rectangle (2s among {0,1}s) - always draw if m > 0 and k+n > 0
+                    // Draw large rectangle (2s among {0,1}s) - LEFT
                     if (m > 0 && (k + n) > 0) {
                         drawRect(p, largeX, largeY, m, k + n, cellSize,
                                  pPathLarge, ePathLarge, pProg, eProg,
                                  'Large rect (m×(k+n)): 2s among {0,1}s', animPhase >= 2);
                     }
                     
-                    // Draw connection line between small rect's bottom-right and large rect's top-left
+                    // Draw small rectangle (1s among 0s) - RIGHT
+                    if (n > 0 && k > 0) {
+                        drawRect(p, smallX, smallY, n, k, cellSize, 
+                                 pPathSmall, ePathSmall, pProg, eProg, 
+                                 'Small rect (n×k): 1s among 0s', animPhase >= 2);
+                    }
+                    
+                    // Draw connection line between large rect's top-right and small rect's bottom-left
+                    // This connects the red P paths
                     if (n > 0 && k > 0 && m > 0 && (k + n) > 0) {
-                        p.stroke(150, 120, 80);
-                        p.strokeWeight(3);
-                        p.drawingContext.setLineDash([8, 5]);
-                        p.line(smallX + n * cellSize, smallY + k * cellSize, largeX, largeY);
-                        p.drawingContext.setLineDash([]);
+                        p.stroke(220, 53, 69);
+                        p.strokeWeight(4);
+                        // Large rect top-right: (largeX + largeW, largeY)
+                        // Small rect bottom-left: (smallX, smallY + smallH)
+                        p.line(largeX + largeW, largeY, smallX, smallY + smallH);
                         
                         // Draw corner markers
-                        p.fill(150, 120, 80);
+                        p.fill(220, 53, 69);
                         p.noStroke();
-                        p.ellipse(smallX + n * cellSize, smallY + k * cellSize, 8);
-                        p.ellipse(largeX, largeY, 8);
+                        p.ellipse(largeX + largeW, largeY, 10);
+                        p.ellipse(smallX, smallY + smallH, 10);
                     }
                     
                     // Labels at top
@@ -546,13 +558,20 @@
                         drawAnimPath(p, originX, originY + h, cs, pPath, p.color(220, 53, 69), 4, false, pProg);
                     }
                     
-                    // Label
+                    // Label - split on colon if present
                     p.fill(100, 80, 60);
                     p.noStroke();
                     p.textSize(10);
                     p.textAlign(p.CENTER, p.TOP);
-                    p.text(label, originX + w/2, originY + h + 5);
-                    p.text(rectW + ' × ' + rectH, originX + w/2, originY + h + 18);
+                    if (label.includes(':')) {
+                        let parts = label.split(':');
+                        p.text(parts[0].trim(), originX + w/2, originY + h + 5);
+                        p.text(parts[1].trim(), originX + w/2, originY + h + 18);
+                        p.text(rectW + ' × ' + rectH, originX + w/2, originY + h + 31);
+                    } else {
+                        p.text(label, originX + w/2, originY + h + 5);
+                        p.text(rectW + ' × ' + rectH, originX + w/2, originY + h + 18);
+                    }
                 }
                 
                 function drawAnimPath(p, ox, oy, cs, path, col, wt, dashed, prog) {
