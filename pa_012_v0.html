@@ -291,12 +291,22 @@
         
         function parseInput(input) {
             let nums = [];
-            let cleaned = input.replace(/[,\[\]]/g, ' ').trim();
-            let parts = cleaned.split(/\s+/);
-            for (let p of parts) {
-                let val = parseInt(p);
-                if (!isNaN(val) && val >= 0 && val <= 2) {
-                    nums.push(val);
+            let cleaned = input.replace(/[,\[\]\s]/g, '').trim();
+            
+            // If it's just digits 0-2 concatenated, split each character
+            if (/^[012]+$/.test(cleaned)) {
+                for (let ch of cleaned) {
+                    nums.push(parseInt(ch));
+                }
+            } else {
+                // Otherwise parse as space/comma separated
+                cleaned = input.replace(/[,\[\]]/g, ' ').trim();
+                let parts = cleaned.split(/\s+/);
+                for (let p of parts) {
+                    let val = parseInt(p);
+                    if (!isNaN(val) && val >= 0 && val <= 2) {
+                        nums.push(val);
+                    }
                 }
             }
             return nums;
