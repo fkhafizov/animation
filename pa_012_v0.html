@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiset Paths: 0^k 1^n 2^m</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Sora:wght@300;500;700&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Sora', sans-serif;
+            background: linear-gradient(180deg, #b8d4e8 0%, #e8f0d8 20%, #fdf8e3 45%, #fefcf4 70%, #ffffff 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 25px;
+        }
+        
+        h1 {
+            font-weight: 700;
+            font-size: 1.8rem;
+            color: #3d5a6e;
+            margin-bottom: 15px;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,253,245,0.95);
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(80,70,50,0.1);
+            margin-bottom: 15px;
+        }
+        
+        .controls label {
+            font-family: 'Fira Code', monospace;
+            font-weight: 600;
+            color: #2a5a7a;
+        }
+        
+        .controls input {
+            font-family: 'Fira Code', monospace;
+            padding: 8px 12px;
+            border: 2px solid #8ecae6;
+            border-radius: 8px;
+            width: 260px;
+        }
+        
+        button {
+            font-family: 'Sora', sans-serif;
+            font-weight: 600;
+            padding: 10px 20px;
+            background: linear-gradient(145deg, #219ebc 0%, #1a7a94 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(33,158,188,0.4);
+        }
+        
+        .info-text {
+            background: rgba(255,253,245,0.95);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.8rem;
+            color: #4a5a68;
+            margin-bottom: 15px;
+            max-width: 700px;
+            text-align: center;
+        }
+        
+        .main-area {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        
+        .info-panel {
+            background: rgba(255,253,248,0.96);
+            padding: 15px;
+            border-radius: 12px;
+            width: 240px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.8rem;
+            color: #3d5a6e;
+        }
+        
+        .info-panel h3 {
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e8e0c8;
+        }
+        
+        .info-row {
+            padding: 6px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .info-label { color: #6a9bb8; font-size: 0.7rem; }
+        .info-value { font-weight: 600; margin-top: 2px; }
+        .info-value.red { color: #dc3545; }
+        .info-value.green { color: #198754; }
+        .info-value.purple { color: #6f42c1; }
+        
+        #canvas-container {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(80,70,50,0.15);
+            border: 3px solid rgba(255,200,100,0.5);
+        }
+    </style>
+</head>
+<body>
+    <h1>Multiset Paths: 0<sup>k</sup> 1<sup>n</sup> 2<sup>m</sup></h1>
+    
+    <div class="controls">
+        <label>P :</label>
+        <input type="text" id="pInput" value="2 2 2 1 1 0 0 0 0">
+        <button id="drawBtn">DRAW</button>
+        <button id="randBtn">RAND</button>
+        <span style="margin-left: 15px; border-left: 2px solid #ccc; padding-left: 15px; display: inline-flex; flex-direction: column; align-items: flex-start; gap: 5px;">
+            <span>
+                <label>k:</label>
+                <input type="number" id="kInput" value="4" min="0" max="10" style="width: 50px;">
+                <label>n:</label>
+                <input type="number" id="nInput" value="2" min="0" max="10" style="width: 50px;">
+                <label>m:</label>
+                <input type="number" id="mInput" value="3" min="0" max="10" style="width: 50px;">
+                <button id="genBtn">GEN</button>
+            </span>
+            <label style="font-size: 0.8rem; cursor: pointer;">
+                <input type="checkbox" id="fixKNMChk" style="cursor: pointer;"> fix k,n,m
+            </label>
+        </span>
+    </div>
+    
+    <div class="info-text">
+        <strong>Two-Rectangle Construction:</strong> 
+        Large rectangle (m × (k+n)) shows 2s among {0,1}s. 
+        Small rectangle (n × k) shows 1s among 0s. 
+        Total distance = sum of areas between paths.
+    </div>
+    
+    <div class="main-area">
+        <div class="info-panel">
+            <h3>📊 Info</h3>
+            <div class="info-row">
+                <div class="info-label">P (permutation)</div>
+                <div class="info-value red" id="pDisplay">—</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">E = sort(P)</div>
+                <div class="info-value green" id="eDisplay">—</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Counts</div>
+                <div class="info-value" id="countsDisplay">—</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Large Rect (m × (k+n))</div>
+                <div class="info-value" id="largeRectDisplay">—</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Small Rect (n × k)</div>
+                <div class="info-value" id="smallRectDisplay">—</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Area (Large)</div>
+                <div class="info-value purple" id="areaLargeDisplay">—</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Area (Small)</div>
+                <div class="info-value purple" id="areaSmallDisplay">—</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Total d(P, E)</div>
+                <div class="info-value purple" id="totalDistDisplay">—</div>
+            </div>
+        </div>
+        
+        <div id="canvas-container"></div>
+    </div>
+
+    <script>
+        let pArray = [];
+        let eArray = [];
+        let k = 0, n = 0, m = 0;
+        
+        let pPathLarge = [], ePathLarge = [];
+        let pPathSmall = [], ePathSmall = [];
+        
+        let animProgress = 0;
+        let isAnimating = false;
+        let animPhase = 0;
+        let mainSketch = null;
+        
+        document.getElementById('drawBtn').addEventListener('click', startDraw);
+        document.getElementById('randBtn').addEventListener('click', randomizeInput);
+        document.getElementById('genBtn').addEventListener('click', generateFromKNM);
+        
+        function generateFromKNM() {
+            // Get k, n, m from input fields
+            let kVal = parseInt(document.getElementById('kInput').value) || 0;
+            let nVal = parseInt(document.getElementById('nInput').value) || 0;
+            let mVal = parseInt(document.getElementById('mInput').value) || 0;
+            
+            // Build array with k zeros, n ones, m twos
+            let arr = [];
+            for (let i = 0; i < kVal; i++) arr.push(0);
+            for (let i = 0; i < nVal; i++) arr.push(1);
+            for (let i = 0; i < mVal; i++) arr.push(2);
+            
+            // Shuffle using Fisher-Yates
+            for (let i = arr.length - 1; i > 0; i--) {
+                let j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            
+            // Update input field
+            document.getElementById('pInput').value = arr.join(' ');
+            
+            // Auto-draw
+            startDraw();
+        }
+        
+        function randomizeInput() {
+            let kVal, nVal, mVal;
+            
+            // Check if k,n,m should be fixed
+            if (document.getElementById('fixKNMChk').checked) {
+                // Use current k,n,m values
+                kVal = parseInt(document.getElementById('kInput').value) || 0;
+                nVal = parseInt(document.getElementById('nInput').value) || 0;
+                mVal = parseInt(document.getElementById('mInput').value) || 0;
+            } else {
+                // Random counts: k zeros, n ones, m twos
+                kVal = Math.floor(Math.random() * 6) + 1;  // 1-6 zeros
+                nVal = Math.floor(Math.random() * 5) + 1;  // 1-5 ones
+                mVal = Math.floor(Math.random() * 5) + 1;  // 1-5 twos
+                
+                // Update k,n,m input fields
+                document.getElementById('kInput').value = kVal;
+                document.getElementById('nInput').value = nVal;
+                document.getElementById('mInput').value = mVal;
+            }
+            
+            // Build array with k zeros, n ones, m twos
+            let arr = [];
+            for (let i = 0; i < kVal; i++) arr.push(0);
+            for (let i = 0; i < nVal; i++) arr.push(1);
+            for (let i = 0; i < mVal; i++) arr.push(2);
+            
+            // Shuffle using Fisher-Yates
+            for (let i = arr.length - 1; i > 0; i--) {
+                let j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            
+            // Update input field
+            document.getElementById('pInput').value = arr.join(' ');
+            
+            // Auto-draw
+            startDraw();
+        }
+        
+        function parseInput(input) {
+            let nums = [];
+            let cleaned = input.replace(/[,\[\]]/g, ' ').trim();
+            let parts = cleaned.split(/\s+/);
+            for (let p of parts) {
+                let val = parseInt(p);
+                if (!isNaN(val) && val >= 0 && val <= 2) {
+                    nums.push(val);
+                }
+            }
+            return nums;
+        }
+        
+        function computePaths() {
+            k = pArray.filter(v => v === 0).length;
+            n = pArray.filter(v => v === 1).length;
+            m = pArray.filter(v => v === 2).length;
+            
+            eArray = [...pArray].sort((a, b) => a - b);
+            
+            // Large rectangle paths (2s among {0,1}s)
+            pPathLarge = [];
+            ePathLarge = [];
+            let px = 0, py = 0;
+            pPathLarge.push({x: 0, y: 0});
+            for (let v of pArray) {
+                if (v === 2) px++;
+                else py++;
+                pPathLarge.push({x: px, y: py});
+            }
+            
+            let ex = 0, ey = 0;
+            ePathLarge.push({x: 0, y: 0});
+            for (let v of eArray) {
+                if (v === 2) ex++;
+                else ey++;
+                ePathLarge.push({x: ex, y: ey});
+            }
+            
+            // Small rectangle paths (1s among 0s)
+            let pSub = pArray.filter(v => v !== 2);
+            let eSub = eArray.filter(v => v !== 2);
+            
+            pPathSmall = [];
+            ePathSmall = [];
+            px = 0; py = 0;
+            pPathSmall.push({x: 0, y: 0});
+            for (let v of pSub) {
+                if (v === 1) px++;
+                else py++;
+                pPathSmall.push({x: px, y: py});
+            }
+            
+            ex = 0; ey = 0;
+            ePathSmall.push({x: 0, y: 0});
+            for (let v of eSub) {
+                if (v === 1) ex++;
+                else ey++;
+                ePathSmall.push({x: ex, y: ey});
+            }
+        }
+        
+        function calcArea(path1, path2) {
+            if (path1.length < 2 || path2.length < 2) return 0;
+            let polygon = [...path1];
+            for (let i = path2.length - 1; i >= 0; i--) {
+                polygon.push(path2[i]);
+            }
+            let area = 0;
+            for (let i = 0; i < polygon.length; i++) {
+                let j = (i + 1) % polygon.length;
+                area += polygon[i].x * polygon[j].y;
+                area -= polygon[j].x * polygon[i].y;
+            }
+            return Math.abs(area) / 2;
+        }
+        
+        function startDraw() {
+            pArray = parseInput(document.getElementById('pInput').value);
+            
+            if (pArray.length === 0) {
+                alert('Enter a permutation with 0s, 1s, 2s');
+                return;
+            }
+            
+            computePaths();
+            
+            document.getElementById('pDisplay').textContent = '[' + pArray.join(', ') + ']';
+            document.getElementById('eDisplay').textContent = '[' + eArray.join(', ') + ']';
+            document.getElementById('countsDisplay').textContent = `k=${k}, n=${n}, m=${m}`;
+            document.getElementById('largeRectDisplay').textContent = `${m} × ${k+n}`;
+            document.getElementById('smallRectDisplay').textContent = `${n} × ${k}`;
+            
+            let areaLarge = calcArea(pPathLarge, ePathLarge);
+            let areaSmall = calcArea(pPathSmall, ePathSmall);
+            
+            document.getElementById('areaLargeDisplay').textContent = areaLarge;
+            document.getElementById('areaSmallDisplay').textContent = areaSmall;
+            document.getElementById('totalDistDisplay').textContent = areaLarge + areaSmall;
+            
+            animProgress = 0;
+            animPhase = 0;
+            isAnimating = true;
+            
+            createCanvas();
+        }
+        
+        function createCanvas() {
+            if (mainSketch) {
+                mainSketch.remove();
+            }
+            
+            let padding = 80;
+            let gap = 60;
+            let cellSize = 40;
+            
+            // Ensure minimum values for display
+            let dispN = Math.max(n, 1);
+            let dispK = Math.max(k, 1);
+            let dispM = Math.max(m, 1);
+            let dispKN = Math.max(k + n, 1);
+            
+            // Calculate required canvas size based on rectangles
+            let smallW = dispN * cellSize;
+            let smallH = dispK * cellSize;
+            let largeW = dispM * cellSize;
+            let largeH = dispKN * cellSize;
+            
+            // Canvas needs to fit: small rect + gap + large rect + padding on both sides
+            let canvasW = Math.max(700, padding + smallW + gap + largeW + padding + 50);
+            let canvasH = Math.max(550, padding + 100 + smallH + largeH + 80);
+            
+            mainSketch = new p5(function(p) {
+                p.setup = function() {
+                    let canvas = p.createCanvas(canvasW, canvasH);
+                    canvas.parent('canvas-container');
+                };
+                
+                p.draw = function() {
+                    p.background(255, 252, 245);
+                    
+                    // Small rectangle position (left side, upper)
+                    let smallX = padding;
+                    let smallY = padding + 100;
+                    
+                    // Large rectangle position (to the right, with small rect's bottom-right
+                    // connecting to large rect's top-left)
+                    let largeX = smallX + smallW + gap;
+                    let largeY = smallY + smallH;
+                    
+                    // Animation progress
+                    let pProg = isAnimating ? (animPhase === 0 ? animProgress : 1) : 1;
+                    let eProg = isAnimating ? (animPhase === 1 ? animProgress : (animPhase > 1 ? 1 : 0)) : 1;
+                    
+                    // Draw small rectangle (1s among 0s) - always draw if n > 0 and k > 0
+                    if (n > 0 && k > 0) {
+                        drawRect(p, smallX, smallY, n, k, cellSize, 
+                                 pPathSmall, ePathSmall, pProg, eProg, 
+                                 'Small rect (n×k): 1s among 0s', animPhase >= 2);
+                    }
+                    
+                    // Draw large rectangle (2s among {0,1}s) - always draw if m > 0 and k+n > 0
+                    if (m > 0 && (k + n) > 0) {
+                        drawRect(p, largeX, largeY, m, k + n, cellSize,
+                                 pPathLarge, ePathLarge, pProg, eProg,
+                                 'Large rect (m×(k+n)): 2s among {0,1}s', animPhase >= 2);
+                    }
+                    
+                    // Draw connection line between small rect's bottom-right and large rect's top-left
+                    if (n > 0 && k > 0 && m > 0 && (k + n) > 0) {
+                        p.stroke(150, 120, 80);
+                        p.strokeWeight(3);
+                        p.drawingContext.setLineDash([8, 5]);
+                        p.line(smallX + n * cellSize, smallY + k * cellSize, largeX, largeY);
+                        p.drawingContext.setLineDash([]);
+                        
+                        // Draw corner markers
+                        p.fill(150, 120, 80);
+                        p.noStroke();
+                        p.ellipse(smallX + n * cellSize, smallY + k * cellSize, 8);
+                        p.ellipse(largeX, largeY, 8);
+                    }
+                    
+                    // Labels at top
+                    p.noStroke();
+                    p.textSize(14);
+                    p.textAlign(p.LEFT, p.TOP);
+                    p.fill(220, 53, 69);
+                    p.textStyle(p.BOLD);
+                    p.text('P = [' + pArray.join(', ') + ']', 20, 15);
+                    p.fill(25, 135, 84);
+                    p.text('E = [' + eArray.join(', ') + ']', 20, 38);
+                    p.fill(80, 80, 100);
+                    p.textStyle(p.NORMAL);
+                    p.textSize(13);
+                    p.text('k=' + k + ' zeros, n=' + n + ' ones, m=' + m + ' twos', 20, 62);
+                    
+                    // Legend at top right
+                    p.textSize(12);
+                    p.textAlign(p.RIGHT, p.TOP);
+                    p.fill(220, 53, 69);
+                    p.text('━━ P path (red solid)', canvasW - 20, 15);
+                    p.fill(25, 135, 84);
+                    p.text('┅┅ E path (green dashed)', canvasW - 20, 35);
+                    p.fill(111, 66, 193);
+                    p.text('▓ Area between paths', canvasW - 20, 55);
+                    
+                    // Animation
+                    if (isAnimating) {
+                        animProgress += 0.03;
+                        if (animProgress >= 1) {
+                            animProgress = 0;
+                            animPhase++;
+                            if (animPhase >= 2) {
+                                isAnimating = false;
+                            }
+                        }
+                    }
+                };
+                
+                function drawRect(p, originX, originY, rectW, rectH, cs, pPath, ePath, pProg, eProg, label, showArea) {
+                    let w = rectW * cs;
+                    let h = rectH * cs;
+                    
+                    // Background
+                    p.noStroke();
+                    p.fill(255, 245, 220);
+                    p.rect(originX, originY, w, h);
+                    
+                    // Grid
+                    p.stroke(200, 200, 200);
+                    p.strokeWeight(1);
+                    for (let i = 0; i <= rectW; i++) {
+                        p.line(originX + i * cs, originY, originX + i * cs, originY + h);
+                    }
+                    for (let i = 0; i <= rectH; i++) {
+                        p.line(originX, originY + i * cs, originX + w, originY + i * cs);
+                    }
+                    
+                    // Border
+                    p.stroke(180, 140, 80);
+                    p.strokeWeight(2);
+                    p.noFill();
+                    p.rect(originX, originY, w, h);
+                    
+                    // Area between paths
+                    if (showArea && pPath.length > 1 && ePath.length > 1) {
+                        p.noStroke();
+                        p.fill(111, 66, 193, 50);
+                        p.beginShape();
+                        for (let pt of pPath) {
+                            p.vertex(originX + pt.x * cs, originY + h - pt.y * cs);
+                        }
+                        for (let i = ePath.length - 1; i >= 0; i--) {
+                            p.vertex(originX + ePath[i].x * cs, originY + h - ePath[i].y * cs);
+                        }
+                        p.endShape(p.CLOSE);
+                    }
+                    
+                    // E path (green dashed) - draw first
+                    if (ePath.length > 1 && eProg > 0) {
+                        drawAnimPath(p, originX, originY + h, cs, ePath, p.color(25, 135, 84), 3, true, eProg);
+                    }
+                    
+                    // P path (red solid)
+                    if (pPath.length > 1 && pProg > 0) {
+                        drawAnimPath(p, originX, originY + h, cs, pPath, p.color(220, 53, 69), 4, false, pProg);
+                    }
+                    
+                    // Label
+                    p.fill(100, 80, 60);
+                    p.noStroke();
+                    p.textSize(10);
+                    p.textAlign(p.CENTER, p.TOP);
+                    p.text(label, originX + w/2, originY + h + 5);
+                    p.text(rectW + ' × ' + rectH, originX + w/2, originY + h + 18);
+                }
+                
+                function drawAnimPath(p, ox, oy, cs, path, col, wt, dashed, prog) {
+                    let total = path.length - 1;
+                    let segs = Math.floor(prog * total);
+                    let partial = (prog * total) % 1;
+                    
+                    p.stroke(col);
+                    p.strokeWeight(wt);
+                    
+                    for (let i = 0; i < segs && i < total; i++) {
+                        let x1 = ox + path[i].x * cs;
+                        let y1 = oy - path[i].y * cs;
+                        let x2 = ox + path[i+1].x * cs;
+                        let y2 = oy - path[i+1].y * cs;
+                        
+                        if (dashed) {
+                            p.drawingContext.setLineDash([4, 3]);
+                        }
+                        p.line(x1, y1, x2, y2);
+                        if (dashed) {
+                            p.drawingContext.setLineDash([]);
+                        }
+                    }
+                    
+                    // Partial segment
+                    if (segs < total && prog > 0) {
+                        let x1 = ox + path[segs].x * cs;
+                        let y1 = oy - path[segs].y * cs;
+                        let x2 = ox + path[segs+1].x * cs;
+                        let y2 = oy - path[segs+1].y * cs;
+                        let px = p.lerp(x1, x2, partial);
+                        let py = p.lerp(y1, y2, partial);
+                        
+                        if (dashed) {
+                            p.drawingContext.setLineDash([4, 3]);
+                        }
+                        p.line(x1, y1, px, py);
+                        if (dashed) {
+                            p.drawingContext.setLineDash([]);
+                        }
+                        
+                        // Moving dot
+                        p.noStroke();
+                        p.fill(col);
+                        p.ellipse(px, py, 8);
+                    }
+                    
+                    // Vertices
+                    p.noStroke();
+                    p.fill(col);
+                    for (let i = 0; i <= segs && i < path.length; i++) {
+                        p.ellipse(ox + path[i].x * cs, oy - path[i].y * cs, 5);
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
