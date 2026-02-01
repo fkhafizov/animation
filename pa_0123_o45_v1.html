@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiset Paths: 0^k 1^n 2^m 3^t</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Sora:wght@300;500;700&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Sora', sans-serif;
+            background: linear-gradient(180deg, #b8d4e8 0%, #e8f0d8 20%, #fdf8e3 45%, #fefcf4 70%, #ffffff 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 25px;
+        }
+        
+        h1 {
+            font-weight: 700;
+            font-size: 1.8rem;
+            color: #3d5a6e;
+            margin-bottom: 15px;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,253,245,0.95);
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(80,70,50,0.1);
+            margin-bottom: 15px;
+        }
+        
+        .controls label {
+            font-family: 'Fira Code', monospace;
+            font-weight: 600;
+            color: #2a5a7a;
+        }
+        
+        .controls input[type="text"] {
+            font-family: 'Fira Code', monospace;
+            padding: 8px 12px;
+            border: 2px solid #8ecae6;
+            border-radius: 8px;
+            width: 300px;
+        }
+        
+        button {
+            font-family: 'Sora', sans-serif;
+            font-weight: 600;
+            padding: 10px 20px;
+            background: linear-gradient(145deg, #219ebc 0%, #1a7a94 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(33,158,188,0.4);
+        }
+        
+        .info-text {
+            background: rgba(255,253,245,0.95);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.75rem;
+            color: #4a5a68;
+            margin-bottom: 15px;
+            max-width: 850px;
+            text-align: center;
+        }
+        
+        .main-area {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        
+        .info-panel {
+            background: rgba(255,253,248,0.96);
+            padding: 15px;
+            border-radius: 12px;
+            width: 260px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.75rem;
+            color: #3d5a6e;
+        }
+        
+        .info-panel h3 {
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e8e0c8;
+        }
+        
+        .info-row {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .info-label { color: #6a9bb8; font-size: 0.65rem; }
+        .info-value { font-weight: 600; margin-top: 2px; }
+        .info-value.red { color: #dc3545; }
+        .info-value.green { color: #198754; }
+        .info-value.purple { color: #6f42c1; }
+        
+        #canvas-container {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(80,70,50,0.15);
+            border: 3px solid rgba(255,200,100,0.5);
+        }
+    </style>
+</head>
+<body>
+    <h1>Multiset Paths: 0<sup>k</sup> 1<sup>n</sup> 2<sup>m</sup> 3<sup>t</sup></h1>
+    
+    <div class="controls">
+        <label>P :</label>
+        <input type="text" id="pInput" value="2 0 3 1 2 0 2 1 2 3 0 1 2 0">
+        <button id="drawBtn">DRAW</button>
+        <button id="randBtn">RAND</button>
+        <button id="helpBtn">HELP</button>
+        <button id="levelBtn">LEVEL</button>
+        <span style="margin-left: 15px; border-left: 2px solid #ccc; padding-left: 15px; display: inline-flex; flex-direction: column; align-items: flex-start; gap: 5px;">
+            <span style="display: inline-flex; align-items: flex-end; gap: 4px; flex-wrap: wrap;">
+                <span style="display: inline-flex; flex-direction: column; align-items: center;">
+                    <label style="font-size: 0.75rem;">#0s k:</label>
+                    <input type="number" id="kInput" value="4" min="0" max="10" style="width: 55px;">
+                </span>
+                <span style="display: inline-flex; flex-direction: column; align-items: center;">
+                    <label style="font-size: 0.75rem;">#1s n:</label>
+                    <input type="number" id="nInput" value="3" min="0" max="10" style="width: 55px;">
+                </span>
+                <span style="display: inline-flex; flex-direction: column; align-items: center;">
+                    <label style="font-size: 0.75rem;">#2s m:</label>
+                    <input type="number" id="mInput" value="5" min="0" max="10" style="width: 55px;">
+                </span>
+                <span style="display: inline-flex; flex-direction: column; align-items: center;">
+                    <label style="font-size: 0.75rem;">#3s t:</label>
+                    <input type="number" id="tInput" value="2" min="0" max="10" style="width: 55px;">
+                </span>
+                <button id="genBtn">GEN</button>
+            </span>
+            <span style="display: inline-flex; align-items: center; gap: 15px;">
+                <label style="font-size: 0.8rem; cursor: pointer;">fix k,n,m,t<input type="checkbox" id="fixKNMTChk" style="cursor: pointer; margin: 0; padding: 0;" checked></label>
+                <label style="font-size: 0.8rem; cursor: pointer;">Lattice<input type="checkbox" id="latticeChk" style="cursor: pointer; margin: 0; padding: 0;" checked></label>
+            </span>
+        </span>
+    </div>
+    
+    <div id="helpText" style="display: none; background: #fffde7; padding: 10px 20px; border-radius: 8px; border: 1px solid #ffc107; margin-bottom: 10px; font-size: 0.9rem; color: #5d4037;">
+        P must have k 0s, n 1s, m 2s, t 3s. Press DRAW to see paths. Use RAND to shuffle P. Use LEVEL to lower all rectangles.
+    </div>
+    
+    <div class="info-text">
+        <strong>Three-Rectangle Construction:</strong> 
+        R3 (t × (k+n+m)) tracks 3s among {0,1,2}s. 
+        R2 (m × (k+n)) tracks 2s among {0,1}s. 
+        R1 (n × k) tracks 1s among 0s. 
+        Total d(P,E) = A₃ + A₂ + A₁.
+    </div>
+    
+    <div class="main-area">
+        <div class="info-panel">
+            <h3>📊 Info</h3>
+            <div class="info-row">
+                <div class="info-label">P (permutation)</div>
+                <div class="info-value green" id="pDisplay">—</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label" style="color: #dc3545;">E = sort(P)</div>
+                <div class="info-value red" id="eDisplay">—</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Counts</div>
+                <div class="info-value" id="countsDisplay">—</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">R3 (t × (k+n+m))</div>
+                <div class="info-value" id="r3Display">—</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">R2 (m × (k+n))</div>
+                <div class="info-value" id="r2Display">—</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">R1 (n × k)</div>
+                <div class="info-value" id="r1Display">—</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">A₃ = Area (R3)</div>
+                <div class="info-value purple" id="area3Display">—</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">A₂ = Area (R2)</div>
+                <div class="info-value purple" id="area2Display">—</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">A₁ = Area (R1)</div>
+                <div class="info-value purple" id="area1Display">—</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Total d(P, E)</div>
+                <div class="info-value purple" id="totalDistDisplay">—</div>
+            </div>
+        </div>
+        
+        <div id="canvas-container"></div>
+    </div>
+
+    <script>
+        let pArray = [];
+        let eArray = [];
+        let k = 0, n = 0, m = 0, t = 0;
+        
+        // Paths for three rectangles
+        let pPath3 = [], ePath3 = [];  // R3: 3s among {0,1,2}s
+        let pPath2 = [], ePath2 = [];  // R2: 2s among {0,1}s
+        let pPath1 = [], ePath1 = [];  // R1: 1s among 0s
+        
+        let animProgress = 0;
+        let isAnimating = false;
+        let animPhase = 0;
+        let mainSketch = null;
+        let totalDist = 0;
+        let area3 = 0, area2 = 0, area1 = 0;
+        let levelMode = false;
+        
+        document.getElementById('drawBtn').addEventListener('click', startDraw);
+        document.getElementById('randBtn').addEventListener('click', randomizeInput);
+        document.getElementById('genBtn').addEventListener('click', generateFromKNMT);
+        document.getElementById('helpBtn').addEventListener('click', toggleHelp);
+        document.getElementById('levelBtn').addEventListener('click', toggleLevel);
+        
+        function toggleLevel() {
+            levelMode = !levelMode;
+            if (pArray.length > 0) createCanvas();
+        }
+        
+        function toggleHelp() {
+            let helpDiv = document.getElementById('helpText');
+            helpDiv.style.display = helpDiv.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        function generateFromKNMT() {
+            let kVal = parseInt(document.getElementById('kInput').value) || 0;
+            let nVal = parseInt(document.getElementById('nInput').value) || 0;
+            let mVal = parseInt(document.getElementById('mInput').value) || 0;
+            let tVal = parseInt(document.getElementById('tInput').value) || 0;
+            
+            let arr = [];
+            for (let i = 0; i < kVal; i++) arr.push(0);
+            for (let i = 0; i < nVal; i++) arr.push(1);
+            for (let i = 0; i < mVal; i++) arr.push(2);
+            for (let i = 0; i < tVal; i++) arr.push(3);
+            
+            // Shuffle using Fisher-Yates
+            for (let i = arr.length - 1; i > 0; i--) {
+                let j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            
+            document.getElementById('pInput').value = arr.join(' ');
+            startDraw();
+        }
+        
+        function randomizeInput() {
+            let kVal, nVal, mVal, tVal;
+            
+            if (document.getElementById('fixKNMTChk').checked) {
+                kVal = parseInt(document.getElementById('kInput').value) || 0;
+                nVal = parseInt(document.getElementById('nInput').value) || 0;
+                mVal = parseInt(document.getElementById('mInput').value) || 0;
+                tVal = parseInt(document.getElementById('tInput').value) || 0;
+            } else {
+                kVal = Math.floor(Math.random() * 5) + 1;
+                nVal = Math.floor(Math.random() * 4) + 1;
+                mVal = Math.floor(Math.random() * 4) + 1;
+                tVal = Math.floor(Math.random() * 3) + 1;
+                
+                document.getElementById('kInput').value = kVal;
+                document.getElementById('nInput').value = nVal;
+                document.getElementById('mInput').value = mVal;
+                document.getElementById('tInput').value = tVal;
+            }
+            
+            let arr = [];
+            for (let i = 0; i < kVal; i++) arr.push(0);
+            for (let i = 0; i < nVal; i++) arr.push(1);
+            for (let i = 0; i < mVal; i++) arr.push(2);
+            for (let i = 0; i < tVal; i++) arr.push(3);
+            
+            for (let i = arr.length - 1; i > 0; i--) {
+                let j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            
+            document.getElementById('pInput').value = arr.join(' ');
+            startDraw();
+        }
+        
+        function parseInput(input) {
+            let nums = [];
+            let cleaned = input.replace(/[,\[\]\s]/g, '').trim();
+            
+            if (/^[0123]+$/.test(cleaned)) {
+                for (let ch of cleaned) {
+                    nums.push(parseInt(ch));
+                }
+            } else {
+                cleaned = input.replace(/[,\[\]]/g, ' ').trim();
+                let parts = cleaned.split(/\s+/);
+                for (let p of parts) {
+                    let val = parseInt(p);
+                    if (!isNaN(val) && val >= 0 && val <= 3) {
+                        nums.push(val);
+                    }
+                }
+            }
+            return nums;
+        }
+        
+        function computePaths() {
+            k = pArray.filter(v => v === 0).length;
+            n = pArray.filter(v => v === 1).length;
+            m = pArray.filter(v => v === 2).length;
+            t = pArray.filter(v => v === 3).length;
+            
+            eArray = [...pArray].sort((a, b) => a - b);
+            
+            // R3: t × (k+n+m) - tracking 3s among {0,1,2}s
+            // if see 3, step right; if see 0,1,2, step up
+            pPath3 = [];
+            ePath3 = [];
+            let px = 0, py = 0;
+            pPath3.push({x: 0, y: 0});
+            for (let v of pArray) {
+                if (v === 3) px++;
+                else py++;
+                pPath3.push({x: px, y: py});
+            }
+            
+            let ex = 0, ey = 0;
+            ePath3.push({x: 0, y: 0});
+            for (let v of eArray) {
+                if (v === 3) ex++;
+                else ey++;
+                ePath3.push({x: ex, y: ey});
+            }
+            
+            // R2: m × (k+n) - tracking 2s among {0,1}s (P without 3s)
+            let pSub2 = pArray.filter(v => v !== 3);
+            let eSub2 = eArray.filter(v => v !== 3);
+            
+            pPath2 = [];
+            ePath2 = [];
+            px = 0; py = 0;
+            pPath2.push({x: 0, y: 0});
+            for (let v of pSub2) {
+                if (v === 2) px++;
+                else py++;
+                pPath2.push({x: px, y: py});
+            }
+            
+            ex = 0; ey = 0;
+            ePath2.push({x: 0, y: 0});
+            for (let v of eSub2) {
+                if (v === 2) ex++;
+                else ey++;
+                ePath2.push({x: ex, y: ey});
+            }
+            
+            // R1: n × k - tracking 1s among 0s (P without 3s and 2s)
+            let pSub1 = pArray.filter(v => v !== 3 && v !== 2);
+            let eSub1 = eArray.filter(v => v !== 3 && v !== 2);
+            
+            pPath1 = [];
+            ePath1 = [];
+            px = 0; py = 0;
+            pPath1.push({x: 0, y: 0});
+            for (let v of pSub1) {
+                if (v === 1) px++;
+                else py++;
+                pPath1.push({x: px, y: py});
+            }
+            
+            ex = 0; ey = 0;
+            ePath1.push({x: 0, y: 0});
+            for (let v of eSub1) {
+                if (v === 1) ex++;
+                else ey++;
+                ePath1.push({x: ex, y: ey});
+            }
+        }
+        
+        function calcArea(path1, path2) {
+            if (path1.length < 2 || path2.length < 2) return 0;
+            let polygon = [...path1];
+            for (let i = path2.length - 1; i >= 0; i--) {
+                polygon.push(path2[i]);
+            }
+            let area = 0;
+            for (let i = 0; i < polygon.length; i++) {
+                let j = (i + 1) % polygon.length;
+                area += polygon[i].x * polygon[j].y;
+                area -= polygon[j].x * polygon[i].y;
+            }
+            return Math.abs(area) / 2;
+        }
+        
+        function startDraw() {
+            pArray = parseInput(document.getElementById('pInput').value);
+            
+            if (pArray.length === 0) {
+                alert('Enter a permutation with 0s, 1s, 2s, 3s');
+                return;
+            }
+            
+            computePaths();
+            
+            document.getElementById('pDisplay').textContent = '[' + pArray.join(', ') + ']';
+            document.getElementById('eDisplay').textContent = '[' + eArray.join(', ') + ']';
+            document.getElementById('countsDisplay').textContent = `k=${k}, n=${n}, m=${m}, t=${t}`;
+            document.getElementById('r3Display').textContent = `${t} × ${k+n+m}`;
+            document.getElementById('r2Display').textContent = `${m} × ${k+n}`;
+            document.getElementById('r1Display').textContent = `${n} × ${k}`;
+            
+            area3 = calcArea(pPath3, ePath3);
+            area2 = calcArea(pPath2, ePath2);
+            area1 = calcArea(pPath1, ePath1);
+            totalDist = area3 + area2 + area1;
+            
+            document.getElementById('area3Display').textContent = area3;
+            document.getElementById('area2Display').textContent = area2;
+            document.getElementById('area1Display').textContent = area1;
+            document.getElementById('totalDistDisplay').textContent = totalDist;
+            
+            animProgress = 0;
+            animPhase = 0;
+            isAnimating = true;
+            
+            createCanvas();
+        }
+        
+        function createCanvas() {
+            if (mainSketch) {
+                mainSketch.remove();
+            }
+            
+            let padding = 70;
+            let cellSize = 32;
+            
+            // Ensure minimum values
+            let dispK = Math.max(k, 1);
+            let dispN = Math.max(n, 1);
+            let dispM = Math.max(m, 1);
+            let dispT = Math.max(t, 1);
+            
+            // Rectangle dimensions
+            let r1W = dispN * cellSize;
+            let r1H = dispK * cellSize;
+            let r2W = dispM * cellSize;
+            let r2H = (dispK + dispN) * cellSize;
+            let r3W = dispT * cellSize;
+            let r3H = (dispK + dispN + dispM) * cellSize;
+            
+            let rectGap = 6;
+            let latticeSpace = Math.max(180, (t + m + n) * 16 + 100);
+            let canvasW, canvasH;
+            if (levelMode) {
+                canvasW = Math.max(950, padding + r3W + rectGap + r2W + rectGap + r1W + padding + latticeSpace);
+                canvasH = Math.max(600, padding + 110 + Math.max(r1H, r2H, r3H) + 60);
+            } else {
+                canvasW = Math.max(950, padding + r3W + r2W + r1W + padding + latticeSpace);
+                canvasH = Math.max(600, padding + 110 + r1H + r2H + r3H + 60);
+            }
+            
+            mainSketch = new p5(function(p) {
+                p.setup = function() {
+                    let canvas = p.createCanvas(canvasW, canvasH);
+                    canvas.parent('canvas-container');
+                };
+                
+                p.draw = function() {
+                    p.background(255, 252, 245);
+                    
+                    let r3X, r3Y, r2X, r2Y, r1X, r1Y;
+                    if (levelMode) {
+                        // All rectangles on same horizontal level (same bottom)
+                        let bottomY = padding + 110 + Math.max(r1H, r2H, r3H);
+                        r3X = padding;
+                        r3Y = bottomY - r3H;
+                        r2X = r3X + r3W + rectGap;
+                        r2Y = bottomY - r2H;
+                        r1X = r2X + r2W + rectGap;
+                        r1Y = bottomY - r1H;
+                    } else {
+                        // Stacked: R3 (left, bottom) -> R2 (middle) -> R1 (right, top)
+                        r3X = padding;
+                        r3Y = padding + 110 + r1H + r2H;
+                        r2X = r3X + r3W;
+                        r2Y = r3Y - r2H;
+                        r1X = r2X + r2W;
+                        r1Y = r2Y - r1H;
+                    }
+                    
+                    // Animation progress
+                    let pProg = isAnimating ? (animPhase === 0 ? animProgress : 1) : 1;
+                    let eProg = isAnimating ? (animPhase === 1 ? animProgress : (animPhase > 1 ? 1 : 0)) : 1;
+                    
+                    // Draw R3 (3s among {0,1,2}s)
+                    if (t > 0 && (k + n + m) > 0) {
+                        drawRect(p, r3X, r3Y, t, k + n + m, cellSize,
+                                 pPath3, ePath3, pProg, eProg,
+                                 'R3 (t×(k+n+m)): 3s among {0,1,2}s', animPhase >= 2,
+                                 'A₃', area3);
+                    }
+                    
+                    // Draw R2 (2s among {0,1}s)
+                    if (m > 0 && (k + n) > 0) {
+                        drawRect(p, r2X, r2Y, m, k + n, cellSize,
+                                 pPath2, ePath2, pProg, eProg,
+                                 'R2 (m×(k+n)): 2s among {0,1}s', animPhase >= 2,
+                                 'A₂', area2);
+                    }
+                    
+                    // Draw R1 (1s among 0s)
+                    if (n > 0 && k > 0) {
+                        drawRect(p, r1X, r1Y, n, k, cellSize,
+                                 pPath1, ePath1, pProg, eProg,
+                                 'R1 (n×k): 1s among 0s', animPhase >= 2,
+                                 'A₁', area1);
+                    }
+                    
+                    // Connection lines (green dashed) only in stacked mode
+                    if (!levelMode) {
+                        p.stroke(25, 135, 84);
+                        p.strokeWeight(3);
+                        p.drawingContext.setLineDash([6, 4]);
+                        
+                        if (t > 0 && m > 0) {
+                            p.line(r3X + r3W, r3Y, r2X, r2Y + r2H);
+                            p.drawingContext.setLineDash([]);
+                            p.fill(25, 135, 84);
+                            p.noStroke();
+                            p.ellipse(r3X + r3W, r3Y, 8);
+                            p.ellipse(r2X, r2Y + r2H, 8);
+                            p.stroke(25, 135, 84);
+                            p.drawingContext.setLineDash([6, 4]);
+                        }
+                        
+                        if (m > 0 && n > 0 && k > 0) {
+                            p.line(r2X + r2W, r2Y, r1X, r1Y + r1H);
+                            p.drawingContext.setLineDash([]);
+                            p.fill(25, 135, 84);
+                            p.noStroke();
+                            p.ellipse(r2X + r2W, r2Y, 8);
+                            p.ellipse(r1X, r1Y + r1H, 8);
+                        }
+                        p.drawingContext.setLineDash([]);
+                    }
+                    
+                    // Labels at top
+                    p.noStroke();
+                    p.textSize(12);
+                    p.textAlign(p.LEFT, p.TOP);
+                    p.fill(80, 80, 100);
+                    p.textStyle(p.NORMAL);
+                    p.text('k=' + k + ' (0s), n=' + n + ' (1s), m=' + m + ' (2s), t=' + t + ' (3s)', 20, 12);
+                    p.textSize(13);
+                    p.fill(25, 135, 84);
+                    p.textStyle(p.BOLD);
+                    p.text('P = [' + pArray.join(', ') + ']', 20, 32);
+                    p.fill(220, 53, 69);
+                    p.text('E = [' + eArray.join(', ') + ']', 20, 52);
+                    p.fill(111, 66, 193);
+                    p.text('d(P, E) = ' + area3 + ' + ' + area2 + ' + ' + area1 + ' = ' + totalDist, 20, 72);
+                    
+                    // Legend
+                    p.textSize(11);
+                    p.textAlign(p.RIGHT, p.TOP);
+                    p.fill(220, 53, 69);
+                    p.text('━━ E path (red solid)', canvasW - latticeSpace - 10, 12);
+                    p.fill(25, 135, 84);
+                    p.text('┅┅ P path (green dashed)', canvasW - latticeSpace - 10, 28);
+                    p.fill(111, 66, 193);
+                    p.text('▓ Area between paths', canvasW - latticeSpace - 10, 44);
+                    
+                    // Lattice grids
+                    if (document.getElementById('latticeChk').checked) {
+                        let latticeStartY = 100;
+                        let circleR = 10;
+                        let circleSpacing = 14;
+                        let gridGap = 20;
+                        
+                        function getPathYatX(path, x) {
+                            let y = 0;
+                            for (let pt of path) {
+                                if (pt.x > x) break;
+                                y = pt.y;
+                            }
+                            return y;
+                        }
+                        
+                        // Calculate positions for three grids
+                        let grid3Width = t * circleSpacing;
+                        let grid2Width = m * circleSpacing;
+                        let grid1Width = n * circleSpacing;
+                        let totalGridWidth = grid3Width + grid2Width + grid1Width + 2 * gridGap;
+                        let latticeStartX = canvasW - totalGridWidth - 30;
+                        
+                        let lattice3X = latticeStartX + grid3Width / 2;
+                        let lattice2X = latticeStartX + grid3Width + gridGap + grid2Width / 2;
+                        let lattice1X = latticeStartX + grid3Width + gridGap + grid2Width + gridGap + grid1Width / 2;
+                        
+                        // Grid 3: t × (k+n+m)
+                        p.textAlign(p.CENTER, p.BOTTOM);
+                        p.fill(80, 80, 100);
+                        p.textSize(8);
+                        p.noStroke();
+                        p.text('t×(k+n+m)', lattice3X, latticeStartY - 5);
+                        for (let row = 0; row < k + n + m; row++) {
+                            for (let col = 0; col < t; col++) {
+                                let pY = getPathYatX(pPath3, col);
+                                let eY = getPathYatX(ePath3, col);
+                                let cellY = (k + n + m) - 1 - row;
+                                let inArea = (cellY >= eY && cellY < pY) || (cellY >= pY && cellY < eY);
+                                
+                                p.stroke(220, 53, 69);
+                                p.strokeWeight(1);
+                                p.fill(inArea ? p.color(25, 135, 84, 150) : p.color(255, 245, 220));
+                                p.ellipse(lattice3X - (t-1)*circleSpacing/2 + col * circleSpacing,
+                                         latticeStartY + row * circleSpacing, circleR);
+                            }
+                        }
+                        
+                        // Grid 2: m × (k+n)
+                        p.noStroke();
+                        p.fill(80, 80, 100);
+                        p.text('m×(k+n)', lattice2X, latticeStartY - 5);
+                        for (let row = 0; row < k + n; row++) {
+                            for (let col = 0; col < m; col++) {
+                                let pY = getPathYatX(pPath2, col);
+                                let eY = getPathYatX(ePath2, col);
+                                let cellY = (k + n) - 1 - row;
+                                let inArea = (cellY >= eY && cellY < pY) || (cellY >= pY && cellY < eY);
+                                
+                                p.stroke(220, 53, 69);
+                                p.strokeWeight(1);
+                                p.fill(inArea ? p.color(25, 135, 84, 150) : p.color(255, 245, 220));
+                                p.ellipse(lattice2X - (m-1)*circleSpacing/2 + col * circleSpacing,
+                                         latticeStartY + row * circleSpacing, circleR);
+                            }
+                        }
+                        
+                        // Grid 1: n × k
+                        p.noStroke();
+                        p.fill(80, 80, 100);
+                        p.text('n×k', lattice1X, latticeStartY - 5);
+                        for (let row = 0; row < k; row++) {
+                            for (let col = 0; col < n; col++) {
+                                let pY = getPathYatX(pPath1, col);
+                                let eY = getPathYatX(ePath1, col);
+                                let cellY = k - 1 - row;
+                                let inArea = (cellY >= eY && cellY < pY) || (cellY >= pY && cellY < eY);
+                                
+                                p.stroke(220, 53, 69);
+                                p.strokeWeight(1);
+                                p.fill(inArea ? p.color(25, 135, 84, 150) : p.color(255, 245, 220));
+                                p.ellipse(lattice1X - (n-1)*circleSpacing/2 + col * circleSpacing,
+                                         latticeStartY + row * circleSpacing, circleR);
+                            }
+                        }
+                    }
+                    
+                    // Animation
+                    if (isAnimating) {
+                        animProgress += 0.025;
+                        if (animProgress >= 1) {
+                            animProgress = 0;
+                            animPhase++;
+                            if (animPhase >= 2) {
+                                isAnimating = false;
+                            }
+                        }
+                    }
+                };
+                
+                function drawRect(p, originX, originY, rectW, rectH, cs, pPath, ePath, pProg, eProg, label, showArea, areaLabel, areaVal) {
+                    let w = rectW * cs;
+                    let h = rectH * cs;
+                    
+                    p.noStroke();
+                    p.fill(255, 245, 220);
+                    p.rect(originX, originY, w, h);
+                    
+                    p.stroke(200, 200, 200);
+                    p.strokeWeight(1);
+                    for (let i = 0; i <= rectW; i++) {
+                        p.line(originX + i * cs, originY, originX + i * cs, originY + h);
+                    }
+                    for (let i = 0; i <= rectH; i++) {
+                        p.line(originX, originY + i * cs, originX + w, originY + i * cs);
+                    }
+                    
+                    p.stroke(180, 140, 80);
+                    p.strokeWeight(2);
+                    p.noFill();
+                    p.rect(originX, originY, w, h);
+                    
+                    if (showArea && pPath.length > 1 && ePath.length > 1) {
+                        p.noStroke();
+                        p.fill(111, 66, 193, 50);
+                        p.beginShape();
+                        for (let pt of pPath) {
+                            p.vertex(originX + pt.x * cs, originY + h - pt.y * cs);
+                        }
+                        for (let i = ePath.length - 1; i >= 0; i--) {
+                            p.vertex(originX + ePath[i].x * cs, originY + h - ePath[i].y * cs);
+                        }
+                        p.endShape(p.CLOSE);
+                    }
+                    
+                    if (ePath.length > 1 && eProg > 0) {
+                        drawAnimPath(p, originX, originY + h, cs, ePath, p.color(220, 53, 69), 3, false, eProg);
+                    }
+                    
+                    if (pPath.length > 1 && pProg > 0) {
+                        drawAnimPath(p, originX, originY + h, cs, pPath, p.color(25, 135, 84), 2, true, pProg);
+                    }
+                    
+                    p.fill(100, 80, 60);
+                    p.noStroke();
+                    p.textSize(9);
+                    p.textAlign(p.CENTER, p.TOP);
+                    if (label.includes(':')) {
+                        let parts = label.split(':');
+                        p.text(parts[0].trim(), originX + w/2, originY + h + 4);
+                        p.text(parts[1].trim(), originX + w/2, originY + h + 15);
+                        let dimAreaLine = rectW + '×' + rectH;
+                        if (areaLabel) dimAreaLine += '; ' + areaLabel + '=' + areaVal;
+                        p.text(dimAreaLine, originX + w/2, originY + h + 26);
+                    } else {
+                        p.text(label, originX + w/2, originY + h + 4);
+                        let dimAreaLine = rectW + '×' + rectH;
+                        if (areaLabel) dimAreaLine += '; ' + areaLabel + '=' + areaVal;
+                        p.text(dimAreaLine, originX + w/2, originY + h + 15);
+                    }
+                }
+                
+                function drawAnimPath(p, ox, oy, cs, path, col, wt, dashed, prog) {
+                    let total = path.length - 1;
+                    let segs = Math.floor(prog * total);
+                    let partial = (prog * total) % 1;
+                    
+                    p.stroke(col);
+                    p.strokeWeight(wt);
+                    
+                    for (let i = 0; i < segs && i < total; i++) {
+                        let x1 = ox + path[i].x * cs;
+                        let y1 = oy - path[i].y * cs;
+                        let x2 = ox + path[i+1].x * cs;
+                        let y2 = oy - path[i+1].y * cs;
+                        
+                        if (dashed) p.drawingContext.setLineDash([4, 3]);
+                        p.line(x1, y1, x2, y2);
+                        if (dashed) p.drawingContext.setLineDash([]);
+                    }
+                    
+                    if (segs < total && prog > 0) {
+                        let x1 = ox + path[segs].x * cs;
+                        let y1 = oy - path[segs].y * cs;
+                        let x2 = ox + path[segs+1].x * cs;
+                        let y2 = oy - path[segs+1].y * cs;
+                        let px = p.lerp(x1, x2, partial);
+                        let py = p.lerp(y1, y2, partial);
+                        
+                        if (dashed) p.drawingContext.setLineDash([4, 3]);
+                        p.line(x1, y1, px, py);
+                        if (dashed) p.drawingContext.setLineDash([]);
+                        
+                        p.noStroke();
+                        p.fill(col);
+                        p.ellipse(px, py, 6);
+                    }
+                    
+                    p.noStroke();
+                    p.fill(col);
+                    for (let i = 0; i <= segs && i < path.length; i++) {
+                        p.ellipse(ox + path[i].x * cs, oy - path[i].y * cs, 4);
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
