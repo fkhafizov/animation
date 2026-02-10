@@ -38,7 +38,7 @@
             gap: 10px;
             align-items: center;
         }
-        #wave-btn, #pic-btn {
+        #pic-btn {
             padding: 8px 20px;
             font-size: 0.85rem;
             font-family: 'Space Grotesk', sans-serif;
@@ -52,15 +52,6 @@
             letter-spacing: 0.5px;
             box-shadow: 0 2px 8px rgba(33, 150, 243, 0.35);
         }
-        #wave-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.45);
-        }
-        #wave-btn:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-            transform: none;
-        }
         #pic-btn {
             background: linear-gradient(135deg, #546e7a 0%, #37474f 100%);
             box-shadow: 0 2px 8px rgba(84, 110, 122, 0.35);
@@ -68,6 +59,74 @@
         #pic-btn:hover {
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(84, 110, 122, 0.45);
+        }
+        #eg-toggle, #logs-toggle {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #37474f;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            user-select: none;
+        }
+        #eg-check, #logs-check {
+            accent-color: #2196f3;
+            width: 15px;
+            height: 15px;
+            cursor: pointer;
+        }
+        #logs-panel {
+            position: fixed;
+            bottom: 16px;
+            right: 12px;
+            width: 420px;
+            height: 300px;
+            background: rgba(38,50,56,0.95);
+            backdrop-filter: blur(12px);
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+            z-index: 100;
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        #logs-panel.hidden { display: none; }
+        #logs-panel .logs-header {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.65rem;
+            color: #90a4ae;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 8px 12px 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #logs-panel .logs-clear {
+            font-size: 0.6rem;
+            color: #78909c;
+            background: none;
+            border: 1px solid #546e7a;
+            border-radius: 4px;
+            padding: 2px 8px;
+            cursor: pointer;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        #logs-panel .logs-clear:hover { color: #e0e0e0; border-color: #90a4ae; }
+        #logs-textarea {
+            flex: 1;
+            background: transparent;
+            color: #e0e0e0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            line-height: 1.6;
+            border: none;
+            outline: none;
+            resize: none;
+            padding: 6px 12px 10px;
+            overflow-y: auto;
         }
         #path-panel {
             position: fixed;
@@ -123,8 +182,8 @@
         }
         #ref-panel {
             position: fixed;
-            top: 380px;
-            left: 12px;
+            top: 52px;
+            right: 12px;
             width: 300px;
             max-height: 50vh;
             overflow: auto;
@@ -180,6 +239,95 @@
             margin-right: 6px;
             flex-shrink: 0;
         }
+        #tableau-panel.hidden {
+            display: none;
+        }
+        #tableau-panel {
+            position: fixed;
+            left: 12px;
+            width: 300px;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(12px);
+            padding: 12px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            z-index: 100;
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+        #tableau-panel h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.7rem;
+            color: #546e7a;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        #reduced-word {
+            font-size: 0.72rem;
+            color: #37474f;
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        #reduced-word .rw-label {
+            font-size: 0.62rem;
+            color: #78909c;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            display: block;
+            margin-bottom: 2px;
+        }
+        .tableau-row-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .tableau-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .tableau-wrap .tab-label {
+            font-size: 0.58rem;
+            color: #90a4ae;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+        .young-tableau {
+            display: flex;
+            flex-direction: column;
+            gap: 0px;
+        }
+        .young-tableau .yt-row {
+            display: flex;
+            gap: 0px;
+        }
+        .young-tableau .yt-cell {
+            width: 30px;
+            height: 30px;
+            border: 2px solid #90a4ae;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #263238;
+            background: #fff;
+            margin-right: -2px;
+            margin-bottom: -2px;
+        }
+        .young-tableau .yt-row:first-child .yt-cell {
+            border-top-color: #546e7a;
+        }
+        .young-tableau .yt-row .yt-cell:first-child {
+            border-left-color: #546e7a;
+        }
+        .young-tableau .yt-cell.yt-highlight {
+            background: #e3f2fd;
+            border-color: #1565c0;
+            color: #0d47a1;
+        }
         #canvas-container {
             position: fixed;
             top: 42px;
@@ -193,8 +341,9 @@
     <div id="header">
         <h1>⬡ Schreier (5,2) — Stringy path (Stanley–Edelman–Greene)</h1>
         <div id="header-btns">
+            <label id="eg-toggle"><input type="checkbox" id="eg-check" onchange="toggleEG()"> EG tableau</label>
+            <label id="logs-toggle"><input type="checkbox" id="logs-check" onchange="toggleLogs()"> Logs</label>
             <button id="pic-btn" onclick="togglePic()">PIC (show)</button>
-            <button id="wave-btn" onclick="startWave()">WAVE</button>
         </div>
     </div>
     <div id="path-panel">
@@ -204,6 +353,20 @@
         <button class="path-btn" id="path-btn-2" onclick="selectPath(2)">Path 3<div class="path-preview" id="path-preview-2"></div></button>
         <button class="path-btn" id="path-btn-3" onclick="selectPath(3)">Path 4<div class="path-preview" id="path-preview-3"></div></button>
         <button class="path-btn" id="path-btn-4" onclick="selectPath(4)">Path 5<div class="path-preview" id="path-preview-4"></div></button>
+    </div>
+    <div id="tableau-panel" class="hidden">
+        <h3>Edelman–Greene correspondence</h3>
+        <div id="reduced-word"></div>
+        <div class="tableau-row-container">
+            <div class="tableau-wrap">
+                <div class="tab-label">Insertion P</div>
+                <div id="tableau-p" class="young-tableau"></div>
+            </div>
+            <div class="tableau-wrap">
+                <div class="tab-label">Recording Q</div>
+                <div id="tableau-q" class="young-tableau"></div>
+            </div>
+        </div>
     </div>
     <div id="ref-panel" class="hidden">
         <h3>Reference: schreier_5_2.jpg</h3>
@@ -219,6 +382,13 @@
         <div class="wave-item"><span class="wave-dot" style="background:#6a1b9a"></span>10001</div>
         <div class="wave-item"><span class="wave-dot" style="background:#fdd835"></span>10010</div>
         <div class="wave-item"><span class="wave-dot" style="background:#00acc1"></span>10100</div>
+    </div>
+    <div id="logs-panel" class="hidden">
+        <div class="logs-header">
+            <span>Logs</span>
+            <button class="logs-clear" onclick="clearLogs()">Clear</button>
+        </div>
+        <textarea id="logs-textarea" readonly></textarea>
     </div>
     <div id="canvas-container"></div>
 
@@ -280,6 +450,38 @@
             };
         }
 
+        function toggleLogs() {
+            const panel = document.getElementById('logs-panel');
+            const checked = document.getElementById('logs-check').checked;
+            if (checked) {
+                panel.classList.remove('hidden');
+            } else {
+                panel.classList.add('hidden');
+            }
+        }
+
+        function clearLogs() {
+            document.getElementById('logs-textarea').value = '';
+        }
+
+        function appendLog(text) {
+            if (!document.getElementById('logs-check').checked) return;
+            const ta = document.getElementById('logs-textarea');
+            ta.value += text + '\n';
+            ta.scrollTop = ta.scrollHeight;
+        }
+
+        function toggleEG() {
+            const panel = document.getElementById('tableau-panel');
+            const checked = document.getElementById('eg-check').checked;
+            if (checked) {
+                panel.classList.remove('hidden');
+                updateTableauPanel(selectedPathIndex);
+            } else {
+                panel.classList.add('hidden');
+            }
+        }
+
         function togglePic() {
             const panel = document.getElementById('ref-panel');
             const btn = document.getElementById('pic-btn');
@@ -293,11 +495,27 @@
         function selectPath(index) {
             if (index < 0 || index >= ALL_PATHS.length) return;
             selectedPathIndex = index;
+            // Reset wave state fully and auto-start the wave
+            waveRunning = false;
             waveCompleted = false;
+            waveStepIndex = 0;
+            arrowProgress = 0;
             for (let i = 0; i < ALL_PATHS.length; i++) {
                 const btn = document.getElementById('path-btn-' + i);
                 if (btn) btn.classList.toggle('selected', i === index);
             }
+            // Log path and reduced word
+            const path = ALL_PATHS[index];
+            const word = getReducedWord(path);
+            appendLog('Path ' + (index + 1) + ': ' + path.join(' -> '));
+            appendLog('Reduced word: ' + word.map(function(v) { return 's' + v; }).join(' '));
+            appendLog('');
+            // Update the Young tableau display if visible
+            if (document.getElementById('eg-check').checked) {
+                updateTableauPanel(index);
+            }
+            // Automatically trigger the wave
+            startWave();
         }
 
         function getOnesPositions(str) {
@@ -468,12 +686,102 @@
             drawingContext.setLineDash([]);
         }
 
+        // ── Edelman–Greene insertion ──────────────────────────
+        // Extract the reduced word (sequence of 1-indexed transpositions) from a path
+        function getReducedWord(path) {
+            const word = [];
+            for (let i = 0; i < path.length - 1; i++) {
+                const a = path[i], b = path[i + 1];
+                for (let j = 0; j < a.length - 1; j++) {
+                    if (a[j] !== b[j]) {
+                        word.push(j + 1); // 1-indexed: s_j swaps positions j and j+1
+                        break;
+                    }
+                }
+            }
+            return word;
+        }
+
+        // Edelman–Greene row insertion: insert value x into row R (strictly increasing).
+        // Returns the bumped value, or -1 if appended (no bump).
+        function egRowInsert(row, x) {
+            // If x >= last entry, append
+            if (row.length === 0 || x >= row[row.length - 1]) {
+                row.push(x);
+                return -1; // no bump
+            }
+            // Find leftmost j with row[j] > x
+            let j = 0;
+            while (j < row.length && row[j] <= x) j++;
+            const y = row[j];
+            // Special case: y = x+1 and x already in the row (at position j-1)
+            if (y === x + 1 && j > 0 && row[j - 1] === x) {
+                // Don't modify this row; bump x+1 into next row
+                return x + 1;
+            }
+            // Normal case: replace row[j] with x, bump y
+            row[j] = x;
+            return y;
+        }
+
+        // Full Edelman–Greene insertion of a reduced word.
+        // Returns { P: number[][], Q: number[][] }
+        function edGreeneInsert(word) {
+            const P = []; // insertion tableau (rows of strictly increasing integers)
+            const Q = []; // recording tableau (standard Young tableau)
+            for (let step = 0; step < word.length; step++) {
+                let x = word[step];
+                let rowIdx = 0;
+                while (true) {
+                    if (rowIdx >= P.length) P.push([]);
+                    if (rowIdx >= Q.length) Q.push([]);
+                    const bumped = egRowInsert(P[rowIdx], x);
+                    if (bumped === -1) {
+                        // x was appended in row rowIdx at position P[rowIdx].length - 1
+                        Q[rowIdx].push(step + 1); // 1-indexed step
+                        break;
+                    }
+                    x = bumped;
+                    rowIdx++;
+                }
+            }
+            return { P, Q };
+        }
+
+        // Render a Young tableau (2D array) as HTML
+        function tableauToHtml(tab) {
+            return tab.map(function (row) {
+                const cells = row.map(function (val) {
+                    return '<div class="yt-cell">' + val + '</div>';
+                }).join('');
+                return '<div class="yt-row">' + cells + '</div>';
+            }).join('');
+        }
+
+        // Update the tableau panel for the selected path
+        function updateTableauPanel(pathIndex) {
+            const path = ALL_PATHS[pathIndex];
+            const word = getReducedWord(path);
+            const { P, Q } = edGreeneInsert(word);
+
+            // Reduced word display: s₂ s₄ s₁ s₃
+            const wordHtml = word.map(function (v) {
+                return '<b>s<sub>' + v + '</sub></b>';
+            }).join(' ');
+            const rwEl = document.getElementById('reduced-word');
+            rwEl.innerHTML = '<span class="rw-label">Reduced word</span>' + wordHtml;
+
+            document.getElementById('tableau-p').innerHTML = tableauToHtml(P);
+            document.getElementById('tableau-q').innerHTML = tableauToHtml(Q);
+            positionTableauPanel();
+        }
+
         function startWave() {
             if (waveRunning) return;
             waveRunning = true;
             waveStepIndex = 0;
             arrowProgress = 0;
-            document.getElementById('wave-btn').disabled = true;
+            // wave started
         }
 
         function setup() {
@@ -484,6 +792,17 @@
             for (let i = 0; i < ALL_PATHS.length; i++) {
                 const el = document.getElementById('path-preview-' + i);
                 if (el) el.innerHTML = pathPreviewHtml(ALL_PATHS[i]);
+            }
+            // Tableau panel starts hidden; positioned when toggled on
+            positionTableauPanel();
+        }
+
+        function positionTableauPanel() {
+            const pp = document.getElementById('path-panel');
+            const tp = document.getElementById('tableau-panel');
+            if (pp && tp) {
+                const ppRect = pp.getBoundingClientRect();
+                tp.style.top = (ppRect.bottom + 8) + 'px';
             }
         }
 
@@ -573,7 +892,6 @@
                         if (waveStepIndex >= numArrows) {
                             waveRunning = false;
                             waveCompleted = true;
-                            document.getElementById('wave-btn').disabled = false;
                         }
                     }
                 }
@@ -606,6 +924,7 @@
         function windowResized() {
             resizeCanvas(windowWidth, windowHeight);
             buildGraph();
+            positionTableauPanel();
         }
     </script>
 </body>
