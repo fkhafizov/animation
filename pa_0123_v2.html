@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unified Lehmer-Code Diagram for MSet Path: 0^k 1^n 2^m 3^t</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Sora:wght@300;500;700&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Sora', sans-serif;
+            background: linear-gradient(180deg, #b8d4e8 0%, #e8f0d8 20%, #fdf8e3 45%, #fefcf4 70%, #ffffff 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 25px;
+        }
+        
+        h1 {
+            font-weight: 700;
+            font-size: 1.8rem;
+            color: #3d5a6e;
+            margin-bottom: 15px;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,253,245,0.95);
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(80,70,50,0.1);
+            margin-bottom: 15px;
+        }
+        
+        .controls label {
+            font-family: 'Fira Code', monospace;
+            font-weight: 600;
+            color: #2a5a7a;
+        }
+        
+        .controls input[type="text"] {
+            font-family: 'Fira Code', monospace;
+            padding: 8px 12px;
+            border: 2px solid #8ecae6;
+            border-radius: 8px;
+            width: 300px;
+        }
+        
+        button {
+            font-family: 'Sora', sans-serif;
+            font-weight: 600;
+            padding: 10px 20px;
+            background: linear-gradient(145deg, #219ebc 0%, #1a7a94 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(33,158,188,0.4);
+        }
+        
+        .info-text {
+            background: rgba(255,253,245,0.95);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.75rem;
+            color: #4a5a68;
+            margin-bottom: 15px;
+            max-width: 920px;
+            text-align: center;
+        }
+        
+        .main-area {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        
+        .info-panel {
+            background: rgba(255,253,248,0.96);
+            padding: 15px;
+            border-radius: 12px;
+            width: 260px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.75rem;
+            color: #3d5a6e;
+        }
+        
+        .info-panel h3 {
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e8e0c8;
+        }
+        
+        .info-row {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .info-section {
+            padding: 6px 0 2px 0;
+            border-bottom: 2px solid #e0d8c0;
+            font-weight: 600;
+            color: #5a7a8e;
+            font-size: 0.65rem;
+        }
+        
+        .info-label { color: #6a9bb8; font-size: 0.65rem; }
+        .info-value { font-weight: 600; margin-top: 2px; }
+        .info-value.red { color: #dc3545; }
+        .info-value.green { color: #198754; }
+        .info-value.purple { color: #6f42c1; }
+        .info-value.blue { color: #1976D2; }
+        .info-value.orange { color: #E65100; }
+        
+        #canvas-container {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(80,70,50,0.15);
+            border: 3px solid rgba(255,200,100,0.5);
+        }
+    </style>
+</head>
+<body>
+    <h1>Unified Lehmer-Code Diagram for MSet Path: 0<sup>k</sup> 1<sup>n</sup> 2<sup>m</sup> 3<sup>t</sup></h1>
+    
+    <div class="controls">
+        <label>P :</label>
+        <input type="text" id="pInput" value="2 0 3 1 2 0 2 1 2 3 0 1 2 0">
+        <button id="drawBtn">DRAW</button>
+        <button id="randBtn">RAND</button>
+        <button id="helpBtn">HELP</button>
+        <span style="margin-left: 15px; border-left: 2px solid #ccc; padding-left: 15px; display: inline-flex; flex-direction: column; align-items: flex-start; gap: 5px;">
+            <span style="display: inline-flex; align-items: flex-end; gap: 4px; flex-wrap: wrap;">
+                <span style="display: inline-flex; flex-direction: column; align-items: center;">
+                    <label style="font-size: 0.75rem;">#0s k:</label>
+                    <input type="number" id="kInput" value="4" min="0" max="10" style="width: 55px;">
+                </span>
+                <span style="display: inline-flex; flex-direction: column; align-items: center;">
+                    <label style="font-size: 0.75rem;">#1s n:</label>
+                    <input type="number" id="nInput" value="3" min="0" max="10" style="width: 55px;">
+                </span>
+                <span style="display: inline-flex; flex-direction: column; align-items: center;">
+                    <label style="font-size: 0.75rem;">#2s m:</label>
+                    <input type="number" id="mInput" value="5" min="0" max="10" style="width: 55px;">
+                </span>
+                <span style="display: inline-flex; flex-direction: column; align-items: center;">
+                    <label style="font-size: 0.75rem;">#3s t:</label>
+                    <input type="number" id="tInput" value="2" min="0" max="10" style="width: 55px;">
+                </span>
+                <button id="genBtn">GEN</button>
+            </span>
+            <label style="font-size: 0.8rem; cursor: pointer;">fix k,n,m,t<input type="checkbox" id="fixKNMTChk" style="cursor: pointer; margin: 0; padding: 0;" checked></label>
+        </span>
+    </div>
+    
+    <div id="helpText" style="display: none; background: #fffde7; padding: 10px 20px; border-radius: 8px; border: 1px solid #ffc107; margin-bottom: 10px; font-size: 0.9rem; color: #5d4037; max-width: 920px;">
+        <strong>Unified Lehmer-code Diagram.</strong> 
+        Instead of three separate rectangles, all levels share one figure. 
+        Each position i in P keeps its coordinate. 
+        h<sub>j</sub>(i) = #{elements &lt; j in P[0..i-1]}; 
+        g<sub>j</sub>(i) = same for E = sort(P). 
+        At position i: symbol 0 raises all three curves, 1 raises h<sub>2</sub> and h<sub>3</sub>, 
+        2 raises only h<sub>3</sub>, 3 leaves all flat.
+        Green dashed = P curves, Red solid = E curves. 
+        d(P,E) = A<sub>3</sub>+A<sub>2</sub>+A<sub>1</sub> (rectangle decomposition).
+    </div>
+    
+    <div class="info-text">
+        <strong>Unified Lehmer-Code Diagram:</strong> 
+        h<sub>j</sub>(i) = #{val &lt; j in P[0..i-1]}. 
+        Position i: 0 raises all three, 1 raises h<sub>2</sub>&amp;h<sub>3</sub>, 
+        2 raises h<sub>3</sub> only, 3 all flat. 
+        d(P,E) = A<sub>3</sub>+A<sub>2</sub>+A<sub>1</sub> (rect areas). 
+        A'<sub>3</sub> = A<sub>3</sub> (shear preserves area).
+    </div>
+    
+    <div class="main-area">
+        <div class="info-panel">
+            <h3>Info</h3>
+            <div class="info-row">
+                <div class="info-label">P (permutation)</div>
+                <div class="info-value green" id="pDisplay">&mdash;</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label" style="color: #dc3545;">E = sort(P)</div>
+                <div class="info-value red" id="eDisplay">&mdash;</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Counts</div>
+                <div class="info-value" id="countsDisplay">&mdash;</div>
+            </div>
+            <div class="info-section">Rect Decomposition</div>
+            <div class="info-row">
+                <div class="info-label">A&#8323; (R3: t&times;(k+n+m))</div>
+                <div class="info-value purple" id="area3Display">&mdash;</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">A&#8322; (R2: m&times;(k+n))</div>
+                <div class="info-value purple" id="area2Display">&mdash;</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">A&#8321; (R1: n&times;k)</div>
+                <div class="info-value purple" id="area1Display">&mdash;</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">d(P,E) = A&#8323;+A&#8322;+A&#8321;</div>
+                <div class="info-value purple" id="totalDistDisplay">&mdash;</div>
+            </div>
+            <div class="info-section">Unified Diagram Areas</div>
+            <div class="info-row">
+                <div class="info-label">A'&#8323; (h&#8323; vs g&#8323;) = A&#8323;</div>
+                <div class="info-value blue" id="expArea3Display">&mdash;</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">A'&#8322; (h&#8322; vs g&#8322;)</div>
+                <div class="info-value orange" id="expArea2Display">&mdash;</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">A'&#8321; (h&#8321; vs g&#8321;)</div>
+                <div class="info-value purple" id="expArea1Display">&mdash;</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">&Sigma;A'</div>
+                <div class="info-value" id="expTotalDisplay">&mdash;</div>
+            </div>
+        </div>
+        
+        <div id="canvas-container"></div>
+    </div>
+
+    <script>
+        let pArray = [];
+        let eArray = [];
+        let k = 0, n = 0, m = 0, t = 0;
+        
+        // Original rectangle paths (for area calculations)
+        let pPath3 = [], ePath3 = [];
+        let pPath2 = [], ePath2 = [];
+        let pPath1 = [], ePath1 = [];
+        
+        // Unified step functions: h_j(i) = #{elements < j in P[0..i-1]}
+        let pH1 = [], pH2 = [], pH3 = [];
+        let eH1 = [], eH2 = [], eH3 = [];
+        
+        let animProgress = 0;
+        let isAnimating = false;
+        let animPhase = 0;  // 0=P curves, 1=E curves, 2=areas fade
+        let mainSketch = null;
+        let totalDist = 0;
+        let area3 = 0, area2 = 0, area1 = 0;
+        let expArea3 = 0, expArea2 = 0, expArea1 = 0;
+        
+        document.getElementById('drawBtn').addEventListener('click', startDraw);
+        document.getElementById('randBtn').addEventListener('click', randomizeInput);
+        document.getElementById('genBtn').addEventListener('click', generateFromKNMT);
+        document.getElementById('helpBtn').addEventListener('click', toggleHelp);
+        
+        function toggleHelp() {
+            let helpDiv = document.getElementById('helpText');
+            helpDiv.style.display = helpDiv.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        function generateFromKNMT() {
+            let kVal = parseInt(document.getElementById('kInput').value) || 0;
+            let nVal = parseInt(document.getElementById('nInput').value) || 0;
+            let mVal = parseInt(document.getElementById('mInput').value) || 0;
+            let tVal = parseInt(document.getElementById('tInput').value) || 0;
+            
+            let arr = [];
+            for (let i = 0; i < kVal; i++) arr.push(0);
+            for (let i = 0; i < nVal; i++) arr.push(1);
+            for (let i = 0; i < mVal; i++) arr.push(2);
+            for (let i = 0; i < tVal; i++) arr.push(3);
+            
+            for (let i = arr.length - 1; i > 0; i--) {
+                let j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            
+            document.getElementById('pInput').value = arr.join(' ');
+            startDraw();
+        }
+        
+        function randomizeInput() {
+            let kVal, nVal, mVal, tVal;
+            
+            if (document.getElementById('fixKNMTChk').checked) {
+                kVal = parseInt(document.getElementById('kInput').value) || 0;
+                nVal = parseInt(document.getElementById('nInput').value) || 0;
+                mVal = parseInt(document.getElementById('mInput').value) || 0;
+                tVal = parseInt(document.getElementById('tInput').value) || 0;
+            } else {
+                kVal = Math.floor(Math.random() * 5) + 1;
+                nVal = Math.floor(Math.random() * 4) + 1;
+                mVal = Math.floor(Math.random() * 4) + 1;
+                tVal = Math.floor(Math.random() * 3) + 1;
+                
+                document.getElementById('kInput').value = kVal;
+                document.getElementById('nInput').value = nVal;
+                document.getElementById('mInput').value = mVal;
+                document.getElementById('tInput').value = tVal;
+            }
+            
+            let arr = [];
+            for (let i = 0; i < kVal; i++) arr.push(0);
+            for (let i = 0; i < nVal; i++) arr.push(1);
+            for (let i = 0; i < mVal; i++) arr.push(2);
+            for (let i = 0; i < tVal; i++) arr.push(3);
+            
+            for (let i = arr.length - 1; i > 0; i--) {
+                let j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            
+            document.getElementById('pInput').value = arr.join(' ');
+            startDraw();
+        }
+        
+        function parseInput(input) {
+            let nums = [];
+            let cleaned = input.replace(/[,\[\]\s]/g, '').trim();
+            
+            if (/^[0123]+$/.test(cleaned)) {
+                for (let ch of cleaned) {
+                    nums.push(parseInt(ch));
+                }
+            } else {
+                cleaned = input.replace(/[,\[\]]/g, ' ').trim();
+                let parts = cleaned.split(/\s+/);
+                for (let p of parts) {
+                    let val = parseInt(p);
+                    if (!isNaN(val) && val >= 0 && val <= 3) {
+                        nums.push(val);
+                    }
+                }
+            }
+            return nums;
+        }
+        
+        // ── Compute rectangle paths (for A₃, A₂, A₁) ──
+        function computePaths() {
+            k = pArray.filter(v => v === 0).length;
+            n = pArray.filter(v => v === 1).length;
+            m = pArray.filter(v => v === 2).length;
+            t = pArray.filter(v => v === 3).length;
+            
+            eArray = [...pArray].sort((a, b) => a - b);
+            
+            // R3: t × (k+n+m)
+            pPath3 = [{x:0,y:0}]; ePath3 = [{x:0,y:0}];
+            let px=0,py=0,ex=0,ey=0;
+            for (let v of pArray) { if(v===3) px++; else py++; pPath3.push({x:px,y:py}); }
+            for (let v of eArray) { if(v===3) ex++; else ey++; ePath3.push({x:ex,y:ey}); }
+            
+            // R2: m × (k+n)
+            let pSub2 = pArray.filter(v => v !== 3);
+            let eSub2 = eArray.filter(v => v !== 3);
+            pPath2 = [{x:0,y:0}]; ePath2 = [{x:0,y:0}];
+            px=0;py=0;ex=0;ey=0;
+            for (let v of pSub2) { if(v===2) px++; else py++; pPath2.push({x:px,y:py}); }
+            for (let v of eSub2) { if(v===2) ex++; else ey++; ePath2.push({x:ex,y:ey}); }
+            
+            // R1: n × k
+            let pSub1 = pArray.filter(v => v===0||v===1);
+            let eSub1 = eArray.filter(v => v===0||v===1);
+            pPath1 = [{x:0,y:0}]; ePath1 = [{x:0,y:0}];
+            px=0;py=0;ex=0;ey=0;
+            for (let v of pSub1) { if(v===1) px++; else py++; pPath1.push({x:px,y:py}); }
+            for (let v of eSub1) { if(v===1) ex++; else ey++; ePath1.push({x:ex,y:ey}); }
+        }
+        
+        // ── Compute unified step functions ──
+        function computeStepFunctions() {
+            let N = pArray.length;
+            pH1 = [0]; pH2 = [0]; pH3 = [0];
+            eH1 = [0]; eH2 = [0]; eH3 = [0];
+            
+            for (let i = 0; i < N; i++) {
+                pH1.push(pH1[i] + (pArray[i] < 1 ? 1 : 0));
+                pH2.push(pH2[i] + (pArray[i] < 2 ? 1 : 0));
+                pH3.push(pH3[i] + (pArray[i] < 3 ? 1 : 0));
+                
+                eH1.push(eH1[i] + (eArray[i] < 1 ? 1 : 0));
+                eH2.push(eH2[i] + (eArray[i] < 2 ? 1 : 0));
+                eH3.push(eH3[i] + (eArray[i] < 3 ? 1 : 0));
+            }
+        }
+        
+        function calcArea(path1, path2) {
+            if (path1.length < 2 || path2.length < 2) return 0;
+            let polygon = [...path1];
+            for (let i = path2.length - 1; i >= 0; i--) polygon.push(path2[i]);
+            let area = 0;
+            for (let i = 0; i < polygon.length; i++) {
+                let j = (i + 1) % polygon.length;
+                area += polygon[i].x * polygon[j].y - polygon[j].x * polygon[i].y;
+            }
+            return Math.abs(area) / 2;
+        }
+        
+        // Exact area between two piecewise-linear step functions (trapezoidal)
+        function calcExpandedArea(gFunc, hFunc) {
+            let area = 0;
+            for (let i = 1; i < gFunc.length - 1; i++) {
+                area += gFunc[i] - hFunc[i];
+            }
+            return area;
+        }
+        
+        function startDraw() {
+            pArray = parseInput(document.getElementById('pInput').value);
+            if (pArray.length === 0) {
+                alert('Enter a permutation with 0s, 1s, 2s, 3s');
+                return;
+            }
+            
+            computePaths();
+            computeStepFunctions();
+            
+            // Update info panel
+            document.getElementById('pDisplay').textContent = '[' + pArray.join(', ') + ']';
+            document.getElementById('eDisplay').textContent = '[' + eArray.join(', ') + ']';
+            document.getElementById('countsDisplay').textContent = 'k='+k+', n='+n+', m='+m+', t='+t;
+            
+            area3 = calcArea(pPath3, ePath3);
+            area2 = calcArea(pPath2, ePath2);
+            area1 = calcArea(pPath1, ePath1);
+            totalDist = area3 + area2 + area1;
+            
+            document.getElementById('area3Display').textContent = area3;
+            document.getElementById('area2Display').textContent = area2;
+            document.getElementById('area1Display').textContent = area1;
+            document.getElementById('totalDistDisplay').textContent = area3+' + '+area2+' + '+area1+' = '+totalDist;
+            
+            expArea3 = calcExpandedArea(eH3, pH3);
+            expArea2 = calcExpandedArea(eH2, pH2);
+            expArea1 = calcExpandedArea(eH1, pH1);
+            
+            document.getElementById('expArea3Display').textContent = expArea3;
+            document.getElementById('expArea2Display').textContent = expArea2;
+            document.getElementById('expArea1Display').textContent = expArea1;
+            document.getElementById('expTotalDisplay').textContent = expArea3+' + '+expArea2+' + '+expArea1+' = '+(expArea3+expArea2+expArea1);
+            
+            animProgress = 0;
+            animPhase = 0;
+            isAnimating = true;
+            
+            buildCanvas();
+        }
+        
+        function buildCanvas() {
+            if (mainSketch) mainSketch.remove();
+            
+            let N = pArray.length;
+            let maxY = Math.max(k + n + m, 1);
+            
+            let cellW = Math.min(44, Math.max(24, Math.floor(680 / N)));
+            let cellH = Math.min(44, Math.max(24, Math.floor(440 / maxY)));
+            
+            let padL = 58, padR = 80, padT = 90, padB = 62;
+            let diagW = N * cellW;
+            let diagH = maxY * cellH;
+            let canvasW = padL + diagW + padR;
+            let canvasH = padT + diagH + padB;
+            
+            // ── Level color definitions ──
+            let LVL3 = {r:33,g:120,b:220};   // blue
+            let LVL2 = {r:230,g:120,b:0};    // orange
+            let LVL1 = {r:140,g:50,b:180};   // purple
+            
+            mainSketch = new p5(function(p) {
+                p.setup = function() {
+                    let canvas = p.createCanvas(canvasW, canvasH);
+                    canvas.parent('canvas-container');
+                };
+                
+                p.draw = function() {
+                    p.background(255, 252, 245);
+                    
+                    let ox = padL;
+                    let oy = padT + diagH;  // bottom-left of diagram
+                    
+                    // ── Top text ──
+                    p.noStroke();
+                    p.textSize(12);
+                    p.textAlign(p.LEFT, p.TOP);
+                    p.fill(80, 80, 100);
+                    p.textStyle(p.NORMAL);
+                    p.text('k='+k+' (0s), n='+n+' (1s), m='+m+' (2s), t='+t+' (3s)', 15, 8);
+                    p.textSize(13);
+                    p.textStyle(p.BOLD);
+                    p.fill(25, 135, 84);
+                    p.text('P = ['+pArray.join(', ')+']', 15, 26);
+                    p.fill(220, 53, 69);
+                    p.text('E = ['+eArray.join(', ')+']', 15, 44);
+                    p.fill(111, 66, 193);
+                    p.text('d(P,E) = '+area3+' + '+area2+' + '+area1+' = '+totalDist, 15, 62);
+                    
+                    // ── Legend (top right) ──
+                    p.textSize(10);
+                    p.textStyle(p.NORMAL);
+                    p.textAlign(p.RIGHT, p.TOP);
+                    p.fill(220, 53, 69);
+                    p.text('\u2501\u2501 E curves (red solid)', canvasW - 15, 8);
+                    p.fill(25, 135, 84);
+                    p.text('\u2505\u2505 P curves (green dashed)', canvasW - 15, 22);
+                    p.fill(LVL3.r,LVL3.g,LVL3.b);
+                    p.text('\u2593 Level 3: h\u2083 vs g\u2083', canvasW - 15, 38);
+                    p.fill(LVL2.r,LVL2.g,LVL2.b);
+                    p.text('\u2593 Level 2: h\u2082 vs g\u2082', canvasW - 15, 52);
+                    p.fill(LVL1.r,LVL1.g,LVL1.b);
+                    p.text('\u2593 Level 1: h\u2081 vs g\u2081', canvasW - 15, 66);
+                    
+                    // ── Diagram background ──
+                    p.noStroke();
+                    p.fill(255, 250, 238);
+                    p.rect(ox, oy - diagH, diagW, diagH);
+                    
+                    // ── Grid lines ──
+                    p.stroke(235, 230, 215);
+                    p.strokeWeight(0.5);
+                    for (let i = 0; i <= N; i++)
+                        p.line(ox + i*cellW, oy - diagH, ox + i*cellW, oy);
+                    for (let j = 0; j <= maxY; j++)
+                        p.line(ox, oy - j*cellH, ox + diagW, oy - j*cellH);
+                    
+                    // ── Level boundary lines (dashed) ──
+                    p.stroke(160, 180, 195);
+                    p.strokeWeight(1);
+                    p.drawingContext.setLineDash([5, 4]);
+                    if (k > 0 && k < maxY)
+                        p.line(ox, oy - k*cellH, ox + diagW, oy - k*cellH);
+                    if (k+n > 0 && k+n < maxY && k+n !== k)
+                        p.line(ox, oy - (k+n)*cellH, ox + diagW, oy - (k+n)*cellH);
+                    p.drawingContext.setLineDash([]);
+                    
+                    // ── Diagonal guide y=x (where E curves rise) ──
+                    p.stroke(215, 205, 185);
+                    p.strokeWeight(1);
+                    p.drawingContext.setLineDash([2, 3]);
+                    let diagLen = Math.min(N, maxY);
+                    p.line(ox, oy, ox + diagLen*cellW, oy - diagLen*cellH);
+                    p.drawingContext.setLineDash([]);
+                    
+                    // ── Border ──
+                    p.stroke(180, 140, 80);
+                    p.strokeWeight(2);
+                    p.noFill();
+                    p.rect(ox, oy - diagH, diagW, diagH);
+                    
+                    // ── Animation progress ──
+                    let pProg = isAnimating ? (animPhase===0 ? animProgress : (animPhase>0 ? 1 : 0)) : 1;
+                    let eProg = isAnimating ? (animPhase===1 ? animProgress : (animPhase>1 ? 1 : 0)) : 1;
+                    let areaProg = isAnimating ? (animPhase===2 ? animProgress : (animPhase>2 ? 1 : 0)) : 1;
+                    
+                    // ── Shaded areas (drawn back to front) ──
+                    if (areaProg > 0) {
+                        if (k+n+m > 0) drawAreaFill(p, ox, oy, cellW, cellH, pH3, eH3,
+                            p.color(LVL3.r, LVL3.g, LVL3.b, 40*areaProg));
+                        if (k+n > 0) drawAreaFill(p, ox, oy, cellW, cellH, pH2, eH2,
+                            p.color(LVL2.r, LVL2.g, LVL2.b, 50*areaProg));
+                        if (k > 0) drawAreaFill(p, ox, oy, cellW, cellH, pH1, eH1,
+                            p.color(LVL1.r, LVL1.g, LVL1.b, 60*areaProg));
+                    }
+                    
+                    // ── E curves (red solid) — drawn back to front ──
+                    if (eProg > 0) {
+                        if (k+n+m > 0) drawCurveAnim(p, ox, oy, cellW, cellH, eH3, p.color(210, 40, 55), 3, false, eProg);
+                        if (k+n > 0)   drawCurveAnim(p, ox, oy, cellW, cellH, eH2, p.color(220, 53, 69), 2.5, false, eProg);
+                        if (k > 0)     drawCurveAnim(p, ox, oy, cellW, cellH, eH1, p.color(230, 75, 90), 2, false, eProg);
+                    }
+                    
+                    // ── P curves (green dashed) — drawn back to front ──
+                    if (pProg > 0) {
+                        if (k+n+m > 0) drawCurveAnim(p, ox, oy, cellW, cellH, pH3, p.color(15, 115, 65), 3, true, pProg);
+                        if (k+n > 0)   drawCurveAnim(p, ox, oy, cellW, cellH, pH2, p.color(25, 145, 55), 2.5, true, pProg);
+                        if (k > 0)     drawCurveAnim(p, ox, oy, cellW, cellH, pH1, p.color(40, 175, 45), 2, true, pProg);
+                    }
+                    
+                    // ── Y-axis tick labels ──
+                    p.noStroke();
+                    p.textStyle(p.NORMAL);
+                    p.fill(120, 115, 105);
+                    p.textSize(10);
+                    p.textAlign(p.RIGHT, p.CENTER);
+                    p.text('0', ox - 6, oy);
+                    if (k > 0)
+                        p.text(k, ox - 6, oy - k*cellH);
+                    if (k+n > 0 && k+n !== k)
+                        p.text(k+n, ox - 6, oy - (k+n)*cellH);
+                    if (maxY > 0 && maxY !== k+n)
+                        p.text(maxY, ox - 6, oy - maxY*cellH);
+                    
+                    // ── Right-side level labels ──
+                    p.textAlign(p.LEFT, p.CENTER);
+                    p.textSize(9);
+                    let rx = ox + diagW + 6;
+                    
+                    if (m > 0) {
+                        p.fill(LVL3.r, LVL3.g, LVL3.b);
+                        p.text('h\u2083,g\u2083', rx, oy - ((k+n) + maxY) * cellH / 2);
+                        p.textSize(7);
+                        p.text('#{<3}', rx, oy - ((k+n) + maxY) * cellH / 2 + 11);
+                        p.textSize(9);
+                    }
+                    if (n > 0) {
+                        p.fill(LVL2.r, LVL2.g, LVL2.b);
+                        p.text('h\u2082,g\u2082', rx, oy - (k + (k+n)) * cellH / 2);
+                        p.textSize(7);
+                        p.text('#{<2}', rx, oy - (k + (k+n)) * cellH / 2 + 11);
+                        p.textSize(9);
+                    }
+                    if (k > 0) {
+                        p.fill(LVL1.r, LVL1.g, LVL1.b);
+                        p.text('h\u2081,g\u2081', rx, oy - k * cellH / 2);
+                        p.textSize(7);
+                        p.text('#{<1}', rx, oy - k * cellH / 2 + 11);
+                        p.textSize(9);
+                    }
+                    
+                    // ── X-axis: position indices and element values ──
+                    p.textSize(Math.min(9, cellW * 0.35));
+                    p.textStyle(p.NORMAL);
+                    for (let i = 0; i < N; i++) {
+                        let cx = ox + (i + 0.5) * cellW;
+                        
+                        // position index
+                        p.fill(175, 170, 160);
+                        p.textAlign(p.CENTER, p.TOP);
+                        p.text(i, cx, oy + 3);
+                        
+                        // P[i] colored
+                        p.fill(symColor(p, pArray[i]));
+                        p.textStyle(p.BOLD);
+                        p.text(pArray[i], cx, oy + 16);
+                        
+                        // E[i] colored
+                        p.fill(symColor(p, eArray[i]));
+                        p.text(eArray[i], cx, oy + 29);
+                        p.textStyle(p.NORMAL);
+                    }
+                    
+                    // row labels
+                    p.textStyle(p.BOLD);
+                    p.textAlign(p.RIGHT, p.TOP);
+                    p.textSize(Math.min(9, cellW * 0.35));
+                    p.fill(175, 170, 160);
+                    p.text('i:', ox - 4, oy + 3);
+                    p.fill(25, 135, 84);
+                    p.text('P:', ox - 4, oy + 16);
+                    p.fill(220, 53, 69);
+                    p.text('E:', ox - 4, oy + 29);
+                    p.textStyle(p.NORMAL);
+                    
+                    // ── Segment pattern indicators (colored bars under each position) ──
+                    if (!isAnimating || animPhase >= 2) {
+                        for (let i = 0; i < N; i++) {
+                            let bx = ox + i * cellW + 2;
+                            let by = oy + 44;
+                            let bw = cellW - 4;
+                            let bh = 3;
+                            let v = pArray[i];
+                            // 0: all three levels rise; 1: two; 2: one; 3: none
+                            if (v < 3) { p.noStroke(); p.fill(LVL3.r,LVL3.g,LVL3.b,180); p.rect(bx, by, bw, bh, 1); }
+                            if (v < 2) { p.fill(LVL2.r,LVL2.g,LVL2.b,180); p.rect(bx, by + bh + 1, bw, bh, 1); }
+                            if (v < 1) { p.fill(LVL1.r,LVL1.g,LVL1.b,180); p.rect(bx, by + 2*(bh+1), bw, bh, 1); }
+                        }
+                    }
+                    
+                    // ── Animation update ──
+                    if (isAnimating) {
+                        animProgress += 0.025;
+                        if (animProgress >= 1) {
+                            animProgress = 0;
+                            animPhase++;
+                            if (animPhase >= 3) isAnimating = false;
+                        }
+                    }
+                };
+                
+                // ── Symbol color mapping ──
+                function symColor(p, val) {
+                    switch(val) {
+                        case 0: return p.color(33, 120, 220);   // blue
+                        case 1: return p.color(60, 160, 60);    // green
+                        case 2: return p.color(230, 130, 0);    // orange
+                        case 3: return p.color(220, 50, 50);    // red
+                        default: return p.color(128);
+                    }
+                }
+                
+                // ── Fill area between two step-function curves ──
+                function drawAreaFill(p, ox, oy, cw, ch, hFunc, gFunc, col) {
+                    if (hFunc.length < 2) return;
+                    p.noStroke();
+                    p.fill(col);
+                    p.beginShape();
+                    for (let i = 0; i < hFunc.length; i++)
+                        p.vertex(ox + i*cw, oy - hFunc[i]*ch);
+                    for (let i = gFunc.length - 1; i >= 0; i--)
+                        p.vertex(ox + i*cw, oy - gFunc[i]*ch);
+                    p.endShape(p.CLOSE);
+                }
+                
+                // ── Animated curve drawing ──
+                function drawCurveAnim(p, ox, oy, cw, ch, func, col, wt, dashed, progress) {
+                    if (func.length < 2) return;
+                    let totalN = func.length - 1;
+                    let drawUpTo = progress * totalN;
+                    let fullPts = Math.min(Math.floor(drawUpTo) + 1, func.length);
+                    let segIdx = Math.floor(drawUpTo);
+                    let partialFrac = drawUpTo - segIdx;
+                    let hasPartial = segIdx < totalN && partialFrac > 0;
+                    
+                    // Draw polyline
+                    p.stroke(col);
+                    p.strokeWeight(wt);
+                    if (dashed) p.drawingContext.setLineDash([6, 4]);
+                    p.noFill();
+                    p.beginShape();
+                    for (let i = 0; i < fullPts; i++)
+                        p.vertex(ox + i*cw, oy - func[i]*ch);
+                    if (hasPartial) {
+                        let x1 = ox + segIdx*cw, y1 = oy - func[segIdx]*ch;
+                        let x2 = ox + (segIdx+1)*cw, y2 = oy - func[segIdx+1]*ch;
+                        p.vertex(p.lerp(x1,x2,partialFrac), p.lerp(y1,y2,partialFrac));
+                    }
+                    p.endShape();
+                    if (dashed) p.drawingContext.setLineDash([]);
+                    
+                    // Dots at integer points
+                    p.noStroke();
+                    p.fill(col);
+                    for (let i = 0; i < fullPts; i++)
+                        p.ellipse(ox + i*cw, oy - func[i]*ch, 4);
+                    
+                    // Leading dot
+                    if (hasPartial) {
+                        let x1 = ox + segIdx*cw, y1 = oy - func[segIdx]*ch;
+                        let x2 = ox + (segIdx+1)*cw, y2 = oy - func[segIdx+1]*ch;
+                        p.ellipse(p.lerp(x1,x2,partialFrac), p.lerp(y1,y2,partialFrac), 6);
+                    }
+                }
+            });
+        }
+        
+        // Auto-draw on page load
+        startDraw();
+    </script>
+</body>
+</html>
