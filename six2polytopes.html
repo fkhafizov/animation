@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Six Classical 2-Polytopes</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #1a1f2e;
+    --surface: #212738;
+    --surface2: #282e42;
+    --border: #333a52;
+    --text: #d4d8e8;
+    --text-dim: #6b7394;
+    --c1: #f27649;
+    --c2: #49b6f2;
+    --c3: #e8c84a;
+    --c4: #6dd498;
+    --c5: #c76de8;
+    --c6: #f26b9d;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Diagonal line pattern overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.015;
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 40px,
+      #fff 40px,
+      #fff 41px
+    );
+    z-index: 0;
+  }
+
+  header {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 52px 20px 8px;
+  }
+
+  header .dim-badge {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6rem;
+    font-weight: 500;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--c2);
+    border: 1px solid var(--c2);
+    padding: 3px 14px;
+    border-radius: 2px;
+    margin-bottom: 16px;
+    opacity: 0;
+    animation: fadeIn 0.5s 0.1s ease forwards;
+  }
+
+  header h1 {
+    font-family: 'Libre Baskerville', serif;
+    font-weight: 700;
+    font-size: clamp(2rem, 5vw, 3.4rem);
+    letter-spacing: -0.01em;
+    color: var(--text);
+    line-height: 1.15;
+    opacity: 0;
+    animation: fadeIn 0.6s 0.2s ease forwards;
+  }
+
+  .intro {
+    position: relative;
+    z-index: 1;
+    font-family: 'Libre Baskerville', serif;
+    font-style: italic;
+    font-size: clamp(0.82rem, 1.8vw, 0.98rem);
+    color: var(--text-dim);
+    text-align: center;
+    padding: 10px 20px 40px;
+    max-width: 640px;
+    margin: 0 auto;
+    line-height: 1.65;
+    opacity: 0;
+    animation: fadeIn 0.6s 0.35s ease forwards;
+  }
+
+  @keyframes fadeIn {
+    to { opacity: 1; }
+  }
+
+  .grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    max-width: 1060px;
+    margin: 0 auto 24px;
+    padding: 0 2px;
+  }
+
+  @media (max-width: 860px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
+
+  .cell {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    position: relative;
+    aspect-ratio: 1;
+    min-height: 280px;
+    overflow: hidden;
+    transition: border-color 0.35s, background 0.35s;
+    opacity: 0;
+    transform: translateY(16px);
+    animation: cellIn 0.55s ease forwards;
+  }
+  .cell:nth-child(1) { animation-delay: 0.15s; }
+  .cell:nth-child(2) { animation-delay: 0.22s; }
+  .cell:nth-child(3) { animation-delay: 0.29s; }
+  .cell:nth-child(4) { animation-delay: 0.36s; }
+  .cell:nth-child(5) { animation-delay: 0.43s; }
+  .cell:nth-child(6) { animation-delay: 0.50s; }
+
+  @keyframes cellIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .cell:hover {
+    border-color: rgba(255,255,255,0.15);
+    background: var(--surface2);
+  }
+
+  .cell canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .cell-top {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    padding: 14px 16px 6px;
+    pointer-events: none;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .cell-top .label {
+    font-family: 'Libre Baskerville', serif;
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--text);
+  }
+
+  .cell-top .ngon {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.58rem;
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+
+  .cell-bottom {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 6px 16px 13px;
+    pointer-events: none;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .cell-bottom .info {
+    font-size: 0.56rem;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    line-height: 1.7;
+  }
+
+  .cell-bottom .angles {
+    font-family: 'Libre Baskerville', serif;
+    font-style: italic;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+  }
+
+  .euler-note {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 12px 20px 52px;
+    font-family: 'Libre Baskerville', serif;
+    font-style: italic;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+
+  .euler-note span {
+    color: var(--text);
+    font-style: normal;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="dim-badge">Dimension 2</div>
+  <h1>Convex Polygons</h1>
+</header>
+<p class="intro">
+  A 2-dimensional polytope is a convex polygon P ⊂ ℝ² whose affine hull has dimension 2.
+  Hover to highlight vertices and diagonals. Each polygon pulses gently to show its interior.
+</p>
+
+<div class="grid" id="grid"></div>
+
+<div class="euler-note">
+  For every convex polygon:&ensp;<span>V − E + F = 2</span>&ensp;where F counts the interior face + the outer face.
+</div>
+
+<script>
+// ============================================================
+// POLYGON DEFINITIONS
+// ============================================================
+
+const polygons = [
+  {
+    name: 'Triangle',
+    n: 3,
+    regular: true,
+    color: '#f27649',
+    notes: 'Simplest polygon',
+    interior: 180,
+    custom: null
+  },
+  {
+    name: 'Square',
+    n: 4,
+    regular: true,
+    color: '#49b6f2',
+    notes: 'Regular 4-gon',
+    interior: 360,
+    custom: null
+  },
+  {
+    name: 'Rectangle',
+    n: 4,
+    regular: false,
+    color: '#e8c84a',
+    notes: 'Non-regular 4-gon',
+    interior: 360,
+    custom: [
+      { x: -1.4, y: -0.85 },
+      { x:  1.4, y: -0.85 },
+      { x:  1.4, y:  0.85 },
+      { x: -1.4, y:  0.85 }
+    ]
+  },
+  {
+    name: 'Pentagon',
+    n: 5,
+    regular: true,
+    color: '#6dd498',
+    notes: 'Regular 5-gon',
+    interior: 540,
+    custom: null
+  },
+  {
+    name: 'Hexagon',
+    n: 6,
+    regular: true,
+    color: '#c76de8',
+    notes: 'Regular 6-gon — tiles the plane',
+    interior: 720,
+    custom: null
+  },
+  {
+    name: 'Octagon',
+    n: 8,
+    regular: true,
+    color: '#f26b9d',
+    notes: 'Regular 8-gon',
+    interior: 1080,
+    custom: null
+  }
+];
+
+// Generate regular polygon vertices
+function regularVertices(n, radius) {
+  const verts = [];
+  for (let i = 0; i < n; i++) {
+    const angle = (i * 2 * Math.PI / n) - Math.PI / 2;
+    verts.push({ x: radius * Math.cos(angle), y: radius * Math.sin(angle) });
+  }
+  return verts;
+}
+
+// ============================================================
+// CANVAS RENDERER
+// ============================================================
+
+function createPolygonCanvas(container, poly) {
+  const canvas = document.createElement('canvas');
+  container.appendChild(canvas);
+
+  let width, height, dpr;
+  let hovered = false;
+  let mouseX = 0, mouseY = 0;
+  let time = Math.random() * 100; // offset for variety
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio, 2);
+    width = container.clientWidth;
+    height = container.clientHeight;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = width + 'px';
+    canvas.style.height = height + 'px';
+  }
+
+  container.addEventListener('mouseenter', () => { hovered = true; });
+  container.addEventListener('mouseleave', () => { hovered = false; });
+  container.addEventListener('mousemove', e => {
+    const rect = container.getBoundingClientRect();
+    mouseX = (e.clientX - rect.left) / rect.width;
+    mouseY = (e.clientY - rect.top) / rect.height;
+  });
+
+  resize();
+
+  const ctx = canvas.getContext('2d');
+  const vertices = poly.custom || regularVertices(poly.n, 1);
+
+  function draw() {
+    time += 0.008;
+    const w = width * dpr;
+    const h = height * dpr;
+    ctx.clearRect(0, 0, w, h);
+
+    const cx = w / 2;
+    const cy = h / 2;
+    const scale = Math.min(w, h) * 0.3;
+
+    // Gentle rotation
+    const rotAngle = time * 0.15;
+    const breathe = 1 + Math.sin(time * 0.8) * 0.02;
+
+    // Hover parallax
+    const px = hovered ? (mouseX - 0.5) * 12 : 0;
+    const py = hovered ? (mouseY - 0.5) * 12 : 0;
+
+    // Transform vertices
+    function transform(v) {
+      const cos = Math.cos(rotAngle);
+      const sin = Math.sin(rotAngle);
+      const rx = v.x * cos - v.y * sin;
+      const ry = v.x * sin + v.y * cos;
+      return {
+        x: cx + rx * scale * breathe + px,
+        y: cy + ry * scale * breathe + py
+      };
+    }
+
+    const tv = vertices.map(transform);
+
+    // ---- GLOW BEHIND ----
+    const gradient = ctx.createRadialGradient(cx + px, cy + py, 0, cx + px, cy + py, scale * 1.8);
+    const baseColor = poly.color;
+    gradient.addColorStop(0, baseColor + '18');
+    gradient.addColorStop(0.5, baseColor + '08');
+    gradient.addColorStop(1, 'transparent');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, w, h);
+
+    // ---- DIAGONALS (on hover) ----
+    if (hovered && poly.n > 3) {
+      ctx.save();
+      const diagAlpha = 0.12;
+      ctx.strokeStyle = baseColor;
+      ctx.globalAlpha = diagAlpha;
+      ctx.lineWidth = 1 * dpr;
+      ctx.setLineDash([4 * dpr, 6 * dpr]);
+      for (let i = 0; i < tv.length; i++) {
+        for (let j = i + 2; j < tv.length; j++) {
+          if (i === 0 && j === tv.length - 1) continue; // skip edge
+          ctx.beginPath();
+          ctx.moveTo(tv[i].x, tv[i].y);
+          ctx.lineTo(tv[j].x, tv[j].y);
+          ctx.stroke();
+        }
+      }
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    // ---- INTERIOR FILL ----
+    ctx.beginPath();
+    ctx.moveTo(tv[0].x, tv[0].y);
+    for (let i = 1; i < tv.length; i++) ctx.lineTo(tv[i].x, tv[i].y);
+    ctx.closePath();
+
+    const fillGrad = ctx.createLinearGradient(
+      tv[0].x, tv[0].y,
+      tv[Math.floor(tv.length / 2)].x, tv[Math.floor(tv.length / 2)].y
+    );
+    const pulse = 0.06 + Math.sin(time * 1.2) * 0.025;
+    fillGrad.addColorStop(0, baseColor + hexOpacity(pulse + 0.04));
+    fillGrad.addColorStop(1, baseColor + hexOpacity(pulse));
+    ctx.fillStyle = fillGrad;
+    ctx.fill();
+
+    // ---- EDGES ----
+    ctx.beginPath();
+    ctx.moveTo(tv[0].x, tv[0].y);
+    for (let i = 1; i < tv.length; i++) ctx.lineTo(tv[i].x, tv[i].y);
+    ctx.closePath();
+    ctx.strokeStyle = baseColor;
+    ctx.lineWidth = (hovered ? 2.5 : 1.8) * dpr;
+    ctx.globalAlpha = hovered ? 1 : 0.75;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // ---- VERTICES ----
+    const vertRadius = (hovered ? 5 : 3.5) * dpr;
+    for (let i = 0; i < tv.length; i++) {
+      // Outer glow on hover
+      if (hovered) {
+        const vGlow = ctx.createRadialGradient(tv[i].x, tv[i].y, 0, tv[i].x, tv[i].y, vertRadius * 3);
+        vGlow.addColorStop(0, baseColor + '40');
+        vGlow.addColorStop(1, 'transparent');
+        ctx.fillStyle = vGlow;
+        ctx.beginPath();
+        ctx.arc(tv[i].x, tv[i].y, vertRadius * 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.beginPath();
+      ctx.arc(tv[i].x, tv[i].y, vertRadius, 0, Math.PI * 2);
+      ctx.fillStyle = baseColor;
+      ctx.fill();
+
+      // Inner white dot
+      ctx.beginPath();
+      ctx.arc(tv[i].x, tv[i].y, vertRadius * 0.35, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.globalAlpha = 0.8;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    // ---- VERTEX LABELS (on hover) ----
+    if (hovered) {
+      ctx.font = `${11 * dpr}px 'IBM Plex Mono', monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      for (let i = 0; i < tv.length; i++) {
+        const offsetX = (tv[i].x - cx) * 0.18;
+        const offsetY = (tv[i].y - cy) * 0.18;
+        ctx.fillStyle = baseColor;
+        ctx.globalAlpha = 0.7;
+        ctx.fillText(`v${i + 1}`, tv[i].x + offsetX, tv[i].y + offsetY);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // ---- INTERIOR ANGLE ARC (show one angle) ----
+    if (hovered) {
+      const ai = 0;
+      const prev = tv[tv.length - 1];
+      const curr = tv[0];
+      const next = tv[1];
+
+      const a1 = Math.atan2(prev.y - curr.y, prev.x - curr.x);
+      const a2 = Math.atan2(next.y - curr.y, next.x - curr.x);
+
+      ctx.beginPath();
+      const arcR = 22 * dpr;
+      // Draw the interior angle arc
+      let startA = a2, endA = a1;
+      if (endA < startA) endA += Math.PI * 2;
+      if (endA - startA > Math.PI) {
+        // swap
+        [startA, endA] = [a1, a2];
+        if (endA < startA) endA += Math.PI * 2;
+      }
+      ctx.arc(curr.x, curr.y, arcR, startA, endA);
+      ctx.strokeStyle = baseColor;
+      ctx.lineWidth = 1.5 * dpr;
+      ctx.globalAlpha = 0.5;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      // Label the angle
+      const midA = (startA + endA) / 2;
+      const labelR = arcR + 14 * dpr;
+      const interiorAngle = poly.regular ? ((poly.n - 2) * 180 / poly.n) : 90;
+      ctx.font = `${10 * dpr}px 'IBM Plex Mono', monospace`;
+      ctx.fillStyle = baseColor;
+      ctx.globalAlpha = 0.65;
+      ctx.textAlign = 'center';
+      ctx.fillText(
+        `${interiorAngle.toFixed(0)}°`,
+        curr.x + labelR * Math.cos(midA),
+        curr.y + labelR * Math.sin(midA)
+      );
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function hexOpacity(val) {
+    const clamped = Math.max(0, Math.min(1, val));
+    return Math.round(clamped * 255).toString(16).padStart(2, '0');
+  }
+
+  return { draw, resize };
+}
+
+// ============================================================
+// BUILD GRID
+// ============================================================
+
+const grid = document.getElementById('grid');
+const cells = [];
+
+polygons.forEach((poly, idx) => {
+  const cell = document.createElement('div');
+  cell.className = 'cell';
+
+  const interiorAngle = poly.regular
+    ? ((poly.n - 2) * 180 / poly.n)
+    : 90;
+  const nDiagonals = poly.n * (poly.n - 3) / 2;
+
+  cell.innerHTML = `
+    <div class="cell-top">
+      <div class="label">${poly.name}</div>
+      <div class="ngon">${poly.n}-gon</div>
+    </div>
+    <div class="cell-bottom">
+      <div class="info">
+        V = ${poly.n} &nbsp; E = ${poly.n}<br>
+        Diagonals = ${nDiagonals}
+      </div>
+      <div class="angles">${interiorAngle}° int.</div>
+    </div>
+  `;
+
+  grid.appendChild(cell);
+  const renderer = createPolygonCanvas(cell, poly);
+  cells.push(renderer);
+});
+
+// ============================================================
+// RESIZE & ANIMATE
+// ============================================================
+
+window.addEventListener('resize', () => {
+  cells.forEach(c => c.resize());
+});
+
+function animate() {
+  requestAnimationFrame(animate);
+  cells.forEach(c => c.draw());
+}
+
+animate();
+</script>
+</body>
+</html>

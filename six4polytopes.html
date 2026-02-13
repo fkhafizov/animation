@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Regular 4-Polytopes</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@300;400&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --border: #1e1e2e;
+    --text: #c8c8d8;
+    --text-dim: #6a6a7a;
+    --accent: #7eb8da;
+    --accent2: #da7eb8;
+    --accent3: #b8da7e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  header {
+    text-align: center;
+    padding: 40px 20px 10px;
+    position: relative;
+  }
+
+  header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    letter-spacing: 0.08em;
+    background: linear-gradient(135deg, var(--accent), var(--accent2), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  header p {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin-top: 8px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .subtitle {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    text-align: center;
+    padding: 6px 20px 20px;
+    letter-spacing: 0.02em;
+    text-transform: none !important;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 2px;
+    padding: 2px;
+    max-width: 1200px;
+    margin: 0 auto 40px;
+  }
+
+  .cell {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    position: relative;
+    aspect-ratio: 1;
+    min-height: 340px;
+    overflow: hidden;
+    transition: border-color 0.4s;
+  }
+
+  .cell:hover { border-color: var(--accent); }
+
+  .cell canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+  }
+
+  .cell-label {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 14px 18px;
+    background: linear-gradient(transparent, rgba(10,10,15,0.95));
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .cell-label h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 1.3rem;
+    color: #e8e8f0;
+    margin-bottom: 3px;
+  }
+
+  .cell-label .stats {
+    font-size: 0.62rem;
+    color: var(--text-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .cell-label .stats span {
+    margin-right: 12px;
+  }
+
+  .schlafli {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    color: var(--accent);
+    font-size: 0.85rem;
+  }
+
+  .controls {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    z-index: 10;
+    background: rgba(18,18,26,0.9);
+    border: 1px solid var(--border);
+    padding: 10px 18px;
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+    align-items: center;
+  }
+
+  .controls label {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .controls input[type=range] {
+    width: 100px;
+    accent-color: var(--accent);
+  }
+
+  .controls button {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 4px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .controls button:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .controls button.active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>The Six Regular 4-Polytopes</h1>
+  <p>Stereographic projections from ℝ⁴ → ℝ³ with 4D rotation</p>
+</header>
+<div class="subtitle">Convex polytopes P ⊂ ℝ<sup>d</sup> with dim(aff P) = 4 — drag to rotate in 3D, auto-rotating in the 4th dimension</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="controls">
+  <label>4D Speed</label>
+  <input type="range" id="speedSlider" min="0" max="100" value="30">
+  <button id="toggleRotation" class="active">Rotating</button>
+  <button id="toggleEdges">Thick edges</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ============================================================
+// 4-POLYTOPE VERTEX & EDGE GENERATORS
+// ============================================================
+
+const PHI = (1 + Math.sqrt(5)) / 2;
+const iPHI = 1 / PHI;
+
+function simplex5() {
+  // 4-simplex: 5 vertices in R4
+  const s = 1 / Math.sqrt(10);
+  const verts = [
+    [1, 1, 1, -1/Math.sqrt(5)],
+    [1, -1, -1, -1/Math.sqrt(5)],
+    [-1, 1, -1, -1/Math.sqrt(5)],
+    [-1, -1, 1, -1/Math.sqrt(5)],
+    [0, 0, 0, Math.sqrt(5) - 1/Math.sqrt(5)]
+  ];
+  // normalize
+  verts.forEach(v => {
+    const len = Math.sqrt(v[0]**2+v[1]**2+v[2]**2+v[3]**2);
+    v[0]/=len; v[1]/=len; v[2]/=len; v[3]/=len;
+  });
+  const edges = [];
+  for (let i = 0; i < 5; i++)
+    for (let j = i+1; j < 5; j++)
+      edges.push([i, j]);
+  return { vertices: verts, edges, name: '4-Simplex', schlafli: '{3,3,3}', V: 5, E: 10, F: 10, C: 5 };
+}
+
+function tesseract() {
+  const verts = [];
+  for (let i = 0; i < 16; i++) {
+    verts.push([
+      (i & 1) ? 1 : -1,
+      (i & 2) ? 1 : -1,
+      (i & 4) ? 1 : -1,
+      (i & 8) ? 1 : -1
+    ]);
+  }
+  // normalize
+  const s = 1 / 2;
+  verts.forEach(v => { v[0]*=s; v[1]*=s; v[2]*=s; v[3]*=s; });
+  const edges = [];
+  for (let i = 0; i < 16; i++)
+    for (let j = i+1; j < 16; j++) {
+      let diff = 0;
+      for (let k = 0; k < 4; k++) diff += Math.abs(verts[i][k] - verts[j][k]);
+      if (Math.abs(diff - s*2) < 0.01) edges.push([i, j]);
+    }
+  return { vertices: verts, edges, name: 'Tesseract (4-cube)', schlafli: '{4,3,3}', V: 16, E: 32, F: 24, C: 8 };
+}
+
+function crossPolytope4() {
+  // 16-cell: ±e_i
+  const verts = [];
+  for (let i = 0; i < 4; i++) {
+    const p = [0,0,0,0]; p[i] = 1; verts.push(p);
+    const n = [0,0,0,0]; n[i] = -1; verts.push(n);
+  }
+  const edges = [];
+  for (let i = 0; i < 8; i++)
+    for (let j = i+1; j < 8; j++) {
+      let dot = 0;
+      for (let k = 0; k < 4; k++) dot += verts[i][k] * verts[j][k];
+      if (Math.abs(dot) < 0.01) edges.push([i, j]);
+    }
+  return { vertices: verts, edges, name: '16-Cell (4-cross-polytope)', schlafli: '{3,3,4}', V: 8, E: 24, F: 32, C: 16 };
+}
+
+function cell24() {
+  const verts = [];
+  // 24 vertices: permutations of (±1,±1,0,0)
+  for (let i = 0; i < 4; i++)
+    for (let j = i+1; j < 4; j++)
+      for (let si = -1; si <= 1; si += 2)
+        for (let sj = -1; sj <= 1; sj += 2) {
+          const v = [0,0,0,0];
+          v[i] = si; v[j] = sj;
+          verts.push(v);
+        }
+  // normalize
+  const s = 1/Math.sqrt(2);
+  verts.forEach(v => { v[0]*=s; v[1]*=s; v[2]*=s; v[3]*=s; });
+  const edges = [];
+  for (let i = 0; i < verts.length; i++)
+    for (let j = i+1; j < verts.length; j++) {
+      let d2 = 0;
+      for (let k = 0; k < 4; k++) d2 += (verts[i][k]-verts[j][k])**2;
+      if (Math.abs(d2 - 1) < 0.01) edges.push([i, j]);
+    }
+  return { vertices: verts, edges, name: '24-Cell', schlafli: '{3,4,3}', V: 24, E: 96, F: 96, C: 24 };
+}
+
+function cell120() {
+  const verts = [];
+  const phi = PHI, ip = iPHI;
+  // 120-cell has 600 vertices. We'll use the standard coordinates.
+  // All permutations of: (0,0,±2,±2), (±1,±1,±1,±√5), (±φ⁻²,±φ,±φ,±φ), (±φ⁻¹,±φ⁻¹,±φ⁻¹,±φ²)
+  // and all even permutations of: (0,±φ⁻²,±1,±φ²), (0,±φ⁻¹,±φ,±√5), (±φ⁻¹,±1,±φ,±2)
+
+  function addAllSignPerms(coords) {
+    // all permutations and sign changes
+    const perms = permutations4(coords.map(Math.abs));
+    for (const p of perms) {
+      const signs = [];
+      genSigns(p, 0, signs);
+      for (const s of signs) {
+        verts.push([...s]);
+      }
+    }
+  }
+
+  function addEvenPermSigns(coords) {
+    const abs = coords.map(Math.abs);
+    const eperms = evenPermutations4(abs);
+    for (const p of eperms) {
+      const signs = [];
+      genSigns(p, 0, signs);
+      for (const s of signs) {
+        verts.push([...s]);
+      }
+    }
+  }
+
+  function genSigns(arr, idx, result) {
+    if (idx === 4) { result.push([...arr]); return; }
+    if (Math.abs(arr[idx]) < 1e-10) {
+      genSigns(arr, idx+1, result);
+    } else {
+      const old = arr[idx];
+      arr[idx] = Math.abs(old);
+      genSigns(arr, idx+1, result);
+      arr[idx] = -Math.abs(old);
+      genSigns(arr, idx+1, result);
+      arr[idx] = old;
+    }
+  }
+
+  function permutations4(arr) {
+    const result = new Set();
+    const indices = [0,1,2,3];
+    function permute(a, l, r) {
+      if (l === r) {
+        const p = [arr[a[0]], arr[a[1]], arr[a[2]], arr[a[3]]];
+        result.add(p.join(','));
+      } else {
+        for (let i = l; i <= r; i++) {
+          [a[l], a[i]] = [a[i], a[l]];
+          permute(a, l+1, r);
+          [a[l], a[i]] = [a[i], a[l]];
+        }
+      }
+    }
+    permute([...indices], 0, 3);
+    return [...result].map(s => s.split(',').map(Number));
+  }
+
+  function evenPermutations4(arr) {
+    // Even permutations of 4 elements (12 of them)
+    const even = [
+      [0,1,2,3],[0,2,3,1],[0,3,1,2],
+      [1,0,3,2],[1,2,0,3],[1,3,2,0],
+      [2,0,1,3],[2,1,3,0],[2,3,0,1],
+      [3,0,2,1],[3,1,0,2],[3,2,1,0]
+    ];
+    const seen = new Set();
+    const result = [];
+    for (const p of even) {
+      const v = [arr[p[0]], arr[p[1]], arr[p[2]], arr[p[3]]];
+      const key = v.join(',');
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(v);
+      }
+    }
+    return result;
+  }
+
+  const s5 = Math.sqrt(5);
+  const ip2 = 1/(phi*phi);
+  const phi2 = phi*phi;
+
+  addAllSignPerms([0, 0, 2, 2]);
+  addAllSignPerms([1, 1, 1, s5]);
+  addAllSignPerms([ip2, phi, phi, phi]);
+  addAllSignPerms([ip, ip, ip, phi2]);
+  addEvenPermSigns([0, ip2, 1, phi2]);
+  addEvenPermSigns([0, ip, phi, s5]);
+  addEvenPermSigns([ip, 1, phi, 2]);
+
+  // Deduplicate
+  const unique = [];
+  const seen = new Set();
+  for (const v of verts) {
+    const key = v.map(x => Math.round(x*1000)/1000).join(',');
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(v);
+    }
+  }
+
+  // Normalize to unit sphere
+  const maxR = Math.max(...unique.map(v => Math.sqrt(v[0]**2+v[1]**2+v[2]**2+v[3]**2)));
+  unique.forEach(v => { v[0]/=maxR; v[1]/=maxR; v[2]/=maxR; v[3]/=maxR; });
+
+  // Edges: connect nearest neighbors
+  const edgeLenSq = findMinEdgeLenSq(unique);
+  const edges = [];
+  for (let i = 0; i < unique.length; i++)
+    for (let j = i+1; j < unique.length; j++) {
+      let d2 = 0;
+      for (let k = 0; k < 4; k++) d2 += (unique[i][k]-unique[j][k])**2;
+      if (Math.abs(d2 - edgeLenSq) < 0.005) edges.push([i, j]);
+    }
+
+  return { vertices: unique, edges, name: '120-Cell', schlafli: '{5,3,3}', V: 600, E: 1200, F: 720, C: 120 };
+}
+
+function cell600() {
+  const verts = [];
+  const phi = PHI, ip = iPHI;
+
+  // 120 vertices of the 600-cell
+  // 8 vertices: all permutations of (±1, 0, 0, 0)
+  for (let i = 0; i < 4; i++)
+    for (let s = -1; s <= 1; s += 2) {
+      const v = [0,0,0,0]; v[i] = s; verts.push(v);
+    }
+
+  // 16 vertices: (±0.5, ±0.5, ±0.5, ±0.5)
+  for (let a = 0; a < 16; a++) {
+    verts.push([
+      (a&1)?0.5:-0.5,
+      (a&2)?0.5:-0.5,
+      (a&4)?0.5:-0.5,
+      (a&8)?0.5:-0.5
+    ]);
+  }
+
+  // 96 vertices: even permutations of (±φ/2, ±1/2, ±1/(2φ), 0)
+  const evenPerms = [
+    [0,1,2,3],[0,2,3,1],[0,3,1,2],
+    [1,0,3,2],[1,2,0,3],[1,3,2,0],
+    [2,0,1,3],[2,1,3,0],[2,3,0,1],
+    [3,0,2,1],[3,1,0,2],[3,2,1,0]
+  ];
+
+  const base = [phi/2, 0.5, ip/2, 0];
+  const seen = new Set();
+  for (const p of evenPerms) {
+    const coords = [base[p[0]], base[p[1]], base[p[2]], base[p[3]]];
+    // all sign combos for non-zero
+    for (let s = 0; s < 16; s++) {
+      const v = coords.map((c, i) => (s & (1<<i)) ? -c : c);
+      // skip if any non-zero became wrong
+      const key = v.map(x => Math.round(x*10000)/10000).join(',');
+      const len2 = v[0]**2+v[1]**2+v[2]**2+v[3]**2;
+      if (Math.abs(len2 - 1) < 0.01 && !seen.has(key)) {
+        seen.add(key);
+        verts.push(v);
+      }
+    }
+  }
+
+  // Deduplicate fully
+  const unique = [];
+  const seenFinal = new Set();
+  for (const v of verts) {
+    const key = v.map(x => Math.round(x*10000)/10000).join(',');
+    if (!seenFinal.has(key)) {
+      seenFinal.add(key);
+      unique.push(v);
+    }
+  }
+
+  // Edges: shortest distance
+  const edgeLenSq = findMinEdgeLenSq(unique);
+  const edges = [];
+  for (let i = 0; i < unique.length; i++)
+    for (let j = i+1; j < unique.length; j++) {
+      let d2 = 0;
+      for (let k = 0; k < 4; k++) d2 += (unique[i][k]-unique[j][k])**2;
+      if (Math.abs(d2 - edgeLenSq) < 0.005) edges.push([i, j]);
+    }
+
+  return { vertices: unique, edges, name: '600-Cell', schlafli: '{3,3,5}', V: 120, E: 720, F: 1200, C: 600 };
+}
+
+function findMinEdgeLenSq(verts) {
+  let minD = Infinity;
+  const n = Math.min(verts.length, 200); // sample
+  for (let i = 0; i < n; i++)
+    for (let j = i+1; j < n; j++) {
+      let d2 = 0;
+      for (let k = 0; k < 4; k++) d2 += (verts[i][k]-verts[j][k])**2;
+      if (d2 > 0.0001 && d2 < minD) minD = d2;
+    }
+  return minD;
+}
+
+// ============================================================
+// 4D ROTATION
+// ============================================================
+
+function rotate4D(v, angles) {
+  // 6 rotation planes: xy, xz, xw, yz, yw, zw
+  let [x, y, z, w] = v;
+  const [axy, axz, axw, ayz, ayw, azw] = angles;
+
+  // XY plane
+  let c = Math.cos(axy), s = Math.sin(axy);
+  [x, y] = [c*x - s*y, s*x + c*y];
+  // XW plane
+  c = Math.cos(axw); s = Math.sin(axw);
+  [x, w] = [c*x - s*w, s*x + c*w];
+  // YZ plane
+  c = Math.cos(ayz); s = Math.sin(ayz);
+  [y, z] = [c*y - s*z, s*y + c*z];
+  // ZW plane
+  c = Math.cos(azw); s = Math.sin(azw);
+  [z, w] = [c*z - s*w, s*z + c*w];
+
+  return [x, y, z, w];
+}
+
+function project4Dto3D(v, projDist) {
+  // Perspective projection from 4D
+  const d = projDist;
+  const w = v[3];
+  const scale = d / (d - w);
+  return [v[0] * scale, v[1] * scale, v[2] * scale, scale];
+}
+
+// ============================================================
+// SCENE SETUP
+// ============================================================
+
+const polytopes = [simplex5(), tesseract(), crossPolytope4(), cell24()];
+// Defer heavy ones
+let heavyLoaded = false;
+
+const colors = [
+  0x7eb8da, // blue
+  0xda7eb8, // pink
+  0xb8da7e, // green
+  0xdab87e, // gold
+  0x7edab8, // teal
+  0xb87eda  // purple
+];
+
+const scenes = [];
+const renderers = [];
+const cameras = [];
+const polyData = [];
+let rotating = true;
+let speed = 0.3;
+let thickEdges = false;
+
+function createScene(container, poly, colorIdx) {
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+  camera.position.z = 3;
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setClearColor(0x12121a, 1);
+  container.appendChild(renderer.domElement);
+
+  const group = new THREE.Group();
+  scene.add(group);
+
+  // Create geometry
+  const color = new THREE.Color(colors[colorIdx]);
+  const projDist = 2.5;
+
+  const data = {
+    scene, camera, renderer, group, poly, color, colorIdx,
+    projDist,
+    angles: [0, 0, 0, 0, 0, 0],
+    angleRates: [
+      0.003 + Math.random()*0.004,
+      0.002 + Math.random()*0.003,
+      0.004 + Math.random()*0.003,
+      0.001 + Math.random()*0.003,
+      0.003 + Math.random()*0.002,
+      0.002 + Math.random()*0.004
+    ],
+    edgeLines: null,
+    vertPoints: null,
+    isDragging: false,
+    prevMouse: {x:0, y:0},
+    rotX: 0, rotY: 0
+  };
+
+  rebuildGeometry(data);
+
+  // Mouse interaction for 3D rotation
+  container.addEventListener('mousedown', e => {
+    data.isDragging = true;
+    data.prevMouse = {x: e.clientX, y: e.clientY};
+  });
+  window.addEventListener('mousemove', e => {
+    if (!data.isDragging) return;
+    const dx = e.clientX - data.prevMouse.x;
+    const dy = e.clientY - data.prevMouse.y;
+    data.rotY += dx * 0.005;
+    data.rotX += dy * 0.005;
+    data.prevMouse = {x: e.clientX, y: e.clientY};
+  });
+  window.addEventListener('mouseup', () => { data.isDragging = false; });
+
+  // Touch
+  container.addEventListener('touchstart', e => {
+    data.isDragging = true;
+    data.prevMouse = {x: e.touches[0].clientX, y: e.touches[0].clientY};
+  });
+  container.addEventListener('touchmove', e => {
+    if (!data.isDragging) return;
+    const dx = e.touches[0].clientX - data.prevMouse.x;
+    const dy = e.touches[0].clientY - data.prevMouse.y;
+    data.rotY += dx * 0.005;
+    data.rotX += dy * 0.005;
+    data.prevMouse = {x: e.touches[0].clientX, y: e.touches[0].clientY};
+  });
+  container.addEventListener('touchend', () => { data.isDragging = false; });
+
+  return data;
+}
+
+function rebuildGeometry(data) {
+  const { group, poly, color, projDist } = data;
+
+  // Clear old
+  while (group.children.length) group.remove(group.children[0]);
+
+  // Project vertices
+  const projected = poly.vertices.map(v => {
+    const rotated = rotate4D(v, data.angles);
+    return project4Dto3D(rotated, projDist);
+  });
+
+  // Edges as line segments
+  const edgePositions = [];
+  const edgeColors = [];
+  for (const [i, j] of poly.edges) {
+    edgePositions.push(projected[i][0], projected[i][1], projected[i][2]);
+    edgePositions.push(projected[j][0], projected[j][1], projected[j][2]);
+    // Color by depth (w-scale)
+    const s1 = projected[i][3], s2 = projected[j][3];
+    const c1 = color.clone().multiplyScalar(0.3 + 0.7 * Math.min(s1, 2));
+    const c2 = color.clone().multiplyScalar(0.3 + 0.7 * Math.min(s2, 2));
+    edgeColors.push(c1.r, c1.g, c1.b, c2.r, c2.g, c2.b);
+  }
+
+  const edgeGeo = new THREE.BufferGeometry();
+  edgeGeo.setAttribute('position', new THREE.Float32BufferAttribute(edgePositions, 3));
+  edgeGeo.setAttribute('color', new THREE.Float32BufferAttribute(edgeColors, 3));
+  const edgeMat = new THREE.LineBasicMaterial({ vertexColors: true, linewidth: 1, transparent: true, opacity: 0.85 });
+  const edgeLines = new THREE.LineSegments(edgeGeo, edgeMat);
+  group.add(edgeLines);
+  data.edgeLines = edgeLines;
+
+  // Vertices as points
+  const vertPositions = [];
+  const vertColors = [];
+  const vertSizes = [];
+  for (let i = 0; i < projected.length; i++) {
+    vertPositions.push(projected[i][0], projected[i][1], projected[i][2]);
+    const s = projected[i][3];
+    const c = color.clone().multiplyScalar(0.5 + 0.5 * Math.min(s, 2));
+    vertColors.push(c.r, c.g, c.b);
+    const baseSize = poly.vertices.length > 200 ? 1.5 : (poly.vertices.length > 50 ? 2.5 : 4);
+    vertSizes.push(baseSize * Math.max(s, 0.3));
+  }
+
+  const pointGeo = new THREE.BufferGeometry();
+  pointGeo.setAttribute('position', new THREE.Float32BufferAttribute(vertPositions, 3));
+  pointGeo.setAttribute('color', new THREE.Float32BufferAttribute(vertColors, 3));
+  const pointMat = new THREE.PointsMaterial({ vertexColors: true, size: 0.03, sizeAttenuation: true });
+  const points = new THREE.Points(pointGeo, pointMat);
+  group.add(points);
+  data.vertPoints = points;
+}
+
+function updateGeometry(data) {
+  const { poly, projDist, color } = data;
+
+  const projected = poly.vertices.map(v => {
+    const rotated = rotate4D(v, data.angles);
+    return project4Dto3D(rotated, projDist);
+  });
+
+  // Update edge positions
+  const edgePos = data.edgeLines.geometry.attributes.position.array;
+  const edgeCol = data.edgeLines.geometry.attributes.color.array;
+  let ei = 0, ci = 0;
+  for (const [a, b] of poly.edges) {
+    edgePos[ei++] = projected[a][0]; edgePos[ei++] = projected[a][1]; edgePos[ei++] = projected[a][2];
+    edgePos[ei++] = projected[b][0]; edgePos[ei++] = projected[b][1]; edgePos[ei++] = projected[b][2];
+    const s1 = projected[a][3], s2 = projected[b][3];
+    const c1 = color.clone().multiplyScalar(0.3 + 0.7 * Math.min(Math.max(s1,0), 2));
+    const c2 = color.clone().multiplyScalar(0.3 + 0.7 * Math.min(Math.max(s2,0), 2));
+    edgeCol[ci++]=c1.r; edgeCol[ci++]=c1.g; edgeCol[ci++]=c1.b;
+    edgeCol[ci++]=c2.r; edgeCol[ci++]=c2.g; edgeCol[ci++]=c2.b;
+  }
+  data.edgeLines.geometry.attributes.position.needsUpdate = true;
+  data.edgeLines.geometry.attributes.color.needsUpdate = true;
+
+  // Update vertex positions
+  const vPos = data.vertPoints.geometry.attributes.position.array;
+  const vCol = data.vertPoints.geometry.attributes.color.array;
+  for (let i = 0; i < projected.length; i++) {
+    vPos[i*3] = projected[i][0]; vPos[i*3+1] = projected[i][1]; vPos[i*3+2] = projected[i][2];
+    const s = projected[i][3];
+    const c = color.clone().multiplyScalar(0.5 + 0.5 * Math.min(Math.max(s,0), 2));
+    vCol[i*3]=c.r; vCol[i*3+1]=c.g; vCol[i*3+2]=c.b;
+  }
+  data.vertPoints.geometry.attributes.position.needsUpdate = true;
+  data.vertPoints.geometry.attributes.color.needsUpdate = true;
+}
+
+// ============================================================
+// INIT
+// ============================================================
+
+const grid = document.getElementById('grid');
+
+function addCell(poly, idx) {
+  const cell = document.createElement('div');
+  cell.className = 'cell';
+  cell.innerHTML = `<div class="cell-label">
+    <h2>${poly.name}</h2>
+    <div class="stats">
+      <span class="schlafli">${poly.schlafli}</span>
+      <span>V=${poly.V}</span><span>E=${poly.E}</span><span>F=${poly.F}</span><span>C=${poly.C}</span>
+    </div>
+  </div>`;
+  grid.appendChild(cell);
+  const data = createScene(cell, poly, idx);
+  polyData.push(data);
+}
+
+// Add first 4 immediately
+polytopes.forEach((p, i) => addCell(p, i));
+
+// Load heavy polytopes after a short delay
+setTimeout(() => {
+  const p600 = cell600();
+  addCell(p600, 4);
+
+  // 120-cell is very heavy — add with a note
+  const p120 = cell120();
+  addCell(p120, 5);
+
+  heavyLoaded = true;
+}, 100);
+
+// Resize handler
+function handleResize() {
+  polyData.forEach(data => {
+    const parent = data.renderer.domElement.parentElement;
+    const w = parent.clientWidth;
+    const h = parent.clientHeight;
+    data.renderer.setSize(w, h);
+    data.camera.aspect = w / h;
+    data.camera.updateProjectionMatrix();
+  });
+}
+window.addEventListener('resize', handleResize);
+setTimeout(handleResize, 50);
+setTimeout(handleResize, 200);
+
+// Controls
+document.getElementById('speedSlider').addEventListener('input', e => {
+  speed = e.target.value / 100;
+});
+
+document.getElementById('toggleRotation').addEventListener('click', e => {
+  rotating = !rotating;
+  e.target.textContent = rotating ? 'Rotating' : 'Paused';
+  e.target.classList.toggle('active');
+});
+
+document.getElementById('toggleEdges').addEventListener('click', e => {
+  thickEdges = !thickEdges;
+  e.target.classList.toggle('active');
+  polyData.forEach(d => {
+    d.edgeLines.material.linewidth = thickEdges ? 2 : 1;
+    d.edgeLines.material.opacity = thickEdges ? 1 : 0.85;
+  });
+});
+
+// ============================================================
+// ANIMATION LOOP
+// ============================================================
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  polyData.forEach(data => {
+    if (rotating) {
+      for (let i = 0; i < 6; i++) {
+        data.angles[i] += data.angleRates[i] * speed;
+      }
+    }
+
+    updateGeometry(data);
+    data.group.rotation.x = data.rotX;
+    data.group.rotation.y = data.rotY;
+
+    data.renderer.render(data.scene, data.camera);
+  });
+}
+
+animate();
+
+// Re-check sizes after heavy load
+setTimeout(handleResize, 500);
+setTimeout(handleResize, 1000);
+</script>
+</body>
+</html>

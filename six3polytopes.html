@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Six Classic 3-Polytopes</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400&display=swap');
+
+  :root {
+    --bg: #f4f0eb;
+    --bg2: #eae4dc;
+    --surface: #faf8f5;
+    --border: #d8d0c4;
+    --text: #2a2420;
+    --text-dim: #8a7e72;
+    --accent1: #c45d3e;
+    --accent2: #3e7fc4;
+    --accent3: #3eaa6d;
+    --accent4: #b8891f;
+    --accent5: #7e4fb8;
+    --accent6: #c43e8a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+  }
+
+  /* Subtle grain overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    z-index: 9999;
+  }
+
+  header {
+    text-align: center;
+    padding: 48px 20px 12px;
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: clamp(2.2rem, 5vw, 3.6rem);
+    letter-spacing: -0.02em;
+    color: var(--text);
+    line-height: 1.1;
+  }
+
+  header h1 em {
+    font-style: italic;
+    color: var(--accent1);
+  }
+
+  .intro {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: clamp(0.9rem, 2vw, 1.1rem);
+    color: var(--text-dim);
+    text-align: center;
+    padding: 8px 20px 36px;
+    max-width: 700px;
+    margin: 0 auto;
+    line-height: 1.5;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    max-width: 1100px;
+    margin: 0 auto 60px;
+    border: 1px solid var(--border);
+  }
+
+  @media (max-width: 900px) {
+    .grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 560px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  .cell {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    position: relative;
+    aspect-ratio: 1;
+    min-height: 300px;
+    overflow: hidden;
+    cursor: grab;
+    transition: background 0.3s;
+  }
+
+  .cell:active { cursor: grabbing; }
+
+  .cell:hover {
+    background: #fff;
+  }
+
+  .cell canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+  }
+
+  .cell-header {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    padding: 16px 18px 8px;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .cell-header .number {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    font-weight: 300;
+    color: var(--text-dim);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .cell-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 1.35rem;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  .cell-footer {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 8px 18px 14px;
+    z-index: 2;
+    pointer-events: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .cell-footer .stats {
+    font-size: 0.58rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    line-height: 1.6;
+  }
+
+  .cell-footer .schlafli {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 1rem;
+    color: var(--text-dim);
+  }
+
+  .color-dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+  }
+
+  .controls-bar {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+    background: rgba(250,248,245,0.92);
+    border: 1px solid var(--border);
+    padding: 8px 16px;
+    border-radius: 6px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    align-items: center;
+  }
+
+  .controls-bar label {
+    font-size: 0.58rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+
+  .controls-bar input[type=range] {
+    width: 90px;
+    accent-color: var(--accent1);
+  }
+
+  .controls-bar button {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 4px 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .controls-bar button:hover {
+    border-color: var(--accent1);
+    color: var(--accent1);
+  }
+
+  .controls-bar button.active {
+    background: var(--text);
+    color: var(--surface);
+    border-color: var(--text);
+  }
+
+  /* entry animation */
+  .cell {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 0.6s ease forwards;
+  }
+  .cell:nth-child(1) { animation-delay: 0.05s; }
+  .cell:nth-child(2) { animation-delay: 0.12s; }
+  .cell:nth-child(3) { animation-delay: 0.19s; }
+  .cell:nth-child(4) { animation-delay: 0.26s; }
+  .cell:nth-child(5) { animation-delay: 0.33s; }
+  .cell:nth-child(6) { animation-delay: 0.40s; }
+
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Classical <em>3</em>-Polytopes</h1>
+</header>
+<p class="intro">
+  Convex polyhedra in ℝ³ — the five Platonic solids and the triangular prism.
+  Drag any cell to rotate. Each solid shown with transparent faces and wireframe edges.
+</p>
+
+<div class="grid" id="grid"></div>
+
+<div class="controls-bar">
+  <label>Spin</label>
+  <input type="range" id="speedSlider" min="0" max="100" value="35">
+  <button id="toggleSpin" class="active">Auto-rotate</button>
+  <button id="toggleWire">Wireframe</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ============================================================
+// POLYHEDRA DEFINITIONS
+// ============================================================
+
+const PHI = (1 + Math.sqrt(5)) / 2;
+
+function makeTetrahedron() {
+  const v = [
+    [1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]
+  ];
+  const f = [[0,1,2],[0,2,3],[0,3,1],[1,3,2]];
+  return {
+    vertices: v, faces: f,
+    name: 'Tetrahedron', schlafli: '{3, 3}',
+    V: 4, E: 6, F: 4,
+    dual: 'Self-dual',
+    color: '#c45d3e'
+  };
+}
+
+function makeCube() {
+  const v = [];
+  for (let i = 0; i < 8; i++)
+    v.push([(i&1)?1:-1, (i&2)?1:-1, (i&4)?1:-1]);
+  const f = [
+    [0,1,3,2],[4,6,7,5],[0,4,5,1],
+    [2,3,7,6],[0,2,6,4],[1,5,7,3]
+  ];
+  return {
+    vertices: v, faces: f,
+    name: 'Cube', schlafli: '{4, 3}',
+    V: 8, E: 12, F: 6,
+    dual: 'Octahedron',
+    color: '#3e7fc4'
+  };
+}
+
+function makeOctahedron() {
+  const v = [
+    [1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]
+  ];
+  const f = [
+    [0,2,4],[0,4,3],[0,3,5],[0,5,2],
+    [1,4,2],[1,3,4],[1,5,3],[1,2,5]
+  ];
+  return {
+    vertices: v, faces: f,
+    name: 'Octahedron', schlafli: '{3, 4}',
+    V: 6, E: 12, F: 8,
+    dual: 'Cube',
+    color: '#3eaa6d'
+  };
+}
+
+function makeDodecahedron() {
+  const p = PHI, ip = 1/PHI;
+  const v = [];
+  // 8 cube vertices
+  for (let i = 0; i < 8; i++)
+    v.push([(i&1)?1:-1, (i&2)?1:-1, (i&4)?1:-1]);
+  // 12 more from golden rectangles
+  for (let s1 = -1; s1 <= 1; s1 += 2)
+    for (let s2 = -1; s2 <= 1; s2 += 2) {
+      v.push([0, s1*ip, s2*p]);
+      v.push([s1*ip, s2*p, 0]);
+      v.push([s2*p, 0, s1*ip]);
+    }
+
+  // Find 12 pentagonal faces by identifying which 5 vertices share a face
+  // Use the known face structure of the dodecahedron
+  const faces = findDodecahedronFaces(v);
+
+  return {
+    vertices: v, faces: faces,
+    name: 'Dodecahedron', schlafli: '{5, 3}',
+    V: 20, E: 30, F: 12,
+    dual: 'Icosahedron',
+    color: '#b8891f'
+  };
+}
+
+function findDodecahedronFaces(verts) {
+  // Build edge list: edges connect vertices at the minimum distance
+  const n = verts.length;
+  let minD = Infinity;
+  for (let i = 0; i < n; i++)
+    for (let j = i+1; j < n; j++) {
+      const d = dist(verts[i], verts[j]);
+      if (d > 0.01 && d < minD) minD = d;
+    }
+
+  const adj = Array.from({length: n}, () => []);
+  for (let i = 0; i < n; i++)
+    for (let j = i+1; j < n; j++) {
+      if (Math.abs(dist(verts[i], verts[j]) - minD) < 0.05) {
+        adj[i].push(j);
+        adj[j].push(i);
+      }
+    }
+
+  // Find pentagons: for each edge, walk around the face
+  const faces = [];
+  const faceSet = new Set();
+
+  for (let start = 0; start < n; start++) {
+    for (const second of adj[start]) {
+      // Try to build a pentagon starting at `start`, going to `second`
+      const face = [start, second];
+      let prev = start, cur = second;
+      for (let step = 0; step < 3; step++) {
+        // Next vertex: neighbor of cur (not prev) that shares a neighbor with prev
+        let next = -1;
+        let bestAngle = -Infinity;
+        for (const cand of adj[cur]) {
+          if (cand === prev) continue;
+          // Pick the neighbor that turns left the most (consistent winding)
+          const v1 = sub(verts[prev], verts[cur]);
+          const v2 = sub(verts[cand], verts[cur]);
+          const angle = Math.atan2(
+            len(cross(v1, v2)),
+            dot3(v1, v2)
+          );
+          // We want the one forming a pentagon interior angle ~108 degrees
+          if (Math.abs(angle - 108 * Math.PI / 180) < 0.3) {
+            if (next === -1 || angle > bestAngle) {
+              // Use a consistent selection: pick candidate that's also adjacent to the start vertex (for the last step)
+              next = cand;
+              bestAngle = angle;
+            }
+          }
+        }
+        if (next === -1) {
+          // fallback: pick any neighbor that isn't prev and isn't already in face
+          for (const cand of adj[cur]) {
+            if (cand !== prev && !face.includes(cand)) {
+              const v1 = sub(verts[prev], verts[cur]);
+              const v2 = sub(verts[cand], verts[cur]);
+              const angle = Math.atan2(len(cross(v1, v2)), dot3(v1, v2));
+              if (angle > 1.5 && (next === -1 || angle > bestAngle)) {
+                next = cand;
+                bestAngle = angle;
+              }
+            }
+          }
+        }
+        if (next === -1) break;
+        face.push(next);
+        prev = cur;
+        cur = next;
+      }
+      if (face.length === 5 && adj[face[4]].includes(face[0])) {
+        const sorted = [...face].sort((a,b) => a-b).join(',');
+        if (!faceSet.has(sorted)) {
+          faceSet.add(sorted);
+          // Ensure consistent winding
+          const center = [0,0,0];
+          face.forEach(fi => { center[0]+=verts[fi][0]; center[1]+=verts[fi][1]; center[2]+=verts[fi][2]; });
+          center[0]/=5; center[1]/=5; center[2]/=5;
+          const normal = cross(sub(verts[face[1]], verts[face[0]]), sub(verts[face[2]], verts[face[0]]));
+          if (dot3(normal, center) < 0) face.reverse();
+          faces.push([...face]);
+        }
+      }
+    }
+  }
+  return faces;
+}
+
+function makeIcosahedron() {
+  const p = PHI;
+  const v = [];
+  for (let s1 = -1; s1 <= 1; s1 += 2)
+    for (let s2 = -1; s2 <= 1; s2 += 2) {
+      v.push([0, s1, s2*p]);
+      v.push([s1, s2*p, 0]);
+      v.push([s2*p, 0, s1]);
+    }
+  // Find triangular faces
+  const n = v.length;
+  let minD = Infinity;
+  for (let i = 0; i < n; i++)
+    for (let j = i+1; j < n; j++) {
+      const d = dist(v[i], v[j]);
+      if (d > 0.01 && d < minD) minD = d;
+    }
+  const edges = [];
+  for (let i = 0; i < n; i++)
+    for (let j = i+1; j < n; j++)
+      if (Math.abs(dist(v[i], v[j]) - minD) < 0.05)
+        edges.push([i, j]);
+
+  const faces = [];
+  const faceSet = new Set();
+  for (const [a, b] of edges) {
+    for (let c = 0; c < n; c++) {
+      if (c === a || c === b) continue;
+      if (Math.abs(dist(v[a], v[c]) - minD) < 0.05 &&
+          Math.abs(dist(v[b], v[c]) - minD) < 0.05) {
+        const tri = [a, b, c].sort((x,y) => x-y);
+        const key = tri.join(',');
+        if (!faceSet.has(key)) {
+          faceSet.add(key);
+          // Winding
+          const center = [(v[a][0]+v[b][0]+v[c][0])/3, (v[a][1]+v[b][1]+v[c][1])/3, (v[a][2]+v[b][2]+v[c][2])/3];
+          const normal = cross(sub(v[tri[1]], v[tri[0]]), sub(v[tri[2]], v[tri[0]]));
+          if (dot3(normal, center) < 0) tri.reverse();
+          faces.push(tri);
+        }
+      }
+    }
+  }
+
+  return {
+    vertices: v, faces,
+    name: 'Icosahedron', schlafli: '{3, 5}',
+    V: 12, E: 30, F: 20,
+    dual: 'Dodecahedron',
+    color: '#7e4fb8'
+  };
+}
+
+function makeTriPrism() {
+  const h = 1.2;
+  const r = 1;
+  const v = [];
+  for (let i = 0; i < 3; i++) {
+    const a = (i * 2 * Math.PI / 3) - Math.PI / 2;
+    v.push([r * Math.cos(a), -h, r * Math.sin(a)]);
+    v.push([r * Math.cos(a),  h, r * Math.sin(a)]);
+  }
+  // Bottom: 0,2,4  Top: 1,3,5  Sides: (0,1,3,2), (2,3,5,4), (4,5,1,0)
+  const faces = [
+    [0, 4, 2],       // bottom triangle (reversed for outward normal)
+    [1, 3, 5],       // top triangle
+    [0, 2, 3, 1],    // side
+    [2, 4, 5, 3],    // side
+    [4, 0, 1, 5]     // side
+  ];
+  return {
+    vertices: v, faces,
+    name: 'Triangular Prism', schlafli: '—',
+    V: 6, E: 9, F: 5,
+    dual: 'Triangular bipyramid',
+    color: '#c43e8a'
+  };
+}
+
+// Vector helpers
+function dist(a, b) { return Math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2 + (a[2]-b[2])**2); }
+function sub(a, b) { return [a[0]-b[0], a[1]-b[1], a[2]-b[2]]; }
+function cross(a, b) { return [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]]; }
+function dot3(a, b) { return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]; }
+function len(a) { return Math.sqrt(a[0]**2+a[1]**2+a[2]**2); }
+
+// ============================================================
+// THREE.JS SCENE BUILDER
+// ============================================================
+
+const polyhedra = [
+  makeTetrahedron(),
+  makeCube(),
+  makeOctahedron(),
+  makeDodecahedron(),
+  makeIcosahedron(),
+  makeTriPrism()
+];
+
+const cellData = [];
+let autoRotate = true;
+let spinSpeed = 0.35;
+let wireOnly = false;
+
+function buildThreeGeometry(poly) {
+  const geo = new THREE.BufferGeometry();
+  const positions = [];
+  const normals = [];
+
+  for (const face of poly.faces) {
+    // Triangulate the face (fan from first vertex)
+    for (let i = 1; i < face.length - 1; i++) {
+      const a = poly.vertices[face[0]];
+      const b = poly.vertices[face[i]];
+      const c = poly.vertices[face[i+1]];
+      const n = cross(sub(b, a), sub(c, a));
+      const nl = len(n);
+      const nn = nl > 0 ? [n[0]/nl, n[1]/nl, n[2]/nl] : [0,1,0];
+
+      positions.push(a[0], a[1], a[2]);
+      positions.push(b[0], b[1], b[2]);
+      positions.push(c[0], c[1], c[2]);
+      normals.push(nn[0], nn[1], nn[2]);
+      normals.push(nn[0], nn[1], nn[2]);
+      normals.push(nn[0], nn[1], nn[2]);
+    }
+  }
+
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geo.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+  return geo;
+}
+
+function buildEdgeGeometry(poly) {
+  const edgeSet = new Set();
+  const positions = [];
+
+  for (const face of poly.faces) {
+    for (let i = 0; i < face.length; i++) {
+      const a = face[i];
+      const b = face[(i+1) % face.length];
+      const key = Math.min(a,b) + ',' + Math.max(a,b);
+      if (!edgeSet.has(key)) {
+        edgeSet.add(key);
+        positions.push(
+          poly.vertices[a][0], poly.vertices[a][1], poly.vertices[a][2],
+          poly.vertices[b][0], poly.vertices[b][1], poly.vertices[b][2]
+        );
+      }
+    }
+  }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  return geo;
+}
+
+function createCell(container, poly, index) {
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+
+  // Normalize polytope size
+  let maxR = 0;
+  for (const v of poly.vertices) {
+    const r = Math.sqrt(v[0]**2 + v[1]**2 + v[2]**2);
+    if (r > maxR) maxR = r;
+  }
+  const scale = 1.1 / maxR;
+
+  camera.position.z = 4;
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setClearColor(0xfaf8f5, 0);
+  container.appendChild(renderer.domElement);
+
+  const group = new THREE.Group();
+  group.scale.set(scale, scale, scale);
+  scene.add(group);
+
+  // Lighting
+  const ambient = new THREE.AmbientLight(0xffffff, 0.45);
+  scene.add(ambient);
+  const dir1 = new THREE.DirectionalLight(0xffffff, 0.7);
+  dir1.position.set(3, 5, 4);
+  scene.add(dir1);
+  const dir2 = new THREE.DirectionalLight(new THREE.Color(poly.color), 0.25);
+  dir2.position.set(-3, -2, 2);
+  scene.add(dir2);
+
+  // Faces (transparent)
+  const faceGeo = buildThreeGeometry(poly);
+  const faceMat = new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color(poly.color),
+    transparent: true,
+    opacity: 0.12,
+    side: THREE.DoubleSide,
+    roughness: 0.5,
+    metalness: 0.1,
+    depthWrite: false
+  });
+  const faceMesh = new THREE.Mesh(faceGeo, faceMat);
+  group.add(faceMesh);
+
+  // Edges
+  const edgeGeo = buildEdgeGeometry(poly);
+  const edgeMat = new THREE.LineBasicMaterial({
+    color: new THREE.Color(poly.color).multiplyScalar(0.6),
+    linewidth: 1,
+    transparent: true,
+    opacity: 0.9
+  });
+  const edgeLines = new THREE.LineSegments(edgeGeo, edgeMat);
+  group.add(edgeLines);
+
+  // Vertices as small spheres
+  const vertGroup = new THREE.Group();
+  const sphereGeo = new THREE.SphereGeometry(0.04, 12, 12);
+  const sphereMat = new THREE.MeshStandardMaterial({
+    color: new THREE.Color(poly.color),
+    roughness: 0.3, metalness: 0.4
+  });
+  for (const v of poly.vertices) {
+    const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+    sphere.position.set(v[0], v[1], v[2]);
+    vertGroup.add(sphere);
+  }
+  group.add(vertGroup);
+
+  // Mouse / touch dragging
+  let isDragging = false;
+  let prevMouse = { x: 0, y: 0 };
+  let rotX = 0.3, rotY = 0.5; // slight initial tilt
+
+  container.addEventListener('mousedown', e => {
+    isDragging = true;
+    prevMouse = { x: e.clientX, y: e.clientY };
+  });
+  window.addEventListener('mousemove', e => {
+    if (!isDragging) return;
+    rotY += (e.clientX - prevMouse.x) * 0.008;
+    rotX += (e.clientY - prevMouse.y) * 0.008;
+    prevMouse = { x: e.clientX, y: e.clientY };
+  });
+  window.addEventListener('mouseup', () => { isDragging = false; });
+
+  container.addEventListener('touchstart', e => {
+    isDragging = true;
+    prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }, { passive: true });
+  container.addEventListener('touchmove', e => {
+    if (!isDragging) return;
+    rotY += (e.touches[0].clientX - prevMouse.x) * 0.008;
+    rotX += (e.touches[0].clientY - prevMouse.y) * 0.008;
+    prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }, { passive: true });
+  container.addEventListener('touchend', () => { isDragging = false; });
+
+  return {
+    scene, camera, renderer, group, faceMesh, edgeLines, vertGroup,
+    isDragging: () => isDragging,
+    getRotation: () => ({ x: rotX, y: rotY }),
+    setRotation: (x, y) => { rotX = x; rotY = y; },
+    addSpin: (dx, dy) => { rotX += dx; rotY += dy; }
+  };
+}
+
+// ============================================================
+// BUILD GRID
+// ============================================================
+
+const grid = document.getElementById('grid');
+
+polyhedra.forEach((poly, idx) => {
+  const cell = document.createElement('div');
+  cell.className = 'cell';
+
+  const dualInfo = poly.dual ? `Dual: ${poly.dual}` : '';
+
+  cell.innerHTML = `
+    <div class="cell-header">
+      <div class="number"><span class="color-dot" style="background:${poly.color}"></span>No. ${idx + 1} of 6</div>
+      <h2>${poly.name}</h2>
+    </div>
+    <div class="cell-footer">
+      <div class="stats">
+        V = ${poly.V} &nbsp; E = ${poly.E} &nbsp; F = ${poly.F}<br>
+        ${dualInfo}
+      </div>
+      <div class="schlafli">${poly.schlafli}</div>
+    </div>
+  `;
+
+  grid.appendChild(cell);
+  const data = createCell(cell, poly, idx);
+  cellData.push(data);
+});
+
+// ============================================================
+// RESIZE
+// ============================================================
+
+function handleResize() {
+  cellData.forEach(data => {
+    const parent = data.renderer.domElement.parentElement;
+    const w = parent.clientWidth;
+    const h = parent.clientHeight;
+    data.renderer.setSize(w, h);
+    data.camera.aspect = w / h;
+    data.camera.updateProjectionMatrix();
+  });
+}
+window.addEventListener('resize', handleResize);
+setTimeout(handleResize, 50);
+setTimeout(handleResize, 200);
+
+// ============================================================
+// CONTROLS
+// ============================================================
+
+document.getElementById('speedSlider').addEventListener('input', e => {
+  spinSpeed = e.target.value / 100;
+});
+
+document.getElementById('toggleSpin').addEventListener('click', e => {
+  autoRotate = !autoRotate;
+  e.target.textContent = autoRotate ? 'Auto-rotate' : 'Paused';
+  e.target.classList.toggle('active');
+});
+
+document.getElementById('toggleWire').addEventListener('click', e => {
+  wireOnly = !wireOnly;
+  e.target.classList.toggle('active');
+  cellData.forEach(d => {
+    d.faceMesh.visible = !wireOnly;
+    d.vertGroup.visible = !wireOnly;
+    d.edgeLines.material.opacity = wireOnly ? 1.0 : 0.9;
+  });
+});
+
+// Euler formula check
+const eulerCheck = document.createElement('div');
+eulerCheck.style.cssText = `
+  text-align:center; padding:0 20px 50px; font-size:0.72rem;
+  color:var(--text-dim); font-family:'Playfair Display',serif; font-style:italic;
+`;
+eulerCheck.innerHTML = 'Euler\'s formula:&nbsp; <span style="color:var(--text);font-style:normal;">V − E + F = 2</span>&nbsp; holds for each convex polyhedron above.';
+grid.after(eulerCheck);
+
+// ============================================================
+// ANIMATE
+// ============================================================
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  cellData.forEach((data, idx) => {
+    if (autoRotate && !data.isDragging()) {
+      // Each spins at slightly different rates for visual variety
+      const rates = [0.005, 0.004, 0.006, 0.003, 0.005, 0.004];
+      data.addSpin(rates[idx] * spinSpeed * 0.5, rates[idx] * spinSpeed);
+    }
+
+    const rot = data.getRotation();
+    data.group.rotation.x = rot.x;
+    data.group.rotation.y = rot.y;
+
+    data.renderer.render(data.scene, data.camera);
+  });
+}
+
+animate();
+</script>
+</body>
+</html>
