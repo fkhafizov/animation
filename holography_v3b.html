@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graph ↔ Rectangle Holography</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;1,400&family=Fira+Code:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #f7f5f0;
+    --surface: #ffffff;
+    --surface2: #faf9f6;
+    --border: #e2ddd4;
+    --text: #2e2a24;
+    --text-dim: #8a8278;
+    --text-bright: #1a1714;
+    --cft: #c85a35;
+    --cft-dim: #c85a3530;
+    --ads: #2e7dba;
+    --ads-dim: #2e7dba30;
+    --holo: #5a9a2e;
+    --holo-dim: #5a9a2e30;
+    --area: #c43a78;
+    --area-dim: #c43a7825;
+    --selected: #d4960a;
+    --selected-dim: #d4960a25;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Fira Code', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.04;
+    background-image:
+      linear-gradient(#b8ad9e 1px, transparent 1px),
+      linear-gradient(90deg, #b8ad9e 1px, transparent 1px);
+    background-size: 60px 60px;
+    z-index: 0;
+  }
+
+  header {
+    position: relative; z-index: 1;
+    text-align: center;
+    padding: 36px 20px 6px;
+  }
+
+  .tag-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .tag {
+    font-size: 0.55rem;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 3px 12px;
+    border-radius: 2px;
+    border: 1px solid;
+  }
+
+  .tag.cft { color: var(--cft); border-color: var(--cft); }
+  .tag.ads { color: var(--ads); border-color: var(--ads); }
+  .tag.holo { color: var(--holo); border-color: var(--holo); }
+
+  header h1 {
+    font-family: 'Newsreader', serif;
+    font-weight: 600;
+    font-size: clamp(1.6rem, 4vw, 2.6rem);
+    color: var(--text-bright);
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+
+  header h1 span.cft { color: var(--cft); }
+  header h1 span.ads { color: var(--ads); }
+
+  .subtitle {
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    text-align: center;
+    padding: 8px 20px 6px;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .params {
+    position: relative; z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 20px 20px;
+    flex-wrap: wrap;
+  }
+
+  .params label {
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .params select {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.72rem;
+    border-radius: 3px;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  .main-layout {
+    position: relative; z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    max-width: 1200px;
+    margin: 0 auto 10px;
+    padding: 0 2px;
+  }
+
+  @media (max-width: 800px) {
+    .main-layout { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    position: relative;
+    min-height: 420px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+
+  .panel-header {
+    padding: 14px 16px 8px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .panel-header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .panel-header .graph-hint {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+  }
+
+  .panel-header-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .panel-header h2 {
+    font-family: 'Newsreader', serif;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-bright);
+  }
+
+  .panel-header .side-label {
+    font-size: 0.52rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 2px;
+    border: 1px solid;
+  }
+
+  .panel-header .side-label.cft { color: var(--cft); border-color: var(--cft-dim); }
+  .panel-header .side-label.ads { color: var(--ads); border-color: var(--ads-dim); }
+
+  .rect-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .highlight-check {
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .highlight-check input { cursor: pointer; }
+
+  .panel canvas {
+    display: block;
+    width: 100%;
+    cursor: pointer;
+  }
+
+  .info-bar {
+    position: relative; z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto 8px;
+    padding: 0 2px;
+  }
+
+  .info-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 14px 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: center;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.03);
+  }
+
+  .info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .info-item .label {
+    font-size: 0.52rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .info-item .value {
+    font-size: 0.82rem;
+    color: var(--text-bright);
+  }
+
+  .info-item .value.cft { color: var(--cft); }
+  .info-item .value.ads { color: var(--ads); }
+  .info-item .value.holo { color: var(--holo); }
+  .info-item .value.area { color: var(--area); }
+  .info-item .value.vec-a { color: #c62828 !important; }
+  .info-item .value.vec-b { color: #2e7d32 !important; }
+  .info-item #infoVec .vec-a { color: #c62828 !important; }
+  .info-item #infoVec .vec-b { color: #2e7d32 !important; }
+
+  .legend {
+    position: relative; z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto 40px;
+    padding: 0 2px;
+  }
+
+  .legend-content {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px 18px;
+    font-size: 0.68rem;
+    line-height: 1.8;
+    color: var(--text-dim);
+  }
+
+  .legend-content strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .legend-content .cft { color: var(--cft); }
+  .legend-content .ads { color: var(--ads); }
+  .legend-content .holo { color: var(--holo); }
+  .legend-content .area-c { color: var(--area); }
+
+  .pair-section {
+    position: relative; z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto 40px;
+    padding: 0 2px;
+  }
+
+  .pair-header {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    padding: 14px 18px 10px;
+  }
+
+  .pair-header h2 {
+    font-family: 'Newsreader', serif;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--area);
+  }
+
+  .btn-clear {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .btn-clear:hover {
+    color: var(--text);
+    background: var(--surface);
+    border-color: var(--text-dim);
+  }
+
+  .btn-clear-blue {
+    color: var(--ads);
+    border-color: var(--ads);
+  }
+  .btn-clear-blue:hover {
+    color: var(--ads);
+    background: var(--ads-dim);
+    border-color: var(--ads);
+  }
+
+  .pair-header p {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  .pair-canvas-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 10px;
+  }
+
+  .pair-canvas-wrap canvas {
+    display: block;
+    width: 100%;
+    cursor: pointer;
+  }
+
+  /* entry anims */
+  .panel, .info-bar, .legend, .pair-section {
+    opacity: 0;
+    transform: translateY(12px);
+    animation: slideUp 0.5s ease forwards;
+  }
+  .panel:nth-child(1) { animation-delay: 0.1s; }
+  .panel:nth-child(2) { animation-delay: 0.18s; }
+  .info-bar { animation-delay: 0.26s; }
+  .legend { animation-delay: 0.34s; }
+  .pair-section { animation-delay: 0.42s; }
+
+  @keyframes slideUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="tag-row">
+    <span class="tag cft">CFT-side</span>
+    <span class="tag holo">Holography</span>
+    <span class="tag ads">AdS-side</span>
+  </div>
+  <h1><span class="cft">Graph</span> ↔ <span class="ads">Rectangle</span> Holography</h1>
+</header>
+<div class="subtitle">
+  "Particle on a graph dual to a string on the rectangle" — click nodes or paths to explore the holography map
+</div>
+
+<div class="params">
+  <label>n =</label>
+  <select id="selN">
+    <option value="4">4</option>
+    <option value="5" selected>5</option>
+    <option value="6">6</option>
+  </select>
+  <label>k =</label>
+  <select id="selK">
+    <option value="2" selected>2</option>
+  </select>
+  <span style="font-size:0.6rem;color:var(--text-dim);margin-left:8px;">
+    Gr(<span id="showK">2</span>, <span id="showN">5</span>) over 𝔽₁ &nbsp;—&nbsp;
+    <span id="showCount">10</span> nodes
+  </span>
+</div>
+
+<div class="main-layout">
+  <div class="panel" id="graphPanel">
+    <div class="panel-header">
+      <div class="panel-header-left">
+        <h2>Schreier Graph (CFT-Side)</h2>
+        <p class="graph-hint">First click: node A. Second click: node B.</p>
+      </div>
+      <div class="panel-header-controls">
+        <button type="button" id="btnClearPair" class="btn-clear btn-clear-blue" title="Clear selection">Clear selection</button>
+      </div>
+    </div>
+    <canvas id="graphCanvas" role="img" aria-label="Schreier graph: nodes as binary vectors, edges for adjacent transpositions"></canvas>
+  </div>
+  <div class="panel" id="rectPanel">
+    <div class="panel-header rect-header">
+      <h2>Rectangle Paths (ADS-Side)</h2>
+      <label class="highlight-check">
+        <input type="checkbox" id="chkHighlightArea" title="Highlight area under the selected path (red or green)">
+        Highlight area under path
+      </label>
+    </div>
+    <canvas id="rectCanvas" role="img" aria-label="Rectangle paths: lattice paths on k by n minus k grid, 1 is step up, 0 is step right"></canvas>
+  </div>
+</div>
+
+<div class="info-bar">
+  <div class="info-row" id="infoRow">
+    <div class="info-item">
+      <span class="label">Selected node</span>
+      <span class="value cft" id="infoNode">—</span>
+    </div>
+    <div class="info-item">
+      <span class="label">Binary vector</span>
+      <span class="value" id="infoVec">—</span>
+    </div>
+    <div class="info-item">
+      <span class="label">Path encoding</span>
+      <span class="value ads" id="infoPath">—</span>
+    </div>
+    <div class="info-item">
+      <span class="label">Area under path</span>
+      <span class="value area" id="infoArea">—</span>
+    </div>
+    <div class="info-item">
+      <span class="label">Node radii (def/sel/pair)</span>
+      <span class="value" id="infoNodeRadii">7, 20, 20</span>
+    </div>
+  </div>
+</div>
+
+<div class="pair-section">
+  <div class="pair-header">
+    <h2>Complexity = Area &nbsp;(Mann-Whitney / AUC)</h2>
+    <p class="pair-hint">Select two nodes to see: graph distance = area between their ROC curves.</p>
+  </div>
+  <div class="pair-canvas-wrap">
+    <canvas id="pairCanvas" role="img" aria-label="Pair comparison: area between two lattice paths"></canvas>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-content">
+    <strong>Holography map:</strong> Given a binary vector (graph node), read left to right — each <span class="holo">1 = step UP</span>, each <span class="holo">0 = step RIGHT</span>. This gives a bijection from <span class="cft">graph nodes</span> to <span class="ads">lattice paths</span> on the k × (n−k) rectangle.<br>
+    <strong>Graph edges:</strong> two nodes are connected if an <span class="cft">adjacent transposition (i, i+1)</span> sends one vector to the other.<br>
+    <strong>Complexity = Area:</strong> The <span class="area-c">graph distance</span> (minimum adjacent transpositions) between two nodes equals the <span class="area-c">area between</span> their corresponding paths. This is the <span class="area-c">Mann-Whitney U statistic</span> = area between ROC curves.
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let N = 5, K = 2;
+let nodes = [];       // binary vectors as strings e.g. "01011"
+let edges = [];       // pairs [i, j]
+let positions = [];   // graph layout {x, y}
+let selectedNode = -1;
+let selectedPair = [-1, -1]; // for distance visualization
+let pairClickCount = 0;
+let highlightAreaPath = false; // checkbox: show area under single selected path only
+
+// ============================================================
+// COMBINATORICS
+// ============================================================
+
+function generateNodes(n, k) {
+  const result = [];
+  function gen(pos, onesLeft, zerosLeft, current) {
+    if (pos === n) { result.push(current); return; }
+    if (onesLeft > 0) gen(pos+1, onesLeft-1, zerosLeft, current + '1');
+    if (zerosLeft > 0) gen(pos+1, onesLeft, zerosLeft-1, current + '0');
+  }
+  gen(0, k, n-k, '');
+  return result;
+}
+
+function adjacentSwapDiffers(a, b) {
+  // Check if b is obtained from a by swapping positions i and i+1 where a[i] != a[i+1]
+  for (let i = 0; i < a.length - 1; i++) {
+    if (a[i] !== a[i+1]) {
+      const swapped = a.substring(0, i) + a[i+1] + a[i] + a.substring(i+2);
+      if (swapped === b) return true;
+    }
+  }
+  return false;
+}
+
+function generateEdges(nodeList) {
+  const edgeList = [];
+  for (let i = 0; i < nodeList.length; i++)
+    for (let j = i+1; j < nodeList.length; j++)
+      if (adjacentSwapDiffers(nodeList[i], nodeList[j]))
+        edgeList.push([i, j]);
+  return edgeList;
+}
+
+function vectorToPath(vec) {
+  // Returns array of {x, y} points for the lattice path
+  const points = [{x: 0, y: 0}];
+  let x = 0, y = 0;
+  for (const ch of vec) {
+    if (ch === '1') y++;
+    else x++;
+    points.push({x, y});
+  }
+  return points;
+}
+
+function areaUnderPath(vec) {
+  // Area under the path (sum of y-values at each right step)
+  let area = 0, y = 0;
+  for (const ch of vec) {
+    if (ch === '1') y++;
+    else area += y;
+  }
+  return area;
+}
+
+// Returns array of polygons (each polygon = array of {x,y}) for regions where the two paths differ
+function differingPathRegions(vec1, vec2) {
+  const pathA = vectorToPath(vec1);
+  const pathB = vectorToPath(vec2);
+  const polygons = [];
+  let i = 0;
+  while (i < pathA.length - 1) {
+    if (pathA[i].x === pathB[i].x && pathA[i].y === pathB[i].y &&
+        (pathA[i+1].x !== pathB[i+1].x || pathA[i+1].y !== pathB[i+1].y)) {
+      const split = { x: pathA[i].x, y: pathA[i].y };
+      let j = i + 1;
+      while (j < pathA.length && (pathA[j].x !== pathB[j].x || pathA[j].y !== pathB[j].y)) j++;
+      if (j < pathA.length) {
+        const poly = [split];
+        for (let k = i + 1; k <= j; k++) poly.push({ x: pathA[k].x, y: pathA[k].y });
+        for (let k = j - 1; k >= i + 1; k--) poly.push({ x: pathB[k].x, y: pathB[k].y });
+        polygons.push(poly);
+      }
+      i = j;
+    } else {
+      i++;
+    }
+  }
+  return polygons;
+}
+
+function areaBetweenPaths(vec1, vec2) {
+  // Absolute area between two paths
+  // Build y-at-each-x for both
+  function yAtX(vec) {
+    const ys = [0];
+    let x = 0, y = 0;
+    for (const ch of vec) {
+      if (ch === '1') y++;
+      else { x++; ys.push(y); }
+    }
+    return ys;
+  }
+  const y1 = yAtX(vec1);
+  const y2 = yAtX(vec2);
+  let area = 0;
+  for (let i = 0; i < y1.length; i++) area += Math.abs(y1[i] - y2[i]);
+  return area;
+}
+
+function graphDistance(nodeList, edgeList, i, j) {
+  // BFS
+  if (i === j) return 0;
+  const adj = Array.from({length: nodeList.length}, () => []);
+  for (const [a, b] of edgeList) { adj[a].push(b); adj[b].push(a); }
+  const visited = new Set([i]);
+  let queue = [i];
+  let dist = 0;
+  while (queue.length) {
+    dist++;
+    const next = [];
+    for (const u of queue) {
+      for (const v of adj[u]) {
+        if (v === j) return dist;
+        if (!visited.has(v)) {
+          visited.add(v);
+          next.push(v);
+        }
+      }
+    }
+    queue = next;
+  }
+  return -1;
+}
+
+// ============================================================
+// GRAPH LAYOUT — grid for k=2 (matching image), force-directed otherwise
+// ============================================================
+
+function layoutGraph(nodeList, edgeList) {
+  const n = nodeList.length;
+  const pos = [];
+
+  if (K === 2) {
+    // === GRID LAYOUT matching the reference image ===
+    // For k=2, each node has exactly two 1s at positions i < j.
+    // Place node at grid point: x = i, y = j - 1 (y increases upward).
+    // This gives a staircase: row y has y+1 nodes (x = 0..y).
+    for (const vec of nodeList) {
+      const ones = [];
+      for (let c = 0; c < vec.length; c++) {
+        if (vec[c] === '1') ones.push(c);
+      }
+      const [pi, pj] = ones; // pi < pj
+      pos.push({ x: pi, y: pj - 1 });
+    }
+
+    // Normalize to [-1, 1] centered, y flipped so large y = top of canvas (negative)
+    let maxCoord = N - 2; // max value of j-1 or i
+    for (const p of pos) {
+      p.x = (p.x / maxCoord) * 1.6 - 0.1;
+      p.y = -((p.y / maxCoord) * 1.6 - 0.8);
+    }
+
+    // Center the bounding box
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const p of pos) {
+      minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+      minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+    }
+    const cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
+    for (const p of pos) {
+      p.x -= cx;
+      p.y -= cy;
+    }
+
+    return pos;
+  }
+
+  // === GENERAL LAYOUT for k >= 3 (area-layered + force-directed) ===
+  for (let i = 0; i < n; i++) {
+    const angle = (i / n) * 2 * Math.PI;
+    pos.push({ x: Math.cos(angle) * 2, y: Math.sin(angle) * 2 });
+  }
+
+  const areas = nodeList.map(v => areaUnderPath(v));
+  const maxArea = Math.max(...areas);
+  for (let i = 0; i < n; i++) {
+    pos[i].y = -(areas[i] / Math.max(maxArea, 1)) * 3 + 1.5;
+    const sameLevel = nodeList.filter((_, j) => areas[j] === areas[i]);
+    const idx = sameLevel.indexOf(nodeList[i]);
+    pos[i].x = (idx - (sameLevel.length - 1) / 2) * 1.5;
+  }
+
+  const adj = Array.from({length: n}, () => new Set());
+  for (const [a, b] of edgeList) { adj[a].add(b); adj[b].add(a); }
+
+  for (let iter = 0; iter < 300; iter++) {
+    const forces = pos.map(() => ({ x: 0, y: 0 }));
+    const k = 1.5;
+    for (let i = 0; i < n; i++) {
+      for (let j = i+1; j < n; j++) {
+        let dx = pos[i].x - pos[j].x;
+        let dy = pos[i].y - pos[j].y;
+        let d2 = dx*dx + dy*dy + 0.01;
+        let f = k * k / d2;
+        forces[i].x += dx * f * 0.05;
+        forces[i].y += dy * f * 0.05;
+        forces[j].x -= dx * f * 0.05;
+        forces[j].y -= dy * f * 0.05;
+      }
+    }
+    for (const [a, b] of edgeList) {
+      let dx = pos[b].x - pos[a].x;
+      let dy = pos[b].y - pos[a].y;
+      let d = Math.sqrt(dx*dx + dy*dy) + 0.01;
+      let f = (d - k) / d * 0.04;
+      forces[a].x += dx * f;
+      forces[a].y += dy * f;
+      forces[b].x -= dx * f;
+      forces[b].y -= dy * f;
+    }
+    const temp = 0.1 * (1 - iter / 300);
+    for (let i = 0; i < n; i++) {
+      pos[i].x += Math.max(-temp, Math.min(temp, forces[i].x));
+      pos[i].y += Math.max(-temp, Math.min(temp, forces[i].y));
+    }
+  }
+
+  // Normalize to [-1, 1]
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const p of pos) {
+    minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+    minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+  }
+  const rangeX = maxX - minX || 1;
+  const rangeY = maxY - minY || 1;
+  const scale = Math.max(rangeX, rangeY);
+  for (const p of pos) {
+    p.x = ((p.x - minX) / scale - 0.5) * 1.7;
+    p.y = ((p.y - minY) / scale - 0.5) * 1.7;
+  }
+
+  return pos;
+}
+
+// ============================================================
+// RENDERING
+// ============================================================
+
+const graphCanvas = document.getElementById('graphCanvas');
+const rectCanvas = document.getElementById('rectCanvas');
+const pairCanvas = document.getElementById('pairCanvas');
+const graphCtx = graphCanvas.getContext('2d');
+const rectCtx = rectCanvas.getContext('2d');
+const pairCtx = pairCanvas.getContext('2d');
+
+function getColor(name) {
+  const map = {
+    cft: '#c85a35', ads: '#2e7dba', holo: '#5a9a2e',
+    area: '#c43a78', selected: '#d4960a',
+    bg: '#ffffff', border: '#e2ddd4',
+    text: '#2e2a24', textDim: '#8a8278', textBright: '#1a1714'
+  };
+  return map[name];
+}
+
+function setupCanvas(canvas) {
+  const parent = canvas.parentElement;
+  const dpr = Math.min(window.devicePixelRatio, 2);
+  const w = parent.clientWidth;
+  const h = Math.max(380, parent.clientHeight - 50);
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  return { w, h, dpr };
+}
+
+// Bright distinct colors for each path (top-level for all functions)
+const pathColors = [
+  '#e63946', '#2a9d8f', '#e9c46a', '#264673', '#f4a261',
+  '#7b2d8e', '#06d6a0', '#ef476f', '#118ab2', '#8338ec',
+  '#ff6b35', '#1b998b', '#d62828', '#457b9d', '#f77f00',
+  '#6a4c93', '#1982c4', '#ff595e', '#386641', '#bc4749'
+];
+function getPathColor(idx) {
+  return pathColors[idx % pathColors.length];
+}
+
+function drawGraph() {
+  const { w, h, dpr } = setupCanvas(graphCanvas);
+  const ctx = graphCtx;
+  ctx.clearRect(0, 0, w * dpr, h * dpr);
+  ctx.save();
+  ctx.scale(dpr, dpr);
+
+  const cx = w / 2, cy = h / 2;
+  const scale = Math.min(w, h) * 0.38;
+
+  function nodeBaseColor() {
+    return '#3878c0'; // blue for all nodes
+  }
+
+  // Draw edges
+  for (const [a, b] of edges) {
+    ctx.beginPath();
+    ctx.moveTo(cx + positions[a].x * scale, cy + positions[a].y * scale);
+    ctx.lineTo(cx + positions[b].x * scale, cy + positions[b].y * scale);
+
+    const isSelected = (a === selectedNode || b === selectedNode);
+    const isPair = selectedPair.includes(a) && selectedPair.includes(b);
+
+    if (isPair) {
+      ctx.strokeStyle = getColor('area');
+      ctx.lineWidth = 3;
+      ctx.globalAlpha = 0.9;
+    } else if (isSelected) {
+      ctx.strokeStyle = getColor('cft');
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.7;
+    } else {
+      ctx.strokeStyle = '#a09888';
+      ctx.lineWidth = K === 2 ? 2 : 1;
+      ctx.globalAlpha = K === 2 ? 0.6 : 0.25;
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  // Draw nodes
+  for (let i = 0; i < nodes.length; i++) {
+    const x = cx + positions[i].x * scale;
+    const y = cy + positions[i].y * scale;
+    const r = selectedNode === i ? 20 : (selectedPair.includes(i) ? 20 : (K === 2 ? 7 : 8));
+
+    // Glow and fill: A = red, B = green
+    let selColor = null;
+    if (selectedPair[0] >= 0 && i === selectedPair[0]) selColor = '#d04040'; // red: A
+    else if (selectedPair[1] >= 0 && i === selectedPair[1]) selColor = '#2a9a3a'; // green: B
+    if (selColor) {
+      const grad = ctx.createRadialGradient(x, y, 0, x, y, r * 3);
+      grad.addColorStop(0, selColor + '40');
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(x, y, r * 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    if (selColor) {
+      ctx.fillStyle = selColor;
+    } else {
+      ctx.fillStyle = nodeBaseColor(i);
+      ctx.globalAlpha = 0.9;
+    }
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // A/B inside selected/pair nodes
+    if (selectedPair[0] >= 0 && i === selectedPair[0]) {
+      ctx.font = `bold ${Math.max(10, r * 0.7)}px 'Fira Code', monospace`;
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('A', x, y);
+    } else if (selectedPair[1] >= 0 && i === selectedPair[1]) {
+      ctx.font = `bold ${Math.max(10, r * 0.7)}px 'Fira Code', monospace`;
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('B', x, y);
+    }
+
+    // Label: show (vector) — red for A, green for B, dark for others
+    if (nodes.length <= 20) {
+      const fontSize = Math.min(12, 150 / nodes.length);
+      ctx.font = `bold ${fontSize}px 'Fira Code', monospace`;
+      let labelColor = '#1a1714';
+      if (selectedPair[0] >= 0 && i === selectedPair[0]) labelColor = '#c62828';
+      else if (selectedPair[1] >= 0 && i === selectedPair[1]) labelColor = '#2e7d32';
+      ctx.fillStyle = labelColor;
+      ctx.globalAlpha = (labelColor !== '#1a1714') ? 1 : 0.9;
+
+      if (K === 2) {
+        // Place label to the left for leftmost-column nodes, above for top row, etc.
+        const ones = [];
+        for (let c = 0; c < nodes[i].length; c++) if (nodes[i][c] === '1') ones.push(c);
+        const [pi, pj] = ones;
+        const maxCoord = N - 2;
+        let lx = x, ly = y - r - 8;
+        // Left column nodes: label to the left
+        if (pi === 0 && pj < N - 1) {
+          ctx.textAlign = 'right';
+          lx = x - r - 6;
+          ly = y + 4;
+        } else {
+          ctx.textAlign = 'center';
+        }
+        ctx.fillText(`(${nodes[i]})`, lx, ly);
+      } else {
+        ctx.textAlign = 'center';
+        ctx.fillText(nodes[i], x, y + r + 14);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  ctx.restore();
+}
+
+function drawRect() {
+  const { w, h, dpr } = setupCanvas(rectCanvas);
+  const ctx = rectCtx;
+  ctx.clearRect(0, 0, w * dpr, h * dpr);
+  ctx.save();
+  ctx.scale(dpr, dpr);
+
+  const nk = N - K;
+  const margin = 50;
+  const gridW = w - 2 * margin;
+  const gridH = h - 2 * margin;
+  const cellW = gridW / nk;
+  const cellH = gridH / K;
+  const ox = margin;
+  const oy = margin + gridH; // bottom-left origin
+
+  // Grid lines (same color as unselected paths)
+  const gridColor = '#7eb8f5';
+  ctx.strokeStyle = gridColor;
+  ctx.lineWidth = 1.5;
+  for (let x = 0; x <= nk; x++) {
+    ctx.beginPath();
+    ctx.moveTo(ox + x * cellW, oy);
+    ctx.lineTo(ox + x * cellW, oy - gridH);
+    ctx.stroke();
+  }
+  for (let y = 0; y <= K; y++) {
+    ctx.beginPath();
+    ctx.moveTo(ox, oy - y * cellH);
+    ctx.lineTo(ox + gridW, oy - y * cellH);
+    ctx.stroke();
+  }
+
+  // Axis labels
+  ctx.font = "10px 'Fira Code', monospace";
+  ctx.fillStyle = getColor('textDim');
+  ctx.textAlign = 'center';
+  for (let x = 0; x <= nk; x++) {
+    ctx.fillText(x, ox + x * cellW, oy + 16);
+  }
+  ctx.textAlign = 'right';
+  for (let y = 0; y <= K; y++) {
+    ctx.fillText(y, ox - 8, oy - y * cellH + 4);
+  }
+
+  // Rectangle label
+  ctx.font = "11px 'Fira Code', monospace";
+  ctx.fillStyle = getColor('ads');
+  ctx.textAlign = 'center';
+  ctx.globalAlpha = 0.5;
+  ctx.fillText(`${K} × ${nk}`, ox + gridW / 2, oy - gridH / 2 + 4);
+  ctx.globalAlpha = 1;
+
+  // Area between A and B: light blue diagonal lines only where paths differ (always shown when both selected)
+  if (selectedPair[0] >= 0 && selectedPair[1] >= 0) {
+    const vA = nodes[selectedPair[0]];
+    const vB = nodes[selectedPair[1]];
+    const polygons = differingPathRegions(vA, vB);
+    const patSize = 16;
+    const patCanvas = document.createElement('canvas');
+    patCanvas.width = patSize;
+    patCanvas.height = patSize;
+    const pctx = patCanvas.getContext('2d');
+    pctx.strokeStyle = gridColor;
+    pctx.lineWidth = 1;
+    for (let i = -patSize; i < patSize * 2; i += 4) {
+      pctx.beginPath();
+      pctx.moveTo(i, -2);
+      pctx.lineTo(i + patSize + 4, patSize + 2);
+      pctx.stroke();
+    }
+    const pattern = ctx.createPattern(patCanvas, 'repeat');
+    for (const poly of polygons) {
+      if (poly.length < 3) continue;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(ox + poly[0].x * cellW, oy - poly[0].y * cellH);
+      for (let k = 1; k < poly.length; k++) {
+        ctx.lineTo(ox + poly[k].x * cellW, oy - poly[k].y * cellH);
+      }
+      ctx.closePath();
+      ctx.clip();
+      ctx.fillStyle = pattern;
+      ctx.fillRect(ox - 10, oy - gridH - 10, gridW + 20, gridH + 20);
+      ctx.restore();
+    }
+  }
+
+  // Draw all paths — same light blue as grid (unselected)
+  for (let i = 0; i < nodes.length; i++) {
+    if (i === selectedNode || selectedPair.includes(i)) continue;
+    const path = vectorToPath(nodes[i]);
+    ctx.beginPath();
+    ctx.moveTo(ox + path[0].x * cellW, oy - path[0].y * cellH);
+    for (let j = 1; j < path.length; j++) {
+      ctx.lineTo(ox + path[j].x * cellW, oy - path[j].y * cellH);
+    }
+    ctx.strokeStyle = gridColor;
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.6;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  // Draw selected pair paths (A when we have both: thick red line + red arrows)
+  for (const pi of selectedPair) {
+    if (pi < 0 || pi === selectedNode) continue;
+    const path = vectorToPath(nodes[pi]);
+    const vec = nodes[pi];
+    const isA = pi === selectedPair[0];
+    const pathColor = isA ? '#d04040' : getPathColor(pi);
+    const pathWidth = isA ? 5 : 3.5;
+
+    ctx.beginPath();
+    ctx.moveTo(ox + path[0].x * cellW, oy - path[0].y * cellH);
+    for (let j = 1; j < path.length; j++) {
+      ctx.lineTo(ox + path[j].x * cellW, oy - path[j].y * cellH);
+    }
+    ctx.strokeStyle = pathColor;
+    ctx.lineWidth = pathWidth;
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 0.9;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // Arrows for A
+    if (isA) {
+      const arrowSize = 36;
+      let px = 0, py = 0;
+      ctx.font = `bold ${arrowSize}px 'Fira Code', monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#d04040';
+      for (let c = 0; c < vec.length; c++) {
+        const nx = vec[c] === '0' ? px + 1 : px;
+        const ny = vec[c] === '1' ? py + 1 : py;
+        const mx = (px + nx) / 2;
+        const my = (py + ny) / 2;
+        const label = vec[c] === '1' ? '↑' : '→';
+        const offX = vec[c] === '1' ? -(arrowSize * 0.5) : 0;
+        const offY = vec[c] === '0' ? -(arrowSize * 0.4) : 0;
+        ctx.fillText(label, ox + mx * cellW + offX, oy - my * cellH + offY);
+        px = nx; py = ny;
+      }
+    }
+
+    // Vertex dots
+    for (const pt of path) {
+      ctx.beginPath();
+      ctx.arc(ox + pt.x * cellW, oy - pt.y * cellH, 4, 0, Math.PI * 2);
+      ctx.fillStyle = pathColor;
+      ctx.fill();
+    }
+  }
+
+  // Draw selected path with area shading (A when first hit only, B when second hit)
+  if (selectedNode >= 0) {
+    const vec = nodes[selectedNode];
+    const path = vectorToPath(vec);
+    const isA = selectedPair[0] >= 0 && selectedNode === selectedPair[0];
+    const isB = selectedPair[1] >= 0 && selectedNode === selectedPair[1];
+    const selColor = isA ? '#d04040' : (isB ? '#2a9a3a' : getPathColor(selectedNode));
+    const pathLineWidth = (isA || isB) ? 5 : 3.5;
+
+    // Area under path (only when highlight checkbox is on)
+    if (highlightAreaPath) {
+      ctx.beginPath();
+      ctx.moveTo(ox, oy);
+      for (const pt of path) {
+        ctx.lineTo(ox + pt.x * cellW, oy - pt.y * cellH);
+      }
+      ctx.lineTo(ox + nk * cellW, oy);
+      ctx.closePath();
+      ctx.fillStyle = selColor + '20';
+      ctx.fill();
+    }
+
+    // Path line: thick red (A), thick dotted green (B)
+    ctx.beginPath();
+    ctx.moveTo(ox + path[0].x * cellW, oy - path[0].y * cellH);
+    for (let j = 1; j < path.length; j++) {
+      ctx.lineTo(ox + path[j].x * cellW, oy - path[j].y * cellH);
+    }
+    ctx.strokeStyle = selColor;
+    ctx.lineWidth = pathLineWidth;
+    ctx.setLineDash(isB ? [8, 6] : []);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Step arrows — red (A), green (B), 2x size
+    const arrowSize = 36;
+    let px = 0, py = 0;
+    ctx.font = `bold ${arrowSize}px 'Fira Code', monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = isA ? '#d04040' : (isB ? '#2a9a3a' : '#1a1714');
+    ctx.globalAlpha = (isA || isB) ? 1 : 0.85;
+    for (let c = 0; c < vec.length; c++) {
+      const nx = vec[c] === '0' ? px + 1 : px;
+      const ny = vec[c] === '1' ? py + 1 : py;
+      const mx = (px + nx) / 2;
+      const my = (py + ny) / 2;
+      const label = vec[c] === '1' ? '↑' : '→';
+      const offX = vec[c] === '1' ? -(arrowSize * 0.5) : 0;
+      const offY = vec[c] === '0' ? -(arrowSize * 0.4) : 0;
+      ctx.fillText(label, ox + mx * cellW + offX, oy - my * cellH + offY);
+      px = nx; py = ny;
+    }
+    ctx.globalAlpha = 1;
+
+    // Vertex dots
+    for (const pt of path) {
+      ctx.beginPath();
+      ctx.arc(ox + pt.x * cellW, oy - pt.y * cellH, 5, 0, Math.PI * 2);
+      ctx.fillStyle = selColor;
+      ctx.fill();
+    }
+  }
+
+  // Corner labels
+  ctx.font = "11px 'Fira Code', monospace";
+  ctx.fillStyle = getColor('textDim');
+  ctx.textAlign = 'left';
+  ctx.fillText('(0,0)', ox - 4, oy + 30);
+  ctx.textAlign = 'right';
+  ctx.fillText(`(${nk},${K})`, ox + gridW + 4, oy - gridH - 8);
+
+  ctx.restore();
+}
+
+function drawPairPanel() {
+  const parent = pairCanvas.parentElement;
+  const dpr = Math.min(window.devicePixelRatio, 2);
+  const w = parent.clientWidth - 20;
+  const h = 200;
+  pairCanvas.width = w * dpr;
+  pairCanvas.height = h * dpr;
+  pairCanvas.style.width = w + 'px';
+  pairCanvas.style.height = h + 'px';
+  const ctx = pairCtx;
+  ctx.clearRect(0, 0, w * dpr, h * dpr);
+  ctx.save();
+  ctx.scale(dpr, dpr);
+
+  const nk = N - K;
+
+  if (selectedPair[0] < 0 || selectedPair[1] < 0 || selectedPair[0] === selectedPair[1]) {
+    ctx.font = "13px 'Newsreader', serif";
+    ctx.fillStyle = getColor('textDim');
+    ctx.textAlign = 'center';
+    ctx.fillText('Click two different nodes on the graph to compare', w / 2, h / 2);
+    ctx.restore();
+    return;
+  }
+
+  const v1 = nodes[selectedPair[0]];
+  const v2 = nodes[selectedPair[1]];
+  const p1 = vectorToPath(v1);
+  const p2 = vectorToPath(v2);
+  const dist = graphDistance(nodes, edges, selectedPair[0], selectedPair[1]);
+  const areaBetween = areaBetweenPaths(v1, v2);
+
+  const margin = 50;
+  const gridW = w - 2 * margin;
+  const gridH = h - 2 * margin;
+  const cellW = gridW / nk;
+  const cellH = gridH / K;
+  const ox = margin;
+  const oy = margin + gridH;
+
+  // Grid
+  ctx.strokeStyle = getColor('border');
+  ctx.lineWidth = 0.5;
+  for (let x = 0; x <= nk; x++) {
+    ctx.beginPath();
+    ctx.moveTo(ox + x * cellW, oy);
+    ctx.lineTo(ox + x * cellW, oy - gridH);
+    ctx.stroke();
+  }
+  for (let y = 0; y <= K; y++) {
+    ctx.beginPath();
+    ctx.moveTo(ox, oy - y * cellH);
+    ctx.lineTo(ox + gridW, oy - y * cellH);
+    ctx.stroke();
+  }
+
+  // Area between paths (shading)
+  // Build y-at-each-x
+  function yAtEachX(vec) {
+    const ys = [0];
+    let y = 0;
+    for (const ch of vec) {
+      if (ch === '1') y++;
+      else ys.push(y);
+    }
+    return ys;
+  }
+  const ys1 = yAtEachX(v1);
+  const ys2 = yAtEachX(v2);
+
+  ctx.beginPath();
+  // Trace path1 forward
+  for (let x = 0; x <= nk; x++) {
+    ctx.lineTo(ox + x * cellW, oy - ys1[x] * cellH);
+  }
+  // Trace path2 backward
+  for (let x = nk; x >= 0; x--) {
+    ctx.lineTo(ox + x * cellW, oy - ys2[x] * cellH);
+  }
+  ctx.closePath();
+  ctx.fillStyle = getColor('area') + '30';
+  ctx.fill();
+
+  // Draw both paths
+  function drawPath(path, color) {
+    ctx.beginPath();
+    ctx.moveTo(ox + path[0].x * cellW, oy - path[0].y * cellH);
+    for (let j = 1; j < path.length; j++) {
+      ctx.lineTo(ox + path[j].x * cellW, oy - path[j].y * cellH);
+    }
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    for (const pt of path) {
+      ctx.beginPath();
+      ctx.arc(ox + pt.x * cellW, oy - pt.y * cellH, 3, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+  }
+  drawPath(p1, pathColors[selectedPair[0] % pathColors.length]);
+  drawPath(p2, pathColors[selectedPair[1] % pathColors.length]);
+
+  // Labels
+  ctx.font = "bold 11px 'Fira Code', monospace";
+  ctx.textAlign = 'left';
+  ctx.fillStyle = pathColors[selectedPair[0] % pathColors.length];
+  ctx.fillText(v1, ox + gridW + 12, oy - gridH + 14);
+  ctx.fillStyle = pathColors[selectedPair[1] % pathColors.length];
+  ctx.fillText(v2, ox + gridW + 12, oy - gridH + 30);
+
+  ctx.font = "bold 13px 'Newsreader', serif";
+  ctx.fillStyle = getColor('area');
+  ctx.textAlign = 'center';
+  ctx.fillText(`Graph distance = ${dist}   |   Area between = ${areaBetween}   |   ${dist === areaBetween ? '✓ Equal!' : ''}`, w / 2, oy + 28);
+
+  ctx.restore();
+}
+
+// ============================================================
+// INTERACTION
+// ============================================================
+
+const HIT_RADIUS = 90;
+
+function findClickedNode(canvasEl, e) {
+  const rect = canvasEl.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const w = rect.width;
+  const h = rect.height;
+  const cx = w / 2, cy = h / 2;
+  const scale = Math.min(w, h) * 0.38;
+  let best = -1, bestD = HIT_RADIUS;
+  for (let i = 0; i < positions.length; i++) {
+    const x = cx + positions[i].x * scale;
+    const y = cy + positions[i].y * scale;
+    const d = Math.sqrt((mx - x)**2 + (my - y)**2);
+    if (d < bestD) { bestD = d; best = i; }
+  }
+  return best;
+}
+
+function clearSelection() {
+  selectedNode = -1;
+  selectedPair = [-1, -1];
+  pairClickCount = 0;
+  updateInfo();
+  render();
+}
+
+graphCanvas.addEventListener('click', e => {
+  const idx = findClickedNode(graphCanvas, e);
+  if (idx >= 0) {
+    // Pair selection mode
+    if (pairClickCount === 0) {
+      selectedNode = idx;
+      selectedPair = [idx, -1];
+      pairClickCount = 1;
+    } else {
+      selectedPair[1] = idx;
+      selectedNode = idx;
+      pairClickCount = 0;
+    }
+    updateInfo();
+    render();
+  }
+});
+
+document.getElementById('btnClearPair').addEventListener('click', clearSelection);
+
+document.getElementById('chkHighlightArea').addEventListener('change', e => {
+  highlightAreaPath = e.target.checked;
+  render();
+});
+
+function updateInfo() {
+  const defaultR = K === 2 ? 7 : 8;
+  const selR = 20, pairR = 20;
+  document.getElementById('infoNodeRadii').textContent = `${defaultR}, ${selR}, ${pairR}`;
+  if (selectedPair[0] < 0) {
+    document.getElementById('infoNode').textContent = '—';
+    const infoVec = document.getElementById('infoVec');
+    infoVec.textContent = '—';
+    infoVec.innerHTML = '—';
+    infoVec.className = 'value';
+    document.getElementById('infoPath').textContent = '—';
+    document.getElementById('infoPath').className = 'value';
+    document.getElementById('infoArea').textContent = '—';
+  } else {
+    const infoVec = document.getElementById('infoVec');
+    const vecA = nodes[selectedPair[0]];
+    if (selectedPair[1] >= 0) {
+      const vecB = nodes[selectedPair[1]];
+      infoVec.innerHTML = '<span style="color:#c62828!important">' + vecA + '</span> &nbsp;|&nbsp; <span style="color:#2e7d32!important">' + vecB + '</span>';
+    } else {
+      infoVec.textContent = vecA;
+      infoVec.style.color = '#c62828';
+      infoVec.style.fontWeight = '600';
+    }
+    if (selectedPair[1] >= 0) {
+      infoVec.style.color = '';
+      infoVec.style.fontWeight = '';
+    }
+    infoVec.className = 'value';
+    const dispNode = selectedNode >= 0 ? selectedNode : selectedPair[0];
+    document.getElementById('infoNode').textContent = `#${dispNode}`;
+    const dispVec = nodes[dispNode];
+    const steps = dispVec.split('').map(c => c === '1' ? '↑' : '→').join('');
+    document.getElementById('infoPath').textContent = steps;
+    document.getElementById('infoPath').className = 'value ' + (dispNode === selectedPair[0] ? 'vec-a' : (dispNode === selectedPair[1] ? 'vec-b' : 'ads'));
+    document.getElementById('infoArea').textContent = areaUnderPath(dispVec);
+  }
+}
+
+// ============================================================
+// INIT & REBUILD
+// ============================================================
+
+function rebuild() {
+  nodes = generateNodes(N, K);
+  edges = generateEdges(nodes);
+  positions = layoutGraph(nodes, edges);
+  selectedNode = -1;
+  selectedPair = [-1, -1];
+  pairClickCount = 0;
+
+  document.getElementById('showK').textContent = K;
+  document.getElementById('showN').textContent = N;
+  document.getElementById('showCount').textContent = nodes.length;
+
+  updateInfo();
+  render();
+}
+
+function render() {
+  drawGraph();
+  drawRect();
+  drawPairPanel();
+}
+
+// Parameter controls
+const selN = document.getElementById('selN');
+const selK = document.getElementById('selK');
+
+function updateKOptions() {
+  const n = parseInt(selN.value);
+  selK.innerHTML = '';
+  for (let k = 1; k < n; k++) {
+    const opt = document.createElement('option');
+    opt.value = k;
+    opt.textContent = k;
+    if (k === Math.min(K, n-1)) opt.selected = true;
+    selK.appendChild(opt);
+  }
+}
+
+selN.addEventListener('change', () => {
+  N = parseInt(selN.value);
+  updateKOptions();
+  K = parseInt(selK.value);
+  rebuild();
+});
+
+selK.addEventListener('change', () => {
+  K = parseInt(selK.value);
+  rebuild();
+});
+
+window.addEventListener('resize', () => { render(); });
+
+updateKOptions();
+rebuild();
+</script>
+</body>
+</html>
