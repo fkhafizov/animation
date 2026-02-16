@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dyck Subgraph of the Schreier Coset Graph</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,300;0,400;0,600;1,300&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0e14;
+    --surface: #111820;
+    --surface2: #161e28;
+    --border: #243040;
+    --text: #d4dce8;
+    --text-dim: #6e7f94;
+    --dyck: #4fc3f7;
+    --dyck-glow: rgba(79, 195, 247, 0.3);
+    --non-dyck: #546e7a;
+    --non-dyck-dim: rgba(84, 110, 122, 0.4);
+    --edge-dyck: #4fc3f7;
+    --edge-other: rgba(84, 110, 122, 0.2);
+    --accent-warm: #ff8a65;
+    --accent-gold: #ffd54f;
+    --accent-green: #69f0ae;
+    --forbidden: rgba(244, 67, 54, 0.12);
+  }
+
+  body {
+    font-family: 'IBM Plex Serif', Georgia, serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .header {
+    padding: 2rem 2.5rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(79,195,247,0.04) 0%, transparent 100%);
+  }
+
+  .header h1 {
+    font-weight: 300;
+    font-size: 2rem;
+    letter-spacing: -0.01em;
+    color: var(--dyck);
+  }
+
+  .header .tagline {
+    font-size: 1rem;
+    color: var(--text-dim);
+    font-style: italic;
+    margin-top: 0.3rem;
+  }
+
+  .controls-bar {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1rem 2.5rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .ctrl-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .ctrl-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+  }
+
+  .ctrl-btns {
+    display: flex;
+    gap: 3px;
+  }
+
+  .ctrl-btns button {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.9rem;
+    width: 2.4rem;
+    height: 2.4rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface2);
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .ctrl-btns button:hover { border-color: var(--dyck); color: var(--text); }
+  .ctrl-btns button.active {
+    background: var(--dyck);
+    color: var(--bg);
+    border-color: var(--dyck);
+    font-weight: 600;
+  }
+
+  .stat-pill {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .stat-pill .val { font-weight: 600; }
+  .stat-pill.dyck-pill { border-color: rgba(79,195,247,0.3); }
+  .stat-pill.dyck-pill .val { color: var(--dyck); }
+  .stat-pill.total-pill .val { color: var(--accent-warm); }
+  .stat-pill.edge-pill .val { color: var(--accent-green); }
+
+  .toggle-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .toggle-label input { accent-color: var(--dyck); }
+
+  .main-layout {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    height: calc(100vh - 140px);
+  }
+
+  @media (max-width: 1000px) {
+    .main-layout {
+      grid-template-columns: 1fr;
+      height: auto;
+    }
+  }
+
+  .graph-panel {
+    position: relative;
+    overflow: hidden;
+    background: radial-gradient(ellipse at 50% 40%, rgba(79,195,247,0.03) 0%, transparent 70%);
+  }
+
+  #graphCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+  }
+
+  #graphCanvas:active { cursor: grabbing; }
+
+  .tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text);
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 10;
+    white-space: nowrap;
+  }
+
+  .tooltip.show { opacity: 1; }
+
+  .side-panel {
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+  }
+
+  .side-section {
+    padding: 1.2rem 1.4rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .side-section h3 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    margin-bottom: 0.8rem;
+  }
+
+  .lattice-path-preview {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.8rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .lattice-path-preview canvas {
+    display: block;
+    width: 100%;
+    border-radius: 4px;
+  }
+
+  .selected-info {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.82rem;
+    line-height: 1.7;
+  }
+
+  .selected-info .word {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    color: var(--dyck);
+  }
+
+  .selected-info .word.non-dyck { color: var(--non-dyck); }
+
+  .selected-info .label { color: var(--text-dim); }
+  .selected-info .yes { color: var(--accent-green); }
+  .selected-info .no { color: var(--accent-warm); }
+
+  .path-list {
+    max-height: 260px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .path-list::-webkit-scrollbar { width: 5px; }
+  .path-list::-webkit-scrollbar-track { background: transparent; }
+  .path-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .path-list-item {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    padding: 0.35rem 0.6rem;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.12s;
+    color: var(--text-dim);
+  }
+
+  .path-list-item:hover {
+    background: rgba(79,195,247,0.08);
+    color: var(--text);
+  }
+
+  .path-list-item.selected {
+    background: rgba(79,195,247,0.15);
+    color: var(--dyck);
+    font-weight: 500;
+  }
+
+  .path-list-item .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .path-list-item .dot.dyck { background: var(--dyck); }
+  .path-list-item .dot.other { background: var(--non-dyck); }
+
+  .legend-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .legend-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .legend-swatch {
+    width: 24px;
+    height: 6px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  .tamari-note {
+    margin-top: 0.8rem;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--text-dim);
+  }
+
+  .tamari-note em {
+    color: var(--text);
+    font-style: italic;
+  }
+
+  .tamari-note strong {
+    color: var(--accent-gold);
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>The Dyck Subgraph Inside the Schreier Coset Graph</h1>
+  <div class="tagline">Induced subgraph on ballot-condition vertices &mdash; revealing the Tamari lattice (1-skeleton of the associahedron)</div>
+</div>
+
+<div class="controls-bar">
+  <div class="ctrl-group">
+    <span class="ctrl-label">n =</span>
+    <div class="ctrl-btns" id="nBtns"></div>
+  </div>
+  <div class="stat-pill total-pill">Total vertices: <span class="val" id="statTotal">20</span></div>
+  <div class="stat-pill dyck-pill">Dyck vertices (C<sub>n</sub>): <span class="val" id="statDyck">5</span></div>
+  <div class="stat-pill edge-pill">Dyck edges: <span class="val" id="statEdges">5</span></div>
+  <label class="toggle-label">
+    <input type="checkbox" id="showNonDyck" checked> Show non-Dyck vertices
+  </label>
+  <label class="toggle-label">
+    <input type="checkbox" id="showNonDyckEdges" checked> Show non-Dyck edges
+  </label>
+</div>
+
+<div class="main-layout">
+  <div class="graph-panel">
+    <canvas id="graphCanvas"></canvas>
+    <div class="tooltip" id="tooltip"></div>
+  </div>
+
+  <div class="side-panel">
+    <div class="side-section">
+      <h3>Selected Vertex</h3>
+      <div class="lattice-path-preview">
+        <canvas id="pathCanvas" height="160"></canvas>
+      </div>
+      <div class="selected-info" id="selectedInfo">
+        <div style="color: var(--text-dim); font-style: italic;">Click a vertex to inspect it</div>
+      </div>
+    </div>
+
+    <div class="side-section">
+      <h3>Dyck Paths (Ballot-Condition Vertices)</h3>
+      <div class="path-list" id="dyckList"></div>
+    </div>
+
+    <div class="side-section">
+      <h3>Legend</h3>
+      <div class="legend-items">
+        <div class="legend-row">
+          <div class="legend-swatch" style="background: var(--dyck); box-shadow: 0 0 6px var(--dyck-glow);"></div>
+          <span>Dyck vertex (ballot condition satisfied)</span>
+        </div>
+        <div class="legend-row">
+          <div class="legend-swatch" style="background: var(--non-dyck);"></div>
+          <span>Non-Dyck vertex (crosses diagonal)</span>
+        </div>
+        <div class="legend-row">
+          <div class="legend-swatch" style="background: var(--edge-dyck); height: 3px;"></div>
+          <span>Dyck &harr; Dyck edge (Tamari covering)</span>
+        </div>
+        <div class="legend-row">
+          <div class="legend-swatch" style="background: var(--edge-other); height: 2px;"></div>
+          <span>Other edge (adjacent transposition)</span>
+        </div>
+      </div>
+      <div class="tamari-note">
+        The <strong>Dyck subgraph</strong> is the induced subgraph on the <em>C<sub>n</sub></em> vertices satisfying the ballot condition. Its edges are adjacent transpositions <code>10↔01</code> that preserve Dyck-ness. This is precisely the <strong>Tamari lattice</strong> T<sub>n</sub> &mdash; the 1-skeleton of the <strong>associahedron</strong> K<sub>n+1</sub>.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// =====================================================
+// COMBINATORIAL ENGINE
+// =====================================================
+function generateBinaryStrings(len, ones) {
+  const results = [];
+  function bt(pos, rem, current) {
+    if (pos === len) {
+      if (rem === 0) results.push([...current]);
+      return;
+    }
+    const left = len - pos;
+    if (rem > 0) { current.push(1); bt(pos + 1, rem - 1, current); current.pop(); }
+    if (left - 1 >= rem) { current.push(0); bt(pos + 1, rem, current); current.pop(); }
+  }
+  bt(0, ones, []);
+  return results;
+}
+
+function isDyck(bits) {
+  let sum = 0;
+  for (let i = 0; i < bits.length; i++) {
+    sum += bits[i] ? 1 : -1;
+    if (sum < 0) return false;
+  }
+  return sum === 0;
+}
+
+function firstViolation(bits) {
+  let sum = 0;
+  for (let i = 0; i < bits.length; i++) {
+    sum += bits[i] ? 1 : -1;
+    if (sum < 0) return i;
+  }
+  return -1;
+}
+
+function bitsToString(bits) { return bits.join(''); }
+
+function areAdjacent(a, b) {
+  let diffCount = 0, diffPos = -1;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) {
+      diffCount++;
+      if (diffCount === 1) diffPos = i;
+      if (diffCount > 2) return false;
+    }
+  }
+  return diffCount === 2 && Math.abs(diffPos - (function() {
+    for (let j = diffPos + 1; j < a.length; j++) if (a[j] !== b[j]) return j;
+    return -1;
+  })()) === 1;
+}
+
+function catalan(n) {
+  let c = 1;
+  for (let i = 0; i < n; i++) c = c * 2 * (2 * i + 1) / (i + 2);
+  return Math.round(c);
+}
+
+function binom(n, k) {
+  if (k > n) return 0;
+  let r = 1;
+  for (let i = 0; i < k; i++) r = r * (n - i) / (i + 1);
+  return Math.round(r);
+}
+
+// =====================================================
+// GRAPH DATA
+// =====================================================
+let currentN = 3;
+let nodes = [];    // { id, bits, str, isDyck, x, y, vx, vy }
+let edges = [];    // { i, j, bothDyck }
+let selectedIdx = -1;
+
+function buildGraph(n) {
+  const strings = generateBinaryStrings(2 * n, n);
+  const map = {};
+  nodes = strings.map((bits, i) => {
+    const str = bitsToString(bits);
+    map[str] = i;
+    return {
+      id: i, bits: [...bits], str,
+      isDyck: isDyck(bits),
+      x: 0, y: 0, vx: 0, vy: 0
+    };
+  });
+
+  edges = [];
+  for (let i = 0; i < nodes.length; i++) {
+    for (let j = i + 1; j < nodes.length; j++) {
+      if (areAdjacent(nodes[i].bits, nodes[j].bits)) {
+        edges.push({
+          i, j,
+          bothDyck: nodes[i].isDyck && nodes[j].isDyck
+        });
+      }
+    }
+  }
+
+  // Initialize positions — put Dyck nodes more centrally
+  const W = 600, H = 500;
+  nodes.forEach((nd, i) => {
+    const angle = (i / nodes.length) * Math.PI * 2 + Math.random() * 0.3;
+    const r = nd.isDyck ? 80 + Math.random() * 60 : 140 + Math.random() * 100;
+    nd.x = W / 2 + Math.cos(angle) * r;
+    nd.y = H / 2 + Math.sin(angle) * r;
+    nd.vx = 0; nd.vy = 0;
+  });
+
+  selectedIdx = -1;
+  updateStats(n);
+  renderDyckList();
+}
+
+function updateStats(n) {
+  document.getElementById('statTotal').textContent = binom(2 * n, n);
+  document.getElementById('statDyck').textContent = catalan(n);
+  document.getElementById('statEdges').textContent = edges.filter(e => e.bothDyck).length;
+}
+
+// =====================================================
+// FORCE-DIRECTED LAYOUT
+// =====================================================
+function simulate(iterations) {
+  const W = graphCanvas.width / dpr;
+  const H = graphCanvas.height / dpr;
+
+  for (let iter = 0; iter < iterations; iter++) {
+    const alpha = 0.3 * (1 - iter / iterations);
+    if (alpha < 0.001) break;
+
+    // Repulsion
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        let dx = nodes[j].x - nodes[i].x;
+        let dy = nodes[j].y - nodes[i].y;
+        let d2 = dx * dx + dy * dy;
+        if (d2 < 1) d2 = 1;
+        const repulsion = 2500 / d2;
+        const fx = dx / Math.sqrt(d2) * repulsion * alpha;
+        const fy = dy / Math.sqrt(d2) * repulsion * alpha;
+        nodes[i].vx -= fx; nodes[i].vy -= fy;
+        nodes[j].vx += fx; nodes[j].vy += fy;
+      }
+    }
+
+    // Attraction along edges
+    for (const e of edges) {
+      const a = nodes[e.i], b = nodes[e.j];
+      let dx = b.x - a.x;
+      let dy = b.y - a.y;
+      let d = Math.sqrt(dx * dx + dy * dy);
+      if (d < 1) d = 1;
+      const ideal = e.bothDyck ? 55 : 65;
+      const force = (d - ideal) * 0.015 * alpha;
+      const fx = dx / d * force;
+      const fy = dy / d * force;
+      a.vx += fx; a.vy += fy;
+      b.vx -= fx; b.vy -= fy;
+    }
+
+    // Gravity toward center
+    for (const nd of nodes) {
+      const cx = W / 2, cy = H / 2;
+      nd.vx += (cx - nd.x) * 0.003 * alpha;
+      nd.vy += (cy - nd.y) * 0.003 * alpha;
+    }
+
+    // Dyck cluster pull (pull Dyck nodes slightly toward each other)
+    const dyckNodes = nodes.filter(n => n.isDyck);
+    if (dyckNodes.length > 1) {
+      let mcx = 0, mcy = 0;
+      dyckNodes.forEach(n => { mcx += n.x; mcy += n.y; });
+      mcx /= dyckNodes.length; mcy /= dyckNodes.length;
+      dyckNodes.forEach(n => {
+        n.vx += (mcx - n.x) * 0.005 * alpha;
+        n.vy += (mcy - n.y) * 0.005 * alpha;
+      });
+    }
+
+    // Apply velocity + damping
+    for (const nd of nodes) {
+      nd.vx *= 0.7;
+      nd.vy *= 0.7;
+      nd.x += nd.vx;
+      nd.y += nd.vy;
+      nd.x = Math.max(30, Math.min(W - 30, nd.x));
+      nd.y = Math.max(30, Math.min(H - 30, nd.y));
+    }
+  }
+}
+
+// =====================================================
+// RENDERING
+// =====================================================
+const graphCanvas = document.getElementById('graphCanvas');
+const gctx = graphCanvas.getContext('2d');
+let dpr = 1;
+
+function resizeCanvas() {
+  dpr = window.devicePixelRatio || 1;
+  const rect = graphCanvas.parentElement.getBoundingClientRect();
+  graphCanvas.width = rect.width * dpr;
+  graphCanvas.height = rect.height * dpr;
+  graphCanvas.style.width = rect.width + 'px';
+  graphCanvas.style.height = rect.height + 'px';
+}
+
+function drawGraph() {
+  gctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const W = graphCanvas.width / dpr;
+  const H = graphCanvas.height / dpr;
+  gctx.clearRect(0, 0, W, H);
+
+  const showND = document.getElementById('showNonDyck').checked;
+  const showNDE = document.getElementById('showNonDyckEdges').checked;
+
+  // Draw edges
+  for (const e of edges) {
+    const a = nodes[e.i], b = nodes[e.j];
+    if (!e.bothDyck && !showNDE) continue;
+    if (!e.bothDyck && (!showND)) continue;
+    if (!showND && (!a.isDyck || !b.isDyck)) continue;
+
+    gctx.beginPath();
+    gctx.moveTo(a.x, a.y);
+    gctx.lineTo(b.x, b.y);
+    if (e.bothDyck) {
+      gctx.strokeStyle = 'rgba(79, 195, 247, 0.5)';
+      gctx.lineWidth = 2.5;
+      // glow
+      gctx.shadowColor = 'rgba(79, 195, 247, 0.3)';
+      gctx.shadowBlur = 6;
+    } else {
+      gctx.strokeStyle = 'rgba(84, 110, 122, 0.15)';
+      gctx.lineWidth = 1;
+      gctx.shadowBlur = 0;
+    }
+    gctx.stroke();
+    gctx.shadowBlur = 0;
+  }
+
+  // Draw nodes
+  for (let i = 0; i < nodes.length; i++) {
+    const nd = nodes[i];
+    if (!nd.isDyck && !showND) continue;
+
+    const isSelected = i === selectedIdx;
+    const r = nd.isDyck ? (isSelected ? 10 : 7) : (isSelected ? 8 : 4.5);
+
+    if (nd.isDyck) {
+      // Glow
+      gctx.beginPath();
+      gctx.arc(nd.x, nd.y, r + 6, 0, Math.PI * 2);
+      const grad = gctx.createRadialGradient(nd.x, nd.y, r, nd.x, nd.y, r + 6);
+      grad.addColorStop(0, 'rgba(79,195,247,0.2)');
+      grad.addColorStop(1, 'rgba(79,195,247,0)');
+      gctx.fillStyle = grad;
+      gctx.fill();
+
+      gctx.beginPath();
+      gctx.arc(nd.x, nd.y, r, 0, Math.PI * 2);
+      gctx.fillStyle = isSelected ? '#fff' : '#4fc3f7';
+      gctx.fill();
+      if (isSelected) {
+        gctx.strokeStyle = '#4fc3f7';
+        gctx.lineWidth = 2;
+        gctx.stroke();
+      }
+    } else {
+      gctx.beginPath();
+      gctx.arc(nd.x, nd.y, r, 0, Math.PI * 2);
+      gctx.fillStyle = isSelected ? '#90a4ae' : 'rgba(84,110,122,0.5)';
+      gctx.fill();
+      if (isSelected) {
+        gctx.strokeStyle = '#90a4ae';
+        gctx.lineWidth = 1.5;
+        gctx.stroke();
+      }
+    }
+
+    // Label on larger graphs only for Dyck or selected nodes
+    if (nd.isDyck || isSelected) {
+      if (nodes.length <= 20 || nd.isDyck) {
+        gctx.font = `${nd.isDyck ? '500' : '400'} 10px 'IBM Plex Mono', monospace`;
+        gctx.fillStyle = nd.isDyck ? 'rgba(79,195,247,0.85)' : 'rgba(144,164,174,0.7)';
+        gctx.textAlign = 'center';
+        gctx.fillText(nd.str, nd.x, nd.y - r - 5);
+      }
+    }
+  }
+
+  // Highlight neighbors of selected node
+  if (selectedIdx >= 0) {
+    const nd = nodes[selectedIdx];
+    gctx.beginPath();
+    gctx.arc(nd.x, nd.y, 16, 0, Math.PI * 2);
+    gctx.strokeStyle = 'rgba(255,213,79,0.5)';
+    gctx.lineWidth = 1.5;
+    gctx.setLineDash([3, 3]);
+    gctx.stroke();
+    gctx.setLineDash([]);
+  }
+}
+
+// =====================================================
+// LATTICE PATH PREVIEW
+// =====================================================
+const pathCanvas = document.getElementById('pathCanvas');
+const pctx = pathCanvas.getContext('2d');
+
+function drawLatticePath(bits) {
+  const pdpr = window.devicePixelRatio || 1;
+  const rect = pathCanvas.parentElement.getBoundingClientRect();
+  const cW = rect.width - 32;
+  const cH = 150;
+  pathCanvas.width = cW * pdpr;
+  pathCanvas.height = cH * pdpr;
+  pathCanvas.style.width = cW + 'px';
+  pathCanvas.style.height = cH + 'px';
+  pctx.setTransform(pdpr, 0, 0, pdpr, 0, 0);
+  pctx.clearRect(0, 0, cW, cH);
+
+  if (!bits) return;
+
+  const n = bits.length / 2;
+  const pad = { l: 35, r: 15, t: 15, b: 25 };
+  const plotW = cW - pad.l - pad.r;
+  const plotH = cH - pad.t - pad.b;
+  const dx = plotW / (2 * n);
+  const maxH = n;
+  const dy = plotH / maxH;
+
+  // Forbidden zone
+  pctx.fillStyle = 'rgba(244,67,54,0.06)';
+  pctx.fillRect(pad.l, pad.t + maxH * dy, plotW, pad.b + 5);
+
+  // Grid
+  pctx.strokeStyle = 'rgba(36,48,64,0.6)';
+  pctx.lineWidth = 0.5;
+  for (let y = 0; y <= maxH; y++) {
+    const py = pad.t + (maxH - y) * dy;
+    pctx.beginPath(); pctx.moveTo(pad.l, py); pctx.lineTo(pad.l + plotW, py); pctx.stroke();
+  }
+
+  // x-axis (y=0 line) thicker
+  pctx.strokeStyle = 'rgba(110,127,148,0.4)';
+  pctx.lineWidth = 1;
+  const yZero = pad.t + maxH * dy;
+  pctx.beginPath(); pctx.moveTo(pad.l, yZero); pctx.lineTo(pad.l + plotW, yZero); pctx.stroke();
+
+  // Y labels
+  pctx.font = '10px "IBM Plex Mono", monospace';
+  pctx.fillStyle = '#6e7f94';
+  pctx.textAlign = 'right';
+  for (let y = 0; y <= maxH; y++) {
+    pctx.fillText(y, pad.l - 6, pad.t + (maxH - y) * dy + 3.5);
+  }
+
+  // Build path points (Dyck-style: 1=up, 0=down)
+  const pts = [{ x: 0, y: 0 }];
+  let cy = 0;
+  let minY = 0;
+  for (let i = 0; i < bits.length; i++) {
+    cy += bits[i] ? 1 : -1;
+    pts.push({ x: i + 1, y: cy });
+    if (cy < minY) minY = cy;
+  }
+
+  function toCanvas(p) {
+    return { x: pad.l + p.x * dx, y: pad.t + (maxH - p.y) * dy };
+  }
+
+  // Area fill
+  pctx.beginPath();
+  const cp0 = toCanvas(pts[0]);
+  pctx.moveTo(cp0.x, cp0.y);
+  for (let i = 1; i < pts.length; i++) {
+    const cp = toCanvas(pts[i]);
+    pctx.lineTo(cp.x, cp.y);
+  }
+  pctx.lineTo(toCanvas(pts[pts.length - 1]).x, yZero);
+  pctx.lineTo(cp0.x, yZero);
+  pctx.closePath();
+  pctx.fillStyle = isDyck(bits) ? 'rgba(105,240,174,0.08)' : 'rgba(244,67,54,0.06)';
+  pctx.fill();
+
+  // If not Dyck, shade below-zero region
+  if (minY < 0) {
+    pctx.fillStyle = 'rgba(244,67,54,0.1)';
+    pctx.fillRect(pad.l, yZero, plotW, -minY * dy);
+    pctx.setLineDash([3, 3]);
+    pctx.strokeStyle = 'rgba(244,67,54,0.35)';
+    pctx.lineWidth = 1;
+    pctx.beginPath();
+    pctx.moveTo(pad.l, yZero);
+    pctx.lineTo(pad.l + plotW, yZero);
+    pctx.stroke();
+    pctx.setLineDash([]);
+  }
+
+  // Draw path segments
+  pctx.lineWidth = 2.5;
+  pctx.lineCap = 'round';
+  for (let i = 0; i < bits.length; i++) {
+    const from = toCanvas(pts[i]);
+    const to = toCanvas(pts[i + 1]);
+    const belowZero = pts[i].y < 0 || pts[i + 1].y < 0;
+    if (belowZero) {
+      pctx.strokeStyle = '#f44336';
+    } else {
+      pctx.strokeStyle = bits[i] ? '#4fc3f7' : '#ff8a65';
+    }
+    pctx.beginPath();
+    pctx.moveTo(from.x, from.y);
+    pctx.lineTo(to.x, to.y);
+    pctx.stroke();
+  }
+
+  // Vertices
+  for (let i = 0; i < pts.length; i++) {
+    const cp = toCanvas(pts[i]);
+    pctx.beginPath();
+    pctx.arc(cp.x, cp.y, 3.5, 0, Math.PI * 2);
+    pctx.fillStyle = pts[i].y < 0 ? '#f44336' :
+                     (i === 0 || i === pts.length - 1) ? '#ffd54f' : '#d4dce8';
+    pctx.fill();
+    pctx.strokeStyle = '#0a0e14';
+    pctx.lineWidth = 1.5;
+    pctx.stroke();
+  }
+
+  // Violation marker
+  const viol = firstViolation(bits);
+  if (viol >= 0) {
+    const vp = toCanvas(pts[viol + 1]);
+    pctx.beginPath();
+    pctx.arc(vp.x, vp.y, 8, 0, Math.PI * 2);
+    pctx.strokeStyle = 'rgba(244,67,54,0.6)';
+    pctx.lineWidth = 1.5;
+    pctx.setLineDash([2, 2]);
+    pctx.stroke();
+    pctx.setLineDash([]);
+    pctx.font = 'bold 9px "IBM Plex Mono", monospace';
+    pctx.fillStyle = '#f44336';
+    pctx.textAlign = 'center';
+    pctx.fillText('✗', vp.x, vp.y - 12);
+  }
+}
+
+// =====================================================
+// INFO PANEL
+// =====================================================
+function updateSelectedInfo(idx) {
+  selectedIdx = idx;
+  const el = document.getElementById('selectedInfo');
+  if (idx < 0 || idx >= nodes.length) {
+    el.innerHTML = '<div style="color: var(--text-dim); font-style: italic;">Click a vertex to inspect it</div>';
+    drawLatticePath(null);
+    return;
+  }
+  const nd = nodes[idx];
+  const bits = nd.bits;
+  const n = bits.length / 2;
+
+  // Count neighbors
+  const neighbors = edges.filter(e => e.i === idx || e.j === idx);
+  const dyckNeighbors = neighbors.filter(e => e.bothDyck);
+
+  // Prefix sums
+  let prefixStr = '';
+  let sum = 0;
+  for (let i = 0; i < bits.length; i++) {
+    sum += bits[i] ? 1 : -1;
+    prefixStr += sum;
+    if (i < bits.length - 1) prefixStr += ', ';
+  }
+
+  const wordStr = bits.map(b => b ? 'U' : 'D').join('');
+  const parensStr = bits.map(b => b ? '(' : ')').join('');
+
+  el.innerHTML = `
+    <div class="word ${nd.isDyck ? '' : 'non-dyck'}">${nd.str}</div>
+    <div><span class="label">Steps:</span> ${wordStr}</div>
+    <div><span class="label">Parens:</span> ${parensStr}</div>
+    <div><span class="label">Prefix sums:</span> ${prefixStr}</div>
+    <div><span class="label">Dyck?</span> ${nd.isDyck ?
+      '<span class="yes">Yes ✓</span> (all prefix sums ≥ 0)' :
+      '<span class="no">No ✗</span> (dips below 0)'}</div>
+    <div><span class="label">Degree in full graph:</span> ${neighbors.length}</div>
+    ${nd.isDyck ? `<div><span class="label">Degree in Dyck subgraph:</span> <span style="color:var(--dyck)">${dyckNeighbors.length}</span></div>` : ''}
+  `;
+
+  drawLatticePath(bits);
+  highlightInList(idx);
+  drawGraph();
+}
+
+function renderDyckList() {
+  const el = document.getElementById('dyckList');
+  el.innerHTML = '';
+  nodes.forEach((nd, i) => {
+    if (!nd.isDyck) return;
+    const div = document.createElement('div');
+    div.className = 'path-list-item' + (i === selectedIdx ? ' selected' : '');
+    div.innerHTML = `<span><span class="dot dyck"></span></span> <span style="flex:1;margin-left:8px;">${nd.str}</span>`;
+    div.onclick = () => updateSelectedInfo(i);
+    el.appendChild(div);
+  });
+}
+
+function highlightInList(idx) {
+  document.querySelectorAll('.path-list-item').forEach((el, i) => {
+    const dyckIdx = nodes.filter((n, j) => n.isDyck && j <= idx).length - 1;
+    // re-render is simpler
+  });
+  renderDyckList();
+}
+
+// =====================================================
+// INTERACTION
+// =====================================================
+function getMousePos(e) {
+  const rect = graphCanvas.getBoundingClientRect();
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+
+function findNode(mx, my) {
+  const showND = document.getElementById('showNonDyck').checked;
+  let bestIdx = -1, bestDist = 20;
+  for (let i = 0; i < nodes.length; i++) {
+    if (!nodes[i].isDyck && !showND) continue;
+    const dx = nodes[i].x - mx, dy = nodes[i].y - my;
+    const d = Math.sqrt(dx * dx + dy * dy);
+    if (d < bestDist) { bestDist = d; bestIdx = i; }
+  }
+  return bestIdx;
+}
+
+graphCanvas.addEventListener('click', e => {
+  const pos = getMousePos(e);
+  const idx = findNode(pos.x, pos.y);
+  updateSelectedInfo(idx);
+});
+
+const tooltip = document.getElementById('tooltip');
+graphCanvas.addEventListener('mousemove', e => {
+  const pos = getMousePos(e);
+  const idx = findNode(pos.x, pos.y);
+  if (idx >= 0) {
+    tooltip.textContent = nodes[idx].str + (nodes[idx].isDyck ? ' (Dyck)' : '');
+    tooltip.style.left = (e.clientX - graphCanvas.parentElement.getBoundingClientRect().left + 12) + 'px';
+    tooltip.style.top = (e.clientY - graphCanvas.parentElement.getBoundingClientRect().top - 30) + 'px';
+    tooltip.classList.add('show');
+    graphCanvas.style.cursor = 'pointer';
+  } else {
+    tooltip.classList.remove('show');
+    graphCanvas.style.cursor = 'grab';
+  }
+});
+
+graphCanvas.addEventListener('mouseleave', () => {
+  tooltip.classList.remove('show');
+});
+
+// =====================================================
+// TOGGLE + ORDER CONTROLS
+// =====================================================
+document.getElementById('showNonDyck').addEventListener('change', drawGraph);
+document.getElementById('showNonDyckEdges').addEventListener('change', drawGraph);
+
+function setN(n) {
+  currentN = n;
+  document.querySelectorAll('.ctrl-btns button').forEach(b => {
+    b.classList.toggle('active', parseInt(b.textContent) === n);
+  });
+  buildGraph(n);
+  resizeCanvas();
+  simulate(n <= 3 ? 500 : n === 4 ? 800 : 1200);
+  drawGraph();
+  updateSelectedInfo(-1);
+}
+
+const nBtns = document.getElementById('nBtns');
+[2, 3, 4].forEach(n => {
+  const btn = document.createElement('button');
+  btn.textContent = n;
+  btn.onclick = () => setN(n);
+  nBtns.appendChild(btn);
+});
+
+// =====================================================
+// INIT
+// =====================================================
+window.addEventListener('resize', () => {
+  resizeCanvas();
+  drawGraph();
+});
+
+setN(3);
+</script>
+
+</body>
+</html>
