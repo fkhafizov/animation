@@ -16,16 +16,15 @@ Q2: Wouldn’t it resemble the associahedron? In the associahedron, the vertices
 * [demo for Q2 dyck_subgraph_associahedron.html](https://fkhafizov.github.io/animation/dyck_subgraph_associahedron.html)
 
 -----------------------
-
 Q3: There is some bijection with permutations, which bijection is it? Eg, see  https://wp.math.berkeley.edu/drp/wp-content/uploads/sites/18/2024/12/2024_Fall_Latimer.pdf
 
     Claim 3.1. There exists a bijection between 321-avoiding permutations and Dyck paths.
 
 Note here we have 0–1 vectors, so this is something different.
 
-dyck_three_worlds_catalan_bijections
-dyck_three_worlds_catalan_bijections
-* [demo for Q3 .html](https://fkhafizov.github.io/animation/.html)
+
+* [demo for Q3 dyck_three_worlds_catalan_bijections.html](https://fkhafizov.github.io/animation/dyck_three_worlds_catalan_bijections.html)
+
 
 -----
 * https://claude.ai/chat/04b59337-1057-420b-8625-f53c245032ef
