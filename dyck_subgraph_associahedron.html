@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Associahedron ≅ Dyck Subgraph</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Code+Pro:wght@400;500;600&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,300&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #faf6f0;
+    --surface: #f2ece3;
+    --surface2: #e8e0d4;
+    --border: #d4c8b8;
+    --text: #2c2418;
+    --text-dim: #8a7d6e;
+    --ink: #3d3225;
+    --dyck: #c0392b;
+    --dyck-light: rgba(192,57,43,0.12);
+    --tamari-edge: #c0392b;
+    --node-fill: #e74c3c;
+    --node-selected: #2c3e50;
+    --accent-blue: #2980b9;
+    --accent-teal: #16a085;
+    --accent-gold: #d4a017;
+    --accent-purple: #8e44ad;
+    --forbidden: rgba(192,57,43,0.06);
+    --up-color: #2980b9;
+    --down-color: #d4a017;
+  }
+
+  body {
+    font-family: 'Source Serif 4', Georgia, serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* Subtle paper texture */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c4b8a4' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app { position: relative; z-index: 1; }
+
+  .header {
+    padding: 1.8rem 2.5rem 1.2rem;
+    border-bottom: 2px solid var(--border);
+    background: linear-gradient(180deg, rgba(212,160,23,0.05) 0%, transparent 100%);
+  }
+
+  .header h1 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 400;
+    font-size: 2.2rem;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+
+  .header h1 em {
+    font-style: italic;
+    color: var(--dyck);
+  }
+
+  .header .sub {
+    font-size: 1rem;
+    color: var(--text-dim);
+    margin-top: 0.2rem;
+    font-style: italic;
+  }
+
+  .controls-bar {
+    display: flex;
+    align-items: center;
+    gap: 1.6rem;
+    padding: 0.8rem 2.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-wrap: wrap;
+  }
+
+  .ctrl-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .ctrl-label {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+  }
+
+  .ctrl-btns { display: flex; gap: 3px; }
+
+  .ctrl-btns button {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 0.95rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .ctrl-btns button:hover { border-color: var(--dyck); color: var(--text); }
+  .ctrl-btns button.active {
+    background: var(--dyck);
+    color: #fff;
+    border-color: var(--dyck);
+    font-weight: 600;
+  }
+
+  .stat-badge {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 0.8rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+  }
+
+  .stat-badge .v { font-weight: 600; }
+  .stat-badge .v.red { color: var(--dyck); }
+  .stat-badge .v.blue { color: var(--accent-blue); }
+  .stat-badge .v.teal { color: var(--accent-teal); }
+
+  .main-layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    min-height: calc(100vh - 130px);
+  }
+
+  @media (max-width: 960px) {
+    .main-layout { grid-template-columns: 1fr; }
+  }
+
+  /* ===== GRAPH PANEL ===== */
+  .graph-panel {
+    position: relative;
+    overflow: hidden;
+    border-right: 1px solid var(--border);
+  }
+
+  #graphCanvas { display: block; width: 100%; height: 100%; }
+
+  .graph-label {
+    position: absolute;
+    top: 12px;
+    left: 16px;
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    color: var(--text-dim);
+    font-style: italic;
+  }
+
+  /* ===== SIDE PANEL ===== */
+  .side-panel {
+    overflow-y: auto;
+    background: var(--surface);
+  }
+
+  .side-section {
+    padding: 1.1rem 1.3rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .side-section h3 {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    margin-bottom: 0.7rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .side-section h3 .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--dyck);
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 600;
+  }
+
+  .card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .card canvas { display: block; width: 100%; }
+
+  .card-body {
+    padding: 0.7rem 0.9rem;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 0.82rem;
+    line-height: 1.7;
+  }
+
+  .card-body .big {
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+  }
+
+  .card-body .big.red { color: var(--dyck); }
+  .card-body .dim { color: var(--text-dim); }
+  .card-body .blue { color: var(--accent-blue); }
+  .card-body .gold { color: var(--accent-gold); }
+  .card-body .teal { color: var(--accent-teal); }
+  .card-body .purple { color: var(--accent-purple); }
+
+  .vertex-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 210px;
+    overflow-y: auto;
+  }
+
+  .vertex-list::-webkit-scrollbar { width: 5px; }
+  .vertex-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .vx-item {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 0.78rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    transition: all 0.12s;
+    color: var(--text-dim);
+  }
+
+  .vx-item:hover { background: var(--dyck-light); color: var(--text); }
+  .vx-item.active { background: var(--dyck-light); color: var(--dyck); font-weight: 600; }
+
+  .vx-item .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--dyck);
+    flex-shrink: 0;
+  }
+
+  .equiv-note {
+    font-size: 0.88rem;
+    line-height: 1.65;
+    color: var(--text-dim);
+    margin-top: 0.6rem;
+  }
+
+  .equiv-note strong { color: var(--ink); font-weight: 600; }
+  .equiv-note em { color: var(--dyck); font-style: italic; }
+
+  .placeholder-msg {
+    font-style: italic;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    padding: 1rem 0;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="header">
+  <h1>The <em>Associahedron</em> ≅ Dyck Subgraph</h1>
+  <div class="sub">Four faces of the same Catalan object — Tamari lattice, Dyck paths, polygon triangulations, parenthesizations</div>
+</div>
+
+<div class="controls-bar">
+  <div class="ctrl-group">
+    <span class="ctrl-label">Order n =</span>
+    <div class="ctrl-btns" id="nBtns"></div>
+  </div>
+  <div class="stat-badge">Vertices C<sub>n</sub> = <span class="v red" id="sVerts">5</span></div>
+  <div class="stat-badge">Edges = <span class="v blue" id="sEdges">5</span></div>
+  <div class="stat-badge">Polytope K<sub><span id="sKn">4</span></sub> dim = <span class="v teal" id="sDim">2</span></div>
+</div>
+
+<div class="main-layout">
+  <div class="graph-panel">
+    <canvas id="graphCanvas"></canvas>
+    <div class="graph-label" id="graphLabel">Tamari lattice T₃  =  1-skeleton of K₄ (pentagon)</div>
+  </div>
+
+  <div class="side-panel">
+    <!-- Dyck path card -->
+    <div class="side-section">
+      <h3><span class="num">1</span> Dyck Path</h3>
+      <div class="card">
+        <canvas id="dyckCanvas" height="130"></canvas>
+        <div class="card-body" id="dyckInfo">
+          <div class="placeholder-msg">Click a vertex in the graph</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Triangulation card -->
+    <div class="side-section">
+      <h3><span class="num">2</span> Polygon Triangulation</h3>
+      <div class="card">
+        <canvas id="triCanvas" height="180"></canvas>
+        <div class="card-body" id="triInfo">
+          <div class="placeholder-msg">Click a vertex in the graph</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Parenthesization card -->
+    <div class="side-section">
+      <h3><span class="num">3</span> Parenthesization</h3>
+      <div class="card">
+        <div class="card-body" id="parenInfo">
+          <div class="placeholder-msg">Click a vertex in the graph</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vertex list -->
+    <div class="side-section">
+      <h3>All Vertices</h3>
+      <div class="vertex-list" id="vxList"></div>
+    </div>
+
+    <!-- Equivalence note -->
+    <div class="side-section">
+      <div class="equiv-note">
+        Each vertex simultaneously represents a <strong>Dyck path</strong>, a <strong>triangulation</strong>
+        of an (n+2)-gon, a <strong>parenthesization</strong> of n+1 symbols, and a <strong>binary tree</strong>
+        with n internal nodes. The edges correspond to <em>adjacent transpositions</em> 10↔01 preserving
+        the ballot condition — equivalently, <em>diagonal flips</em> in the triangulation, or
+        <em>single applications of the associativity rule</em> (xy)z → x(yz).
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ================================================================
+// COMBINATORIAL ENGINE
+// ================================================================
+
+function generateDyckPaths(n) {
+  const paths = [];
+  function bt(pos, height, bits) {
+    if (pos === 2 * n) {
+      if (height === 0) paths.push([...bits]);
+      return;
+    }
+    const rem = 2 * n - pos;
+    // Up step (1)
+    if (height + 1 <= n && rem - 1 >= height + 1) {
+      bits.push(1);
+      bt(pos + 1, height + 1, bits);
+      bits.pop();
+    }
+    // Down step (0)
+    if (height - 1 >= 0) {
+      bits.push(0);
+      bt(pos + 1, height - 1, bits);
+      bits.pop();
+    }
+  }
+  bt(0, 0, []);
+  return paths;
+}
+
+function bitsToStr(b) { return b.join(''); }
+
+function areTamariAdjacent(a, b) {
+  let diffs = 0;
+  let firstDiff = -1;
+  let secondDiff = -1;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) {
+      diffs++;
+      if (diffs === 1) firstDiff = i;
+      else if (diffs === 2) secondDiff = i;
+      else return false;
+    }
+  }
+  return diffs === 2 && secondDiff === firstDiff + 1;
+}
+
+function prefixSums(bits) {
+  const sums = [];
+  let s = 0;
+  for (const b of bits) { s += b ? 1 : -1; sums.push(s); }
+  return sums;
+}
+
+function catalan(n) {
+  let c = 1;
+  for (let i = 0; i < n; i++) c = c * 2 * (2 * i + 1) / (i + 2);
+  return Math.round(c);
+}
+
+// ================================================================
+// DYCK → TRIANGULATION (stack algorithm)
+// ================================================================
+function dyckToTriangulation(bits) {
+  const n = bits.length / 2;
+  const stack = [0];
+  let vertex = 1;
+  const triangles = [];
+  const diagonals = [];
+
+  for (let i = 0; i < bits.length; i++) {
+    if (bits[i] === 1) {
+      stack.push(vertex);
+      vertex++;
+    } else {
+      const top = stack.pop();
+      const peek = stack[stack.length - 1];
+      triangles.push([peek, top, vertex]);
+      // Diagonal if not an edge of the polygon
+      if (Math.abs(peek - vertex) > 1 && !(peek === 0 && vertex === n + 1) && !(vertex === 0 && peek === n + 1)) {
+        diagonals.push([peek, vertex]);
+      }
+    }
+  }
+  return { triangles, diagonals, nSides: n + 2 };
+}
+
+// ================================================================
+// DYCK → PARENTHESIZATION (first-return decomposition)
+// ================================================================
+function dyckToParenthesization(bits, symbols) {
+  if (bits.length === 0) return symbols[0];
+  // First return to 0
+  let h = 0, firstReturn = -1;
+  for (let i = 0; i < bits.length; i++) {
+    h += bits[i] ? 1 : -1;
+    if (h === 0) { firstReturn = i; break; }
+  }
+  const inner = bits.slice(1, firstReturn); // Dyck path of semi-length k
+  const tail = bits.slice(firstReturn + 1);  // Dyck path of semi-length n-k-1
+  const k = inner.length / 2;
+
+  // Inner part uses first k+1 symbols, tail uses remaining
+  const leftSymbols = symbols.slice(0, k + 1);
+  const rightSymbols = symbols.slice(k + 1);
+
+  const leftExpr = dyckToParenthesization(inner, leftSymbols);
+  if (rightSymbols.length === 0) return leftExpr; // shouldn't happen for valid input
+  const rightExpr = dyckToParenthesization(tail, rightSymbols);
+  return '(' + leftExpr + '·' + rightExpr + ')';
+}
+
+function getParenthesization(bits) {
+  const n = bits.length / 2;
+  const symbols = [];
+  for (let i = 0; i < n + 1; i++) symbols.push(String.fromCharCode(97 + i)); // a, b, c, d, ...
+  return dyckToParenthesization(bits, symbols);
+}
+
+// ================================================================
+// GRAPH DATA
+// ================================================================
+let N = 3;
+let nodes = [];
+let edges = [];
+let selectedIdx = -1;
+
+function buildGraph(n) {
+  N = n;
+  const paths = generateDyckPaths(n);
+  nodes = paths.map((bits, i) => ({
+    id: i,
+    bits: [...bits],
+    str: bitsToStr(bits),
+    x: 0, y: 0, vx: 0, vy: 0,
+    prefixSums: prefixSums(bits),
+    parens: bits.map(b => b ? '(' : ')').join(''),
+    fullParen: getParenthesization(bits),
+    tri: dyckToTriangulation(bits)
+  }));
+
+  edges = [];
+  for (let i = 0; i < nodes.length; i++) {
+    for (let j = i + 1; j < nodes.length; j++) {
+      if (areTamariAdjacent(nodes[i].bits, nodes[j].bits)) {
+        // Determine which is "higher" (more prefix sum)
+        const si = nodes[i].prefixSums.reduce((a, b) => a + b, 0);
+        const sj = nodes[j].prefixSums.reduce((a, b) => a + b, 0);
+        edges.push({ i, j, higher: si >= sj ? i : j });
+      }
+    }
+  }
+
+  layoutGraph(n);
+  selectedIdx = -1;
+  updateStats();
+  renderVertexList();
+}
+
+// ================================================================
+// LAYOUT — hand-crafted for n=2,3, force-directed for n=4
+// ================================================================
+function layoutGraph(n) {
+  const W = 600, H = 520;
+  const cx = W / 2, cy = H / 2;
+
+  if (n === 1) {
+    nodes[0].x = cx; nodes[0].y = cy;
+  } else if (n === 2) {
+    // Line segment — 2 vertices
+    nodes[0].x = cx - 80; nodes[0].y = cy;
+    nodes[1].x = cx + 80; nodes[1].y = cy;
+  } else if (n === 3) {
+    // Pentagon — arrange as regular pentagon, top vertex = max element
+    // Order nodes by total prefix sum (descending) for Hasse levels
+    const sorted = [...nodes].sort((a, b) => {
+      const sa = a.prefixSums.reduce((x, y) => x + y, 0);
+      const sb = b.prefixSums.reduce((x, y) => x + y, 0);
+      return sb - sa;
+    });
+
+    // For a pentagon: top, upper-left, upper-right, lower-left, lower-right
+    const R = 150;
+    for (let i = 0; i < 5; i++) {
+      const angle = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
+      sorted[i].x = cx + R * Math.cos(angle);
+      sorted[i].y = cy + R * Math.sin(angle);
+    }
+  } else {
+    // n=4: force-directed layout
+    // Initialize in a circle
+    for (let i = 0; i < nodes.length; i++) {
+      const angle = (i / nodes.length) * Math.PI * 2;
+      const r = 120 + Math.random() * 40;
+      nodes[i].x = cx + r * Math.cos(angle);
+      nodes[i].y = cy + r * Math.sin(angle);
+      nodes[i].vx = 0; nodes[i].vy = 0;
+    }
+    forceLayout(W, H, 800);
+  }
+}
+
+function forceLayout(W, H, iters) {
+  const cx = W / 2, cy = H / 2;
+  for (let iter = 0; iter < iters; iter++) {
+    const alpha = 0.4 * (1 - iter / iters);
+    if (alpha < 0.001) break;
+
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        let dx = nodes[j].x - nodes[i].x;
+        let dy = nodes[j].y - nodes[i].y;
+        let d2 = dx * dx + dy * dy;
+        if (d2 < 1) d2 = 1;
+        const rep = 3000 / d2;
+        const d = Math.sqrt(d2);
+        const fx = dx / d * rep * alpha;
+        const fy = dy / d * rep * alpha;
+        nodes[i].vx -= fx; nodes[i].vy -= fy;
+        nodes[j].vx += fx; nodes[j].vy += fy;
+      }
+    }
+
+    for (const e of edges) {
+      const a = nodes[e.i], b = nodes[e.j];
+      let dx = b.x - a.x, dy = b.y - a.y;
+      let d = Math.sqrt(dx * dx + dy * dy) || 1;
+      const ideal = 60;
+      const force = (d - ideal) * 0.02 * alpha;
+      const fx = dx / d * force, fy = dy / d * force;
+      a.vx += fx; a.vy += fy;
+      b.vx -= fx; b.vy -= fy;
+    }
+
+    for (const nd of nodes) {
+      nd.vx += (cx - nd.x) * 0.004 * alpha;
+      nd.vy += (cy - nd.y) * 0.004 * alpha;
+      nd.vx *= 0.7; nd.vy *= 0.7;
+      nd.x += nd.vx; nd.y += nd.vy;
+      nd.x = Math.max(40, Math.min(W - 40, nd.x));
+      nd.y = Math.max(40, Math.min(H - 40, nd.y));
+    }
+  }
+}
+
+// ================================================================
+// DRAWING — MAIN GRAPH
+// ================================================================
+const gCanvas = document.getElementById('graphCanvas');
+const gCtx = gCanvas.getContext('2d');
+let gDpr = 1;
+
+function resizeGraph() {
+  gDpr = window.devicePixelRatio || 1;
+  const rect = gCanvas.parentElement.getBoundingClientRect();
+  gCanvas.width = rect.width * gDpr;
+  gCanvas.height = rect.height * gDpr;
+  gCanvas.style.width = rect.width + 'px';
+  gCanvas.style.height = rect.height + 'px';
+}
+
+function drawGraph() {
+  gCtx.setTransform(gDpr, 0, 0, gDpr, 0, 0);
+  const W = gCanvas.width / gDpr, H = gCanvas.height / gDpr;
+  gCtx.clearRect(0, 0, W, H);
+
+  // Scale & center
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const nd of nodes) {
+    minX = Math.min(minX, nd.x); maxX = Math.max(maxX, nd.x);
+    minY = Math.min(minY, nd.y); maxY = Math.max(maxY, nd.y);
+  }
+  const dataW = maxX - minX || 1, dataH = maxY - minY || 1;
+  const pad = 80;
+  const scaleX = (W - 2 * pad) / dataW;
+  const scaleY = (H - 2 * pad) / dataH;
+  const scale = Math.min(scaleX, scaleY, 2.5);
+  const dataCx = (minX + maxX) / 2, dataCy = (minY + maxY) / 2;
+
+  function tx(nd) {
+    return {
+      x: W / 2 + (nd.x - dataCx) * scale,
+      y: H / 2 + (nd.y - dataCy) * scale
+    };
+  }
+
+  // Edges
+  for (const e of edges) {
+    const a = tx(nodes[e.i]), b = tx(nodes[e.j]);
+    const isSelectedEdge = (e.i === selectedIdx || e.j === selectedIdx);
+
+    gCtx.beginPath();
+    gCtx.moveTo(a.x, a.y);
+    gCtx.lineTo(b.x, b.y);
+    gCtx.strokeStyle = isSelectedEdge ? 'rgba(192,57,43,0.7)' : 'rgba(192,57,43,0.25)';
+    gCtx.lineWidth = isSelectedEdge ? 3 : 1.8;
+    gCtx.stroke();
+
+    // Swap label on edge
+    if (N <= 3 || isSelectedEdge) {
+      const bits_i = nodes[e.i].bits, bits_j = nodes[e.j].bits;
+      let swapPos = -1;
+      for (let k = 0; k < bits_i.length; k++) {
+        if (bits_i[k] !== bits_j[k]) { swapPos = k; break; }
+      }
+      if (N <= 3 && swapPos >= 0) {
+        const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+        gCtx.font = '500 9px "Source Code Pro", monospace';
+        gCtx.fillStyle = 'rgba(138,125,110,0.7)';
+        gCtx.textAlign = 'center';
+        gCtx.fillText(`s${swapPos + 1}`, mx + 10, my - 6);
+      }
+    }
+  }
+
+  // Nodes
+  for (let i = 0; i < nodes.length; i++) {
+    const nd = nodes[i];
+    const p = tx(nd);
+    const isSel = i === selectedIdx;
+    const r = isSel ? 14 : 10;
+
+    // Halo
+    gCtx.beginPath();
+    gCtx.arc(p.x, p.y, r + 8, 0, Math.PI * 2);
+    const grad = gCtx.createRadialGradient(p.x, p.y, r, p.x, p.y, r + 8);
+    grad.addColorStop(0, isSel ? 'rgba(44,62,80,0.15)' : 'rgba(192,57,43,0.08)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    gCtx.fillStyle = grad;
+    gCtx.fill();
+
+    // Circle
+    gCtx.beginPath();
+    gCtx.arc(p.x, p.y, r, 0, Math.PI * 2);
+    gCtx.fillStyle = isSel ? '#2c3e50' : '#c0392b';
+    gCtx.fill();
+    gCtx.strokeStyle = isSel ? '#1a252f' : '#922b21';
+    gCtx.lineWidth = 2;
+    gCtx.stroke();
+
+    // Inner dot
+    gCtx.beginPath();
+    gCtx.arc(p.x - 2, p.y - 2, r * 0.3, 0, Math.PI * 2);
+    gCtx.fillStyle = 'rgba(255,255,255,0.25)';
+    gCtx.fill();
+
+    // Label
+    const label = nd.parens;
+    gCtx.font = `${isSel ? '600' : '400'} ${N <= 3 ? 11 : 9}px "Source Code Pro", monospace`;
+    gCtx.fillStyle = isSel ? '#2c3e50' : 'rgba(60,48,37,0.7)';
+    gCtx.textAlign = 'center';
+    gCtx.fillText(label, p.x, p.y - r - 8);
+
+    // Binary string below
+    if (N <= 3) {
+      gCtx.font = '400 9px "Source Code Pro", monospace';
+      gCtx.fillStyle = 'rgba(138,125,110,0.6)';
+      gCtx.fillText(nd.str, p.x, p.y + r + 14);
+    }
+  }
+}
+
+// ================================================================
+// DRAWING — DYCK PATH PREVIEW
+// ================================================================
+const dCanvas = document.getElementById('dyckCanvas');
+const dCtx = dCanvas.getContext('2d');
+
+function drawDyckPath(bits) {
+  const dp = window.devicePixelRatio || 1;
+  const cW = dCanvas.parentElement.clientWidth;
+  const cH = 130;
+  dCanvas.width = cW * dp;
+  dCanvas.height = cH * dp;
+  dCanvas.style.width = cW + 'px';
+  dCanvas.style.height = cH + 'px';
+  dCtx.setTransform(dp, 0, 0, dp, 0, 0);
+  dCtx.clearRect(0, 0, cW, cH);
+  if (!bits) return;
+
+  const n = bits.length / 2;
+  const pad = { l: 32, r: 12, t: 12, b: 20 };
+  const pW = cW - pad.l - pad.r;
+  const pH = cH - pad.t - pad.b;
+  const dx = pW / (2 * n);
+  const dy = pH / n;
+
+  // Grid
+  dCtx.strokeStyle = 'rgba(212,200,184,0.5)';
+  dCtx.lineWidth = 0.5;
+  for (let y = 0; y <= n; y++) {
+    const py = pad.t + (n - y) * dy;
+    dCtx.beginPath(); dCtx.moveTo(pad.l, py); dCtx.lineTo(pad.l + pW, py); dCtx.stroke();
+  }
+
+  // y=0 axis
+  const y0 = pad.t + n * dy;
+  dCtx.strokeStyle = 'rgba(138,125,110,0.5)';
+  dCtx.lineWidth = 1;
+  dCtx.beginPath(); dCtx.moveTo(pad.l, y0); dCtx.lineTo(pad.l + pW, y0); dCtx.stroke();
+
+  // Y labels
+  dCtx.font = '9px "Source Code Pro", monospace';
+  dCtx.fillStyle = '#8a7d6e';
+  dCtx.textAlign = 'right';
+  for (let y = 0; y <= n; y++) dCtx.fillText(y, pad.l - 5, pad.t + (n - y) * dy + 3);
+
+  // Build points
+  const pts = [{ x: 0, y: 0 }];
+  let cy = 0;
+  for (const b of bits) { cy += b ? 1 : -1; pts.push({ x: pts.length, y: cy }); }
+
+  const toC = p => ({ x: pad.l + p.x * dx, y: pad.t + (n - p.y) * dy });
+
+  // Area fill
+  dCtx.beginPath();
+  let cp = toC(pts[0]);
+  dCtx.moveTo(cp.x, cp.y);
+  for (let i = 1; i < pts.length; i++) { cp = toC(pts[i]); dCtx.lineTo(cp.x, cp.y); }
+  dCtx.lineTo(toC(pts[pts.length - 1]).x, y0);
+  dCtx.lineTo(toC(pts[0]).x, y0);
+  dCtx.closePath();
+  dCtx.fillStyle = 'rgba(192,57,43,0.06)';
+  dCtx.fill();
+
+  // Path segments
+  dCtx.lineWidth = 2.5;
+  dCtx.lineCap = 'round';
+  for (let i = 0; i < bits.length; i++) {
+    const from = toC(pts[i]), to = toC(pts[i + 1]);
+    dCtx.strokeStyle = bits[i] ? '#2980b9' : '#d4a017';
+    dCtx.beginPath(); dCtx.moveTo(from.x, from.y); dCtx.lineTo(to.x, to.y); dCtx.stroke();
+  }
+
+  // Vertices
+  for (let i = 0; i < pts.length; i++) {
+    cp = toC(pts[i]);
+    dCtx.beginPath(); dCtx.arc(cp.x, cp.y, 3, 0, Math.PI * 2);
+    dCtx.fillStyle = (i === 0 || i === pts.length - 1) ? '#d4a017' : '#3d3225';
+    dCtx.fill();
+    dCtx.strokeStyle = '#faf6f0';
+    dCtx.lineWidth = 1.5;
+    dCtx.stroke();
+  }
+}
+
+// ================================================================
+// DRAWING — POLYGON TRIANGULATION
+// ================================================================
+const tCanvas = document.getElementById('triCanvas');
+const tCtx = tCanvas.getContext('2d');
+
+function drawTriangulation(tri) {
+  const dp = window.devicePixelRatio || 1;
+  const cW = tCanvas.parentElement.clientWidth;
+  const cH = 180;
+  tCanvas.width = cW * dp;
+  tCanvas.height = cH * dp;
+  tCanvas.style.width = cW + 'px';
+  tCanvas.style.height = cH + 'px';
+  tCtx.setTransform(dp, 0, 0, dp, 0, 0);
+  tCtx.clearRect(0, 0, cW, cH);
+  if (!tri) return;
+
+  const nSides = tri.nSides;
+  const cx = cW / 2, cy = cH / 2;
+  const R = Math.min(cW, cH) / 2 - 28;
+
+  // Polygon vertices (top vertex = 0, clockwise)
+  const verts = [];
+  for (let i = 0; i < nSides; i++) {
+    const angle = -Math.PI / 2 + (i * 2 * Math.PI) / nSides;
+    verts.push({ x: cx + R * Math.cos(angle), y: cy + R * Math.sin(angle) });
+  }
+
+  // Triangle fills
+  const triColors = [
+    'rgba(41,128,185,0.10)',
+    'rgba(212,160,23,0.10)',
+    'rgba(22,160,133,0.10)',
+    'rgba(142,68,173,0.10)',
+    'rgba(192,57,43,0.10)',
+    'rgba(39,174,96,0.10)',
+  ];
+  tri.triangles.forEach((t, idx) => {
+    tCtx.beginPath();
+    tCtx.moveTo(verts[t[0]].x, verts[t[0]].y);
+    tCtx.lineTo(verts[t[1]].x, verts[t[1]].y);
+    tCtx.lineTo(verts[t[2]].x, verts[t[2]].y);
+    tCtx.closePath();
+    tCtx.fillStyle = triColors[idx % triColors.length];
+    tCtx.fill();
+  });
+
+  // Polygon edges
+  tCtx.strokeStyle = '#3d3225';
+  tCtx.lineWidth = 2;
+  tCtx.beginPath();
+  for (let i = 0; i < nSides; i++) {
+    const j = (i + 1) % nSides;
+    tCtx.moveTo(verts[i].x, verts[i].y);
+    tCtx.lineTo(verts[j].x, verts[j].y);
+  }
+  tCtx.stroke();
+
+  // Diagonals
+  tCtx.strokeStyle = '#c0392b';
+  tCtx.lineWidth = 2;
+  tCtx.setLineDash([5, 4]);
+  for (const [a, b] of tri.diagonals) {
+    tCtx.beginPath();
+    tCtx.moveTo(verts[a].x, verts[a].y);
+    tCtx.lineTo(verts[b].x, verts[b].y);
+    tCtx.stroke();
+  }
+  tCtx.setLineDash([]);
+
+  // Vertex dots + labels
+  for (let i = 0; i < nSides; i++) {
+    const v = verts[i];
+    tCtx.beginPath();
+    tCtx.arc(v.x, v.y, 5, 0, Math.PI * 2);
+    tCtx.fillStyle = '#3d3225';
+    tCtx.fill();
+    tCtx.strokeStyle = '#faf6f0';
+    tCtx.lineWidth = 1.5;
+    tCtx.stroke();
+
+    // Label
+    const labelAngle = -Math.PI / 2 + (i * 2 * Math.PI) / nSides;
+    const lx = cx + (R + 16) * Math.cos(labelAngle);
+    const ly = cy + (R + 16) * Math.sin(labelAngle);
+    tCtx.font = '600 11px "Source Code Pro", monospace';
+    tCtx.fillStyle = '#3d3225';
+    tCtx.textAlign = 'center';
+    tCtx.textBaseline = 'middle';
+    tCtx.fillText(i, lx, ly);
+  }
+}
+
+// ================================================================
+// SELECTION & INFO UPDATES
+// ================================================================
+function selectNode(idx) {
+  selectedIdx = idx;
+  if (idx < 0 || idx >= nodes.length) {
+    document.getElementById('dyckInfo').innerHTML = '<div class="placeholder-msg">Click a vertex in the graph</div>';
+    document.getElementById('triInfo').innerHTML = '<div class="placeholder-msg">Click a vertex in the graph</div>';
+    document.getElementById('parenInfo').innerHTML = '<div class="placeholder-msg">Click a vertex in the graph</div>';
+    drawDyckPath(null);
+    drawTriangulation(null);
+    drawGraph();
+    renderVertexList();
+    return;
+  }
+
+  const nd = nodes[idx];
+  const neighbors = edges.filter(e => e.i === idx || e.j === idx);
+  const nbLabels = neighbors.map(e => {
+    const other = e.i === idx ? e.j : e.i;
+    return nodes[other].parens;
+  });
+
+  // Dyck info
+  const word = nd.bits.map(b => b ? 'U' : 'D').join('');
+  drawDyckPath(nd.bits);
+  document.getElementById('dyckInfo').innerHTML = `
+    <div class="big red">${nd.str}</div>
+    <div><span class="dim">Steps:</span> <span class="blue">${word.replace(/U/g, '<span style="color:var(--up-color)">U</span>').replace(/D/g, '<span style="color:var(--down-color)">D</span>')}</span></div>
+    <div><span class="dim">Balanced:</span> ${nd.parens}</div>
+    <div><span class="dim">Area:</span> ${nd.prefixSums.reduce((a, b) => a + b, 0)}</div>
+  `;
+
+  // Triangulation
+  drawTriangulation(nd.tri);
+  const diagStr = nd.tri.diagonals.map(d => `(${d[0]},${d[1]})`).join(', ') || 'none';
+  document.getElementById('triInfo').innerHTML = `
+    <div><span class="dim">Polygon:</span> (${N + 2})-gon</div>
+    <div><span class="dim">Diagonals:</span> <span class="red">${diagStr}</span></div>
+    <div><span class="dim">Triangles:</span> ${nd.tri.triangles.length}</div>
+  `;
+
+  // Parenthesization
+  document.getElementById('parenInfo').innerHTML = `
+    <div class="big" style="font-size:1.05rem; color:var(--accent-purple); word-break:break-all;">${nd.fullParen}</div>
+    <div style="margin-top:0.4rem"><span class="dim">Symbols:</span> ${N + 1} (${Array.from({length: N + 1}, (_, i) => String.fromCharCode(97 + i)).join(', ')})</div>
+    <div><span class="dim">Neighbors:</span> ${nbLabels.join(', ')}</div>
+  `;
+
+  drawGraph();
+  renderVertexList();
+}
+
+function updateStats() {
+  document.getElementById('sVerts').textContent = catalan(N);
+  document.getElementById('sEdges').textContent = edges.length;
+  document.getElementById('sKn').textContent = N + 1;
+  document.getElementById('sDim').textContent = N - 1;
+
+  const names = { 2: '₂', 3: '₃', 4: '₄' };
+  const shapes = {
+    2: 'line segment',
+    3: 'pentagon',
+    4: '3D polytope (9 faces, 21 edges)'
+  };
+  document.getElementById('graphLabel').textContent =
+    `Tamari lattice T${names[N] || N}  =  1-skeleton of K${N + 1} (${shapes[N] || ''})`;
+}
+
+function renderVertexList() {
+  const el = document.getElementById('vxList');
+  el.innerHTML = '';
+  nodes.forEach((nd, i) => {
+    const div = document.createElement('div');
+    div.className = 'vx-item' + (i === selectedIdx ? ' active' : '');
+    div.innerHTML = `<span class="dot"></span><span>${nd.parens}</span><span style="margin-left:auto;opacity:0.5">${nd.str}</span>`;
+    div.onclick = () => selectNode(i);
+    el.appendChild(div);
+  });
+}
+
+// ================================================================
+// INTERACTION
+// ================================================================
+gCanvas.addEventListener('click', e => {
+  const rect = gCanvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+
+  // Reconstruct transform
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const nd of nodes) {
+    minX = Math.min(minX, nd.x); maxX = Math.max(maxX, nd.x);
+    minY = Math.min(minY, nd.y); maxY = Math.max(maxY, nd.y);
+  }
+  const W = gCanvas.width / gDpr, H = gCanvas.height / gDpr;
+  const dataW = maxX - minX || 1, dataH = maxY - minY || 1;
+  const pad = 80;
+  const scale = Math.min((W - 2 * pad) / dataW, (H - 2 * pad) / dataH, 2.5);
+  const dataCx = (minX + maxX) / 2, dataCy = (minY + maxY) / 2;
+
+  let bestIdx = -1, bestD = 25;
+  for (let i = 0; i < nodes.length; i++) {
+    const sx = W / 2 + (nodes[i].x - dataCx) * scale;
+    const sy = H / 2 + (nodes[i].y - dataCy) * scale;
+    const d = Math.sqrt((mx - sx) ** 2 + (my - sy) ** 2);
+    if (d < bestD) { bestD = d; bestIdx = i; }
+  }
+  selectNode(bestIdx);
+});
+
+gCanvas.addEventListener('mousemove', e => {
+  const rect = gCanvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const nd of nodes) {
+    minX = Math.min(minX, nd.x); maxX = Math.max(maxX, nd.x);
+    minY = Math.min(minY, nd.y); maxY = Math.max(maxY, nd.y);
+  }
+  const W = gCanvas.width / gDpr, H = gCanvas.height / gDpr;
+  const dataW = maxX - minX || 1, dataH = maxY - minY || 1;
+  const pad = 80;
+  const scale = Math.min((W - 2 * pad) / dataW, (H - 2 * pad) / dataH, 2.5);
+  const dataCx = (minX + maxX) / 2, dataCy = (minY + maxY) / 2;
+
+  let hit = false;
+  for (let i = 0; i < nodes.length; i++) {
+    const sx = W / 2 + (nodes[i].x - dataCx) * scale;
+    const sy = H / 2 + (nodes[i].y - dataCy) * scale;
+    if (Math.sqrt((mx - sx) ** 2 + (my - sy) ** 2) < 20) { hit = true; break; }
+  }
+  gCanvas.style.cursor = hit ? 'pointer' : 'default';
+});
+
+// ================================================================
+// ORDER CONTROLS
+// ================================================================
+function setN(n) {
+  document.querySelectorAll('.ctrl-btns button').forEach(b =>
+    b.classList.toggle('active', parseInt(b.textContent) === n));
+  buildGraph(n);
+  resizeGraph();
+  drawGraph();
+  selectNode(-1);
+}
+
+const nBtns = document.getElementById('nBtns');
+[2, 3, 4].forEach(n => {
+  const btn = document.createElement('button');
+  btn.textContent = n;
+  btn.onclick = () => setN(n);
+  nBtns.appendChild(btn);
+});
+
+// ================================================================
+// INIT
+// ================================================================
+window.addEventListener('resize', () => { resizeGraph(); drawGraph(); });
+setN(3);
+</script>
+</body>
+</html>
