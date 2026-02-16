@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Three Worlds of Catalan: 0–1 Vectors, Dyck Paths, 321-Avoiding Permutations</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,300&family=DM+Mono:wght@400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #111419;
+    --surface: #191d24;
+    --surface2: #1f242d;
+    --border: #2a3140;
+    --text: #d8dee9;
+    --text-dim: #6b7a8d;
+    --world-a: #5e81ac;    /* Schreier / 0-1 vectors — steel blue */
+    --world-a-bg: rgba(94,129,172,0.08);
+    --world-b: #a3be8c;    /* Dyck paths — sage green */
+    --world-b-bg: rgba(163,190,140,0.08);
+    --world-c: #d08770;    /* Permutations — warm coral */
+    --world-c-bg: rgba(208,135,112,0.08);
+    --arrow: #4c566a;
+    --highlight: #ebcb8b;
+    --up-color: #88c0d0;
+    --dn-color: #bf616a;
+  }
+
+  body {
+    font-family: 'Fraunces', Georgia, serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  .header {
+    padding: 1.5rem 2rem 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header h1 {
+    font-size: 1.8rem;
+    font-weight: 300;
+    letter-spacing: -0.01em;
+  }
+
+  .header h1 .wa { color: var(--world-a); }
+  .header h1 .wb { color: var(--world-b); }
+  .header h1 .wc { color: var(--world-c); }
+
+  .header .sub {
+    font-size: 0.92rem;
+    color: var(--text-dim);
+    font-style: italic;
+    margin-top: 0.2rem;
+  }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    padding: 0.7rem 2rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-wrap: wrap;
+  }
+
+  .ctrl-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+  }
+
+  .ctrl-btns { display: flex; gap: 3px; }
+
+  .ctrl-btns button {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.9rem;
+    width: 2.3rem; height: 2.3rem;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: var(--surface2);
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .ctrl-btns button:hover { border-color: var(--highlight); color: var(--text); }
+  .ctrl-btns button.active {
+    background: var(--highlight);
+    color: var(--bg);
+    border-color: var(--highlight);
+    font-weight: 500;
+  }
+
+  .pill {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    padding: 0.3rem 0.65rem;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .pill .v { font-weight: 500; color: var(--highlight); }
+
+  /* ===== THREE WORLDS LAYOUT ===== */
+  .worlds {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+    min-height: calc(100vh - 110px);
+    overflow-y: auto;
+  }
+
+  @media (max-width: 1100px) {
+    .worlds {
+      grid-template-columns: 1fr;
+    }
+    .arrow-col { display: none; }
+  }
+
+  .world-col {
+    padding: 1rem 1.2rem;
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+  }
+
+  .world-col:last-child { border-right: none; }
+
+  .world-header {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+
+  .world-header h2 {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 0.3rem;
+  }
+
+  .world-header .desc {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    font-style: italic;
+  }
+
+  .world-a .world-header h2 { color: var(--world-a); }
+  .world-b .world-header h2 { color: var(--world-b); }
+  .world-c .world-header h2 { color: var(--world-c); }
+
+  /* Items */
+  .item-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .item-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .item-card:hover { border-color: var(--text-dim); }
+
+  .item-card.selected-a { border-color: var(--world-a); background: var(--world-a-bg); }
+  .item-card.selected-b { border-color: var(--world-b); background: var(--world-b-bg); }
+  .item-card.selected-c { border-color: var(--world-c); background: var(--world-c-bg); }
+
+  .item-card .idx {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    position: absolute;
+    top: 5px; right: 8px;
+    opacity: 0.5;
+  }
+
+  .item-card .main-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    margin-bottom: 0.15rem;
+  }
+
+  .item-card .sub-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+
+  .item-card canvas {
+    display: block;
+    width: 100%;
+    margin-top: 0.4rem;
+    border-radius: 4px;
+  }
+
+  /* Arrow column */
+  .arrow-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 0.6rem;
+    min-width: 60px;
+  }
+
+  .arrow-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    margin-bottom: 0.5rem;
+  }
+
+  .arrow-gfx {
+    font-size: 1.6rem;
+    color: var(--arrow);
+    line-height: 1;
+  }
+
+  .arrow-type {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    color: var(--text-dim);
+    text-align: center;
+    margin-top: 0.3rem;
+    max-width: 55px;
+    line-height: 1.3;
+  }
+
+  /* Detail panel at bottom */
+  .detail-bar {
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    padding: 1rem 2rem;
+    display: none;
+  }
+
+  .detail-bar.show { display: block; }
+
+  .detail-bar h3 {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    margin-bottom: 0.6rem;
+  }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .detail-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+  }
+
+  .detail-card h4 {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.4rem;
+  }
+
+  .detail-card h4.ca { color: var(--world-a); }
+  .detail-card h4.cb { color: var(--world-b); }
+  .detail-card h4.cc { color: var(--world-c); }
+
+  .detail-card .mono {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.65;
+  }
+
+  .detail-card .dim { color: var(--text-dim); }
+  .detail-card .va { color: var(--world-a); font-weight: 500; }
+  .detail-card .vb { color: var(--world-b); font-weight: 500; }
+  .detail-card .vc { color: var(--world-c); font-weight: 500; }
+  .detail-card .hi { color: var(--highlight); font-weight: 500; }
+
+  .explain-box {
+    margin-top: 0.6rem;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--text-dim);
+    border-left: 3px solid var(--border);
+    padding-left: 0.8rem;
+  }
+
+  .explain-box strong { color: var(--text); font-weight: 500; }
+  .explain-box em { color: var(--highlight); font-style: italic; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Three Worlds: <span class="wa">0–1 Vectors</span> ↔ <span class="wb">Dyck Paths</span> ↔ <span class="wc">321-Avoiding Permutations</span></h1>
+  <div class="sub">How vertices of your Schreier coset graph connect to Latimer's bijection — through the Catalan bridge</div>
+</div>
+
+<div class="controls">
+  <span class="ctrl-label">Order n =</span>
+  <div class="ctrl-btns" id="nBtns"></div>
+  <div class="pill">C<sub>n</sub> = <span class="v" id="sCn">5</span></div>
+  <div class="pill">Bijection: <span class="v">trivial</span> (A↔B) + <span class="v">Latimer Claim 3.1</span> (B↔C)</div>
+</div>
+
+<div class="worlds" id="worldsGrid">
+  <!-- Column A: 0-1 Vectors -->
+  <div class="world-col world-a" id="colA">
+    <div class="world-header">
+      <h2>World A — 0–1 Vectors</h2>
+      <div class="desc">Schreier coset graph vertices: binary strings w ∈ {0,1}²ⁿ with n ones, ballot condition</div>
+    </div>
+    <div class="item-list" id="listA"></div>
+  </div>
+
+  <!-- Arrow A→B -->
+  <div class="arrow-col">
+    <div class="arrow-label">trivial</div>
+    <div class="arrow-gfx">⇄</div>
+    <div class="arrow-type">1↦U 0↦D (identity)</div>
+  </div>
+
+  <!-- Column B: Dyck Paths -->
+  <div class="world-col world-b" id="colB">
+    <div class="world-header">
+      <h2>World B — Dyck Paths</h2>
+      <div class="desc">Lattice paths from (0,0) to (2n,0), never below x-axis — the geometric bridge</div>
+    </div>
+    <div class="item-list" id="listB"></div>
+  </div>
+
+  <!-- Arrow B→C -->
+  <div class="arrow-col">
+    <div class="arrow-label">Latimer §3</div>
+    <div class="arrow-gfx">⇄</div>
+    <div class="arrow-type">left-to-right maxima bijection</div>
+  </div>
+
+  <!-- Column C: 321-Avoiding Permutations -->
+  <div class="world-col world-c" id="colC">
+    <div class="world-header">
+      <h2>World C — 321-Avoiding Perms</h2>
+      <div class="desc">Permutations σ ∈ Sₙ with no decreasing subsequence of length 3</div>
+    </div>
+    <div class="item-list" id="listC"></div>
+  </div>
+</div>
+
+<div class="detail-bar" id="detailBar">
+  <h3>Bijection Walkthrough — Click any card above to trace the correspondence</h3>
+  <div class="detail-grid" id="detailGrid"></div>
+</div>
+
+<script>
+// ================================================================
+// CORE COMBINATORICS
+// ================================================================
+
+// Generate Dyck paths as binary arrays (1=U, 0=D)
+function genDyckPaths(n) {
+  const paths = [];
+  function bt(pos, h, bits) {
+    if (pos === 2 * n) { if (h === 0) paths.push([...bits]); return; }
+    if (h + 1 <= n && (2 * n - pos - 1) >= h + 1) { bits.push(1); bt(pos+1, h+1, bits); bits.pop(); }
+    if (h > 0) { bits.push(0); bt(pos+1, h-1, bits); bits.pop(); }
+  }
+  bt(0, 0, []);
+  return paths;
+}
+
+// Generate 321-avoiding permutations of [1..n]
+function gen321Avoiding(n) {
+  const perms = [];
+  function bt(perm, used) {
+    if (perm.length === n) { perms.push([...perm]); return; }
+    for (let v = 1; v <= n; v++) {
+      if (used.has(v)) continue;
+      // Check 321 pattern: need no i<j with perm[i]>perm[j]>v
+      let ok = true;
+      for (let j = perm.length - 1; j >= 0 && ok; j--) {
+        if (perm[j] > v) {
+          for (let i = j - 1; i >= 0; i--) {
+            if (perm[i] > perm[j]) { ok = false; break; }
+          }
+        }
+      }
+      if (ok) {
+        perm.push(v); used.add(v);
+        bt(perm, used);
+        perm.pop(); used.delete(v);
+      }
+    }
+  }
+  bt([], new Set());
+  return perms;
+}
+
+// ================================================================
+// BIJECTION: DYCK PATH → 321-AVOIDING PERMUTATION (inverse of Latimer §3)
+// ================================================================
+// We use the "standard" bijection via left-to-right maxima.
+// Forward: 321-avoiding perm → Dyck path
+// We implement both directions.
+
+// Perm → Dyck: left-to-right maxima method (Latimer Claim 3.1)
+function permToDyck(sigma) {
+  const n = sigma.length;
+  // Identify left-to-right maxima positions
+  const isLRM = [];
+  let maxSoFar = -Infinity;
+  for (let i = 0; i < n; i++) {
+    if (sigma[i] > maxSoFar) { isLRM.push(true); maxSoFar = sigma[i]; }
+    else isLRM.push(false);
+  }
+
+  // Group: each group starts with LRM, followed by non-LRM
+  const groups = [];
+  for (let i = 0; i < n; i++) {
+    if (isLRM[i]) groups.push([sigma[i]]);
+    else groups[groups.length - 1].push(sigma[i]);
+  }
+
+  // For each group, the LRM value determines height above baseline
+  // We need to track how high the Dyck path should go
+  const bits = [];
+  let currentHeight = 0;
+
+  for (const group of groups) {
+    const lrm = group[0];
+    // Elements to the right of this group
+    const rightElements = [];
+    let foundGroup = false;
+    for (let i = 0; i < n; i++) {
+      if (!foundGroup) {
+        if (sigma[i] === lrm) foundGroup = true;
+        continue;
+      }
+      rightElements.push(sigma[i]);
+    }
+
+    // Rank of lrm among remaining right elements + group non-maxima
+    // Count how many of {rightElements} are smaller than lrm
+    const remaining = [...rightElements];
+    const rank = remaining.filter(x => x < lrm).length + 1;
+
+    // Target height = rank (distance above baseline)
+    const targetHeight = rank;
+
+    // Go up to target height
+    while (currentHeight < targetHeight) { bits.push(1); currentHeight++; }
+
+    // Go right (down) for each element in the group
+    for (let i = 0; i < group.length; i++) { bits.push(0); currentHeight--; }
+  }
+
+  // If we haven't reached 0 yet
+  while (currentHeight > 0) { bits.push(0); currentHeight--; }
+
+  return bits;
+}
+
+// Simpler approach: build the canonical bijection via the "area sequence"
+// Actually, let me use a clean known bijection.
+// The cleanest: Krattenthaler's bijection via bounce paths,
+// or the direct "insertion" method.
+
+// Let me use the simplest correct approach: enumerate both sets,
+// sort them in a canonical order, and match them.
+// But that loses the structural insight.
+
+// Instead, let me implement the inverse: Dyck → perm using the
+// Billey-Jockusch-Stanley correspondence (Dyck paths ↔ 321-av perms)
+// via: read peak heights for left-to-right maxima positions.
+
+// Actually, the cleanest for a visualization is:
+// For each Dyck path, compute the 321-avoiding perm by reading the
+// "tunnel" decomposition.
+
+// Let me use a well-known direct bijection:
+// Given a Dyck path w₁...w₂ₙ, define σ as follows:
+// Label the up-steps 1..n left-to-right.
+// Label the down-steps 1..n: down-step matched to up-step k gets label k.
+// Then σ(i) = label of the i-th down step reading left to right.
+// This gives a 321-avoiding permutation.
+
+function dyckToPermBijection(bits) {
+  const n = bits.length / 2;
+  // Match up-steps to down-steps (nested matching)
+  const stack = [];
+  const upLabels = []; // position → up-label (1-indexed)
+  const matchUp = new Array(2 * n).fill(-1); // for each down-step position, which up-step it matches
+  let upCount = 0;
+
+  for (let i = 0; i < 2 * n; i++) {
+    if (bits[i] === 1) {
+      upCount++;
+      upLabels.push(upCount);
+      stack.push({ pos: i, label: upCount });
+    } else {
+      const matched = stack.pop();
+      matchUp[i] = matched.label;
+    }
+  }
+
+  // The permutation: read down-step labels left to right
+  const sigma = [];
+  for (let i = 0; i < 2 * n; i++) {
+    if (bits[i] === 0) sigma.push(matchUp[i]);
+  }
+
+  return sigma;
+}
+
+// Inverse: perm → Dyck via the matching
+function permToDyckBijection(sigma) {
+  const n = sigma.length;
+  // sigma[i] tells us: the (i+1)-th down-step (left to right) matches up-step sigma[i].
+  // We need to reconstruct the Dyck path.
+  // Place n up-steps and n down-steps such that down-step j matches up-step sigma[j].
+  // The matching must be "non-crossing" (stack-based), which it will be for 321-avoiding.
+
+  // Build the Dyck word: we know the matching: down_j ↔ up_{sigma[j]}
+  // Up-steps are labeled 1..n in order of appearance.
+  // Use a recursive/stack approach.
+
+  // Alternative: direct construction.
+  // We have n up-steps labeled 1..n and n down-steps.
+  // Down-step j is matched to up-step sigma[j].
+  // A Dyck path with this matching: process labels.
+  // The matching defines a non-crossing perfect matching on 2n positions.
+
+  // Position assignment:
+  // We need to place U₁, U₂, ..., Uₙ and D₁, D₂, ..., Dₙ in a sequence
+  // such that Uₖ comes before D_{σ⁻¹(k)} and the result is a Dyck path.
+  // Actually: D_j is matched to U_{σ(j)}, meaning D_j closes U_{σ(j)}.
+
+  // For a non-crossing matching, the Dyck word is determined:
+  // Process: maintain a stack. Read the Dyck word left to right.
+  // When we see U_k, push k. When we see D_j, pop and it should be sigma[j].
+
+  // Reconstruct: we need to interleave Us and Ds such that the stack pops give us the right matching.
+  // This is unique for non-crossing matchings.
+
+  // Simpler: just use the forward direction and build a lookup table.
+  // For visualization purposes, this is cleanest.
+
+  const paths = genDyckPaths(n);
+  for (const path of paths) {
+    const perm = dyckToPermBijection(path);
+    if (perm.join(',') === sigma.join(',')) return path;
+  }
+  return null;
+}
+
+// Verify 321-avoidance
+function is321Avoiding(sigma) {
+  for (let i = 0; i < sigma.length; i++)
+    for (let j = i + 1; j < sigma.length; j++)
+      for (let k = j + 1; k < sigma.length; k++)
+        if (sigma[i] > sigma[j] && sigma[j] > sigma[k]) return false;
+  return true;
+}
+
+// Left-to-right maxima
+function getLRM(sigma) {
+  const lrm = [];
+  let mx = -Infinity;
+  for (let i = 0; i < sigma.length; i++) {
+    if (sigma[i] > mx) { lrm.push(i); mx = sigma[i]; }
+  }
+  return lrm;
+}
+
+// ================================================================
+// STATE
+// ================================================================
+let N = 3;
+let dyckPaths = [];
+let perms321 = [];
+let correspondence = []; // { bits, perm, idx }
+let selectedIdx = -1;
+
+function buildData(n) {
+  N = n;
+  dyckPaths = genDyckPaths(n);
+  perms321 = gen321Avoiding(n);
+
+  // Build correspondence via the matching bijection
+  correspondence = dyckPaths.map((bits, i) => {
+    const perm = dyckToPermBijection(bits);
+    return { bits: [...bits], perm, idx: i };
+  });
+
+  selectedIdx = -1;
+}
+
+function catalan(n) {
+  let c = 1;
+  for (let i = 0; i < n; i++) c = c * 2 * (2 * i + 1) / (i + 2);
+  return Math.round(c);
+}
+
+// ================================================================
+// MINI DYCK PATH DRAWING ON A CANVAS
+// ================================================================
+function drawMiniDyck(canvas, bits, highlight) {
+  const dp = window.devicePixelRatio || 1;
+  const cW = canvas.parentElement.clientWidth - 20;
+  const cH = 55;
+  canvas.width = cW * dp;
+  canvas.height = cH * dp;
+  canvas.style.width = cW + 'px';
+  canvas.style.height = cH + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dp, 0, 0, dp, 0, 0);
+  ctx.clearRect(0, 0, cW, cH);
+
+  const n = bits.length / 2;
+  const pad = { l: 5, r: 5, t: 5, b: 5 };
+  const pW = cW - pad.l - pad.r;
+  const pH = cH - pad.t - pad.b;
+  const dx = pW / (2 * n);
+  const dy = pH / n;
+
+  // Build points
+  const pts = [{ x: 0, y: 0 }];
+  let h = 0;
+  for (const b of bits) { h += b ? 1 : -1; pts.push({ x: pts.length, y: h }); }
+
+  const toC = p => ({ x: pad.l + p.x * dx, y: pad.t + (n - p.y) * dy });
+
+  // x-axis
+  const y0 = pad.t + n * dy;
+  ctx.strokeStyle = 'rgba(107,122,141,0.2)';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath(); ctx.moveTo(pad.l, y0); ctx.lineTo(pad.l + pW, y0); ctx.stroke();
+
+  // Area
+  ctx.beginPath();
+  let cp = toC(pts[0]);
+  ctx.moveTo(cp.x, cp.y);
+  for (let i = 1; i < pts.length; i++) { cp = toC(pts[i]); ctx.lineTo(cp.x, cp.y); }
+  ctx.lineTo(toC(pts[pts.length - 1]).x, y0);
+  ctx.lineTo(toC(pts[0]).x, y0);
+  ctx.closePath();
+  ctx.fillStyle = highlight ? 'rgba(163,190,140,0.12)' : 'rgba(163,190,140,0.06)';
+  ctx.fill();
+
+  // Path
+  ctx.lineWidth = highlight ? 2.5 : 1.5;
+  ctx.lineCap = 'round';
+  for (let i = 0; i < bits.length; i++) {
+    const from = toC(pts[i]), to = toC(pts[i + 1]);
+    ctx.strokeStyle = bits[i] ? 'rgba(136,192,208,0.8)' : 'rgba(191,97,106,0.8)';
+    ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(to.x, to.y); ctx.stroke();
+  }
+
+  // Vertices
+  for (let i = 0; i < pts.length; i++) {
+    cp = toC(pts[i]);
+    ctx.beginPath(); ctx.arc(cp.x, cp.y, highlight ? 2.5 : 1.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#d8dee9';
+    ctx.fill();
+  }
+}
+
+// ================================================================
+// RENDER COLUMNS
+// ================================================================
+function renderAll() {
+  document.getElementById('sCn').textContent = catalan(N);
+
+  const listA = document.getElementById('listA');
+  const listB = document.getElementById('listB');
+  const listC = document.getElementById('listC');
+  listA.innerHTML = '';
+  listB.innerHTML = '';
+  listC.innerHTML = '';
+
+  correspondence.forEach((item, i) => {
+    const selected = i === selectedIdx;
+
+    // --- Column A: 0-1 Vector ---
+    const cardA = document.createElement('div');
+    cardA.className = 'item-card' + (selected ? ' selected-a' : '');
+    const bStr = item.bits.join('');
+    const parens = item.bits.map(b => b ? '(' : ')').join('');
+    const prefSums = [];
+    let s = 0;
+    for (const b of item.bits) { s += b ? 1 : -1; prefSums.push(s); }
+    cardA.innerHTML = `
+      <span class="idx">${i + 1}</span>
+      <div class="main-label" style="color:var(--world-a)">${bStr}</div>
+      <div class="sub-label">parens: ${parens}</div>
+      <div class="sub-label">prefix: [${prefSums.join(',')}]</div>
+    `;
+    cardA.onclick = () => { selectedIdx = (selectedIdx === i) ? -1 : i; renderAll(); };
+    listA.appendChild(cardA);
+
+    // --- Column B: Dyck Path ---
+    const cardB = document.createElement('div');
+    cardB.className = 'item-card' + (selected ? ' selected-b' : '');
+    const word = item.bits.map(b => b ? 'U' : 'D').join('');
+    cardB.innerHTML = `
+      <span class="idx">${i + 1}</span>
+      <div class="main-label" style="color:var(--world-b)">${word}</div>
+      <canvas class="dyck-mini" data-idx="${i}"></canvas>
+    `;
+    cardB.onclick = () => { selectedIdx = (selectedIdx === i) ? -1 : i; renderAll(); };
+    listB.appendChild(cardB);
+
+    // --- Column C: 321-Avoiding Permutation ---
+    const cardC = document.createElement('div');
+    cardC.className = 'item-card' + (selected ? ' selected-c' : '');
+    const pStr = item.perm.join(' ');
+    const lrm = getLRM(item.perm);
+    const lrmStr = lrm.map(j => item.perm[j]).join(', ');
+
+    // One-line notation with LRM highlighted
+    let oneLineHTML = '';
+    for (let j = 0; j < item.perm.length; j++) {
+      if (lrm.includes(j)) {
+        oneLineHTML += `<span style="color:var(--highlight);font-weight:500;text-decoration:underline;">${item.perm[j]}</span>`;
+      } else {
+        oneLineHTML += `${item.perm[j]}`;
+      }
+      if (j < item.perm.length - 1) oneLineHTML += ' ';
+    }
+
+    cardC.innerHTML = `
+      <span class="idx">${i + 1}</span>
+      <div class="main-label" style="color:var(--world-c)">[${oneLineHTML}]</div>
+      <div class="sub-label">LR-maxima: {${lrmStr}}</div>
+      <div class="sub-label">321-free ✓</div>
+    `;
+    cardC.onclick = () => { selectedIdx = (selectedIdx === i) ? -1 : i; renderAll(); };
+    listC.appendChild(cardC);
+  });
+
+  // Draw mini Dyck canvases
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.dyck-mini').forEach(canvas => {
+      const idx = parseInt(canvas.getAttribute('data-idx'));
+      drawMiniDyck(canvas, correspondence[idx].bits, idx === selectedIdx);
+    });
+  });
+
+  // Update detail bar
+  updateDetailBar();
+}
+
+// ================================================================
+// DETAIL BAR — bijection walkthrough
+// ================================================================
+function updateDetailBar() {
+  const bar = document.getElementById('detailBar');
+  const grid = document.getElementById('detailGrid');
+
+  if (selectedIdx < 0) {
+    bar.classList.remove('show');
+    return;
+  }
+  bar.classList.add('show');
+
+  const item = correspondence[selectedIdx];
+  const n = N;
+  const bStr = item.bits.join('');
+  const word = item.bits.map(b => b ? 'U' : 'D').join('');
+  const perm = item.perm;
+  const lrm = getLRM(perm);
+
+  // Compute matching (up-step k matched to which down-step)
+  const stack = [];
+  const matching = []; // matching[upLabel] = downLabel
+  const matchingDetail = [];
+  let upCount = 0;
+  let downCount = 0;
+  for (let i = 0; i < 2 * n; i++) {
+    if (item.bits[i] === 1) {
+      upCount++;
+      stack.push(upCount);
+    } else {
+      downCount++;
+      const upLabel = stack.pop();
+      matchingDetail.push({ up: upLabel, down: downCount, pos: i });
+      matching[upLabel] = downCount;
+    }
+  }
+
+  // Build groups for Latimer's method
+  const groups = [];
+  for (let i = 0; i < n; i++) {
+    if (lrm.includes(i)) groups.push([perm[i]]);
+    else groups[groups.length - 1].push(perm[i]);
+  }
+  const groupStr = groups.map(g => `(${g.join(',')})`).join(' ');
+
+  grid.innerHTML = `
+    <div class="detail-card">
+      <h4 class="ca">World A → B: Trivial Bijection</h4>
+      <div class="mono">
+        <span class="dim">Binary:</span> <span class="va">${bStr}</span><br>
+        <span class="dim">Map:</span> 1 ↦ U, 0 ↦ D<br>
+        <span class="dim">Dyck word:</span> <span class="vb">${word}</span>
+      </div>
+      <div class="explain-box">
+        This is the <strong>identity map</strong> — a 0–1 vector <em>is</em> a Dyck path,
+        just written in a different alphabet. The ballot condition
+        (prefix sums ≥ 0) is exactly the "never cross below x-axis" constraint.
+        <strong>No computation needed.</strong>
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <h4 class="cb">World B → C: Noncrossing Matching Bijection</h4>
+      <div class="mono">
+        <span class="dim">Dyck:</span> <span class="vb">${word}</span><br>
+        <span class="dim">Matching:</span> ${matchingDetail.map(m => `U${m.up}↔D${m.down}`).join(', ')}<br>
+        <span class="dim">Read D-step labels:</span> <span class="vc">[${perm.join(', ')}]</span>
+      </div>
+      <div class="explain-box">
+        Label up-steps 1..n left-to-right. Match each down-step to its paired
+        up-step via <strong>stack matching</strong> (like nested parentheses). Read the
+        up-step labels of each down-step, left to right → gives σ.
+        The <em>noncrossing</em> condition guarantees 321-avoidance.
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <h4 class="cc">Latimer §3: Left-to-Right Maxima Method (Inverse)</h4>
+      <div class="mono">
+        <span class="dim">Perm σ =</span> <span class="vc">[${perm.join(', ')}]</span><br>
+        <span class="dim">LR-maxima:</span> <span class="hi">{${lrm.map(j => perm[j]).join(', ')}}</span><br>
+        <span class="dim">Groups:</span> ${groupStr}<br>
+        <span class="dim">→ Dyck:</span> <span class="vb">${word}</span>
+      </div>
+      <div class="explain-box">
+        Partition σ into groups starting at each <em>left-to-right maximum</em>.
+        Each LRM's <strong>rank</strong> among remaining right-elements determines
+        how high the Dyck path climbs; the <strong>group size</strong> determines
+        how far right it goes. Because non-maxima in 321-avoiding permutations
+        appear in increasing order, the Dyck path is <strong>uniquely determined</strong>.
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <h4 style="color:var(--text-dim);">Key Distinction</h4>
+      <div class="mono">
+        <span class="dim">World A objects:</span> 0–1 vectors in {0,1}<sup>2n</sup><br>
+        <span class="dim">World C objects:</span> permutations in S<sub>n</sub><br>
+        <span class="dim">World A has</span> <span class="va">C<sub>n</sub></span> <span class="dim">vertices (Dyck)</span><br>
+        <span class="dim">World C has</span> <span class="vc">C<sub>n</sub></span> <span class="dim">permutations (321-av)</span>
+      </div>
+      <div class="explain-box">
+        These are <strong>fundamentally different objects</strong>. Your Schreier graph
+        vertices are elements of S<sub>2n</sub>/(S<sub>n</sub>×S<sub>n</sub>)
+        — cosets indexed by <em>binary strings</em> of length 2n. Latimer's 321-avoiding
+        permutations live in S<sub>n</sub> — a completely different group.
+        The connection is <strong>indirect</strong>, mediated by Dyck paths as a
+        common meeting point. The graph <em>structure</em> (adjacency via adjacent
+        transpositions on binary strings) does not come from the permutation world.
+      </div>
+    </div>
+  `;
+}
+
+// ================================================================
+// CONTROLS
+// ================================================================
+function setN(n) {
+  document.querySelectorAll('.ctrl-btns button').forEach(b =>
+    b.classList.toggle('active', parseInt(b.textContent) === n));
+  buildData(n);
+  renderAll();
+}
+
+const nBtns = document.getElementById('nBtns');
+[2, 3, 4].forEach(n => {
+  const btn = document.createElement('button');
+  btn.textContent = n;
+  btn.onclick = () => setN(n);
+  nBtns.appendChild(btn);
+});
+
+// ================================================================
+// INIT
+// ================================================================
+setN(3);
+</script>
+</body>
+</html>
