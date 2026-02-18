@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-Symbol Shortest-Path — Interactive Education</title>
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #e8f5e9; font-family: 'Georgia', 'Times New Roman', serif; padding: 16px; color: #2c2416; }
+    h1 { font-size: 1.4rem; margin-bottom: 12px; color: #4a3c2a; }
+    .controls {
+      background: #f1f8e9; padding: 16px; border-radius: 8px; margin-bottom: 16px;
+      border: 1px solid #c8e6c9; max-width: 700px; overflow: visible;
+    }
+    .control-row { margin: 10px 0; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .controls-main { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; margin-bottom: 8px; }
+    .sliders-layout { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 1px solid #c8e6c9; width: 100%; }
+    .sliders-layout .slider-inline { display: inline-flex; align-items: center; gap: 6px; }
+    .sliders-layout .slider-inline label { min-width: auto; font-size: 0.85rem; white-space: nowrap; }
+    .sliders-layout .slider-inline input[type="range"] { width: 70px; min-width: 70px; flex: none; }
+    .sliders-wrap { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; flex: 1; min-width: 360px; }
+    .sliders-wrap .slider-inline, .sliders-wrap .control-row { display: inline-flex; align-items: center; gap: 6px; margin: 0; }
+    .sliders-wrap .slider-inline label, .sliders-wrap .control-row label { min-width: auto; font-size: 0.85rem; white-space: nowrap; }
+    .sliders-wrap .slider-inline input[type="range"], .sliders-wrap .control-row input[type="range"] { width: 70px; min-width: 70px; max-width: none; flex: none; }
+    #countControls { display: contents; }
+    .checkboxes-col { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; padding-left: 12px; border-left: 1px solid #c8e6c9; }
+    .checkboxes-col .control-row { margin: 0; }
+    label { font-weight: 600; min-width: 140px; }
+    input[type="range"] { flex: 1; max-width: 200px; accent-color: #6b5b45; }
+    .val { font-weight: 700; color: #5a4a3a; min-width: 24px; }
+    .info { background: #f1f8e9; padding: 12px; border-radius: 6px; margin-top: 12px; font-size: 0.9rem; border-left: 4px solid #a5d6a7; }
+    #canvas-container { background: #f1f8e9; border-radius: 8px; padding: 20px; display: inline-block; overflow: visible; min-width: 0; }
+    .step-by-step {
+      margin-top: 16px; padding: 16px; background: #f1f8e9; border-radius: 8px;
+      border: 1px solid #c8e6c9; font-size: 0.9rem; line-height: 1.6; max-height: 400px; overflow-y: auto;
+    }
+    .step-by-step h4 { margin: 12px 0 6px; color: inherit; font-size: 1rem; }
+    .step-by-step p { margin: 6px 0; }
+    .step-by-step .step-block { padding: 8px 0; border-bottom: 1px solid #c8e6c9; }
+    .step-by-step .step-block.step-black { color: #000; }
+    .step-by-step .step-block.step-blue { color: #0011aa; }
+    .btn-row { margin: 14px 0; display: flex; gap: 10px; }
+    .btn-row button {
+      padding: 8px 20px; font-size: 0.95rem; font-weight: 600; border-radius: 6px;
+      border: 1px solid #c4b8a8; cursor: pointer; font-family: inherit;
+    }
+    .btn-row button.start { background: #6b8e5a; color: #fff; border-color: #5a7d4a; }
+    .btn-row button.start:hover { background: #5a7d4a; }
+    .btn-row button.reset { background: #c8e6c9; color: #4a3c2a; }
+    .btn-row button.reset:hover { background: #a5d6a7; }
+    .btn-row button.help { background: #a5d6a7; color: #2c2416; border-color: #81c784; }
+    .btn-row button.help:hover { background: #81c784; }
+    .help-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .help-overlay.visible { display: flex; }
+    .help-modal {
+      background: #f1f8e9; border: 2px solid #6b8e5a; border-radius: 12px; max-width: 560px; max-height: 85vh;
+      overflow-y: auto; padding: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+    .help-modal h3 { margin: 0 0 16px; color: #4a3c2a; font-size: 1.2rem; }
+    .help-modal h4 { margin: 14px 0 6px; color: #5a7d4a; font-size: 1rem; }
+    .help-modal p, .help-modal ul { margin: 6px 0; font-size: 0.9rem; line-height: 1.5; }
+    .help-modal ul { padding-left: 20px; }
+    .help-modal .help-table td, .help-modal .help-table th { padding: 6px 8px; border: 1px solid #c8e6c9; text-align: left; }
+    .help-modal .help-table tbody tr:nth-child(even) { background: #f1f8e9; }
+    .help-modal button.close { margin-top: 16px; padding: 8px 20px; background: #6b8e5a; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-family: inherit; }
+    .help-modal button.close:hover { background: #5a7d4a; }
+    .try-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1001;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .try-overlay.visible { display: flex; }
+    .try-modal {
+      background: #f1f8e9; border: 2px solid #6b8e5a; border-radius: 12px; max-width: 420px;
+      padding: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+    .try-modal h3 { margin: 0 0 16px; color: #4a3c2a; font-size: 1.2rem; }
+    .try-modal .try-option { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin: 6px 0; cursor: pointer; border-radius: 8px; border: 1px solid #c8e6c9; }
+    .try-modal .try-option:hover { background: #e8f5e9; }
+    .try-modal .try-option.selected { background: #c8e6c9; border-color: #6b8e5a; }
+    .try-modal .try-option input { margin: 0; }
+    .try-modal button.go { margin-top: 16px; padding: 10px 24px; background: #6b8e5a; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-family: inherit; font-size: 1rem; }
+    .try-modal button.go:hover { background: #5a7d4a; }
+    .quiz-box {
+      margin-top: 16px; padding: 20px; background: #e8f5e9; border-radius: 8px;
+      border: 2px solid #6b8e5a; font-size: 0.95rem;
+    }
+    .quiz-box .quiz-question { font-weight: 600; margin-bottom: 12px; color: #2c2416; }
+    .quiz-box input[type="text"] {
+      padding: 8px 12px; font-size: 1rem; border: 2px solid #c4b8a8; border-radius: 6px;
+      width: 100%; max-width: 200px; margin-bottom: 10px;
+    }
+    .quiz-box .quiz-feedback { margin-top: 10px; padding: 8px; border-radius: 6px; }
+    .quiz-box .quiz-feedback.correct { background: #d4edda; color: #155724; }
+    .quiz-box .quiz-feedback.wrong { background: #f8d7da; color: #721c24; }
+    .quiz-box .quiz-hint { margin-top: 8px; padding: 8px; background: #fff3cd; border-radius: 6px; color: #856404; }
+    .quiz-box button.hint-btn { padding: 6px 14px; margin-top: 6px; background: #c8e6c9; border: 1px solid #a5d6a7; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    .quiz-box button.hint-btn:hover { background: #a5d6a7; }
+    .quiz-progress { font-size: 0.85rem; color: #6b5b45; margin-bottom: 10px; }
+    .top-section { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; margin-bottom: 16px; }
+    .result-panel {
+      flex: 1; min-width: 360px;
+      background: #f1f8e9; padding: 20px; border-radius: 8px; border: 1px solid #c8e6c9;
+      font-size: 0.95rem; line-height: 1.5;
+    }
+    .result-panel .result-line { margin-bottom: 6px; }
+    .result-panel .result-diagram { margin: 16px 0; display: inline-block; }
+    .result-panel .result-diagram table { border-collapse: collapse; border-spacing: 0; }
+    .result-panel .result-diagram td {
+      width: 36px; height: 36px; padding: 0; border: 1.5px solid #b4a494; text-align: center;
+      font-weight: 600; font-size: 14px; vertical-align: middle;
+    }
+    .result-panel .result-steps { margin-top: 16px; font-size: 0.9rem; color: #0011aa; }
+    .result-panel .result-steps div { margin: 4px 0; }
+    .main-row { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+    #canvas-container { flex: 0 0 auto; min-width: 0; position: sticky; left: 0; z-index: 1; }
+    .paths-panel {
+      flex: 1; min-width: 260px; background: #f1f8e9;
+      padding: 16px; border-radius: 8px; border: 1px solid #c8e6c9;
+      overflow-y: auto; font-size: 0.85rem; line-height: 1.5;
+    }
+    .paths-panel h4 { margin: 0 0 8px; color: #4a3c2a; font-size: 1rem; }
+    .paths-panel .paths-how { font-size: 0.8rem; color: #5a4a3a; margin-bottom: 10px; padding: 8px; background: #fff; border-radius: 4px; border: 1px solid #c8e6c9; }
+    .paths-panel table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 0.82rem; }
+    .paths-panel th { text-align: left; padding: 6px 8px; border-bottom: 2px solid #6b8e5a; color: #4a3c2a; font-weight: 600; }
+    .paths-panel td { padding: 6px 8px; border-bottom: 1px solid #c8e6c9; vertical-align: top; }
+    .paths-panel td.path-num { width: 2em; font-weight: 600; color: #6b5b45; }
+    .paths-panel td.path-chain { word-break: break-word; }
+    .paths-panel .word-chip { display: inline-block; padding: 2px 6px; margin: 1px 2px; border-radius: 4px; font-weight: 600; color: #1a1a1a; }
+  </style>
+</head>
+<body>
+  <noscript><p style="color:#a00;padding:12px;">JavaScript is required.</p></noscript>
+  <p id="loadHint" style="background:#fff3cd;padding:10px;border-radius:6px;margin-bottom:12px;">
+    If the canvas is blank, open via HTTP (e.g. <code>python3 -m http.server</code> then <code>http://localhost:8000/hook_frm_edu_v3.html</code>).
+  </p>
+  <h1>Multi-Symbol Paths: the <a href="https://en.wikipedia.org/wiki/Hook_length_formula" target="_blank" rel="noopener">Hook-Length Formula</a> computes</h1>
+  <p style="margin-bottom: 16px; max-width: 700px; font-weight: 600; color: #4a3c2a;">
+    * the number of shortest paths (f^λ) from E=sorted(P) to P=rev(E);<br>
+    * the shortest distance d(P,E).
+  </p>
+
+  <div class="top-section">
+  <div class="controls">
+    <div class="btn-row">
+      <button type="button" class="start" id="btnTry">TRY</button>
+      <button type="button" class="reset" id="btnReset">RESET</button>
+      <button type="button" class="help" id="btnHelp">HELP</button>
+    </div>
+    <div class="controls-main">
+      <div class="sliders-wrap">
+        <div class="slider-inline control-row">
+          <label>r:</label>
+          <input type="range" id="r" min="2" max="6" value="3">
+          <span class="val" id="rVal">3</span>
+        </div>
+        <div id="countControls"></div>
+        <div class="slider-inline control-row">
+          <label>Cell:</label>
+          <input type="range" id="cellSize" min="24" max="56" value="36">
+          <span class="val" id="cellSizeVal">36</span>
+        </div>
+      </div>
+      <div class="sliders-layout">
+        <span style="font-weight:600;font-size:0.85rem;margin-right:8px;">Layout:</span>
+        <div class="slider-inline control-row">
+          <label>Top:</label>
+          <input type="range" id="topWidth" min="400" max="1400" value="950">
+          <span class="val" id="topWidthVal">950</span>
+        </div>
+        <div class="slider-inline control-row">
+          <label>Canvas W:</label>
+          <input type="range" id="canvasW" min="320" max="900" value="794">
+          <span class="val" id="canvasWVal">794</span>
+        </div>
+        <div class="slider-inline control-row">
+          <label>Canvas H:</label>
+          <input type="range" id="canvasH" min="400" max="1000" value="838">
+          <span class="val" id="canvasHVal">838</span>
+        </div>
+        <div class="slider-inline control-row">
+          <label>Paths W:</label>
+          <input type="range" id="pathsW" min="300" max="1500" value="1251">
+          <span class="val" id="pathsWVal">1251</span>
+        </div>
+        <div class="slider-inline control-row">
+          <label>Paths H:</label>
+          <input type="range" id="pathsH" min="400" max="900" value="750">
+          <span class="val" id="pathsHVal">750</span>
+        </div>
+        <div class="slider-inline control-row">
+          <label>Result W:</label>
+          <input type="range" id="resultW" min="320" max="700" value="480">
+          <span class="val" id="resultWVal">480</span>
+        </div>
+      </div>
+      <div class="checkboxes-col">
+        <div class="control-row">
+          <label>Show hook lengths:</label>
+          <input type="checkbox" id="showHooks" checked>
+        </div>
+        <div class="control-row">
+          <label>Show formula steps:</label>
+          <input type="checkbox" id="showSteps" checked>
+        </div>
+        <div class="control-row">
+          <label>Step-by-step:</label>
+          <input type="checkbox" id="showStepByStep">
+        </div>
+        <div class="control-row">
+          <label>Quiz mode:</label>
+          <input type="checkbox" id="quizMode">
+        </div>
+        <div class="control-row">
+          <label>Show paths:</label>
+          <input type="checkbox" id="showPaths" checked>
+        </div>
+        <div class="control-row">
+          <label>Show subgraph:</label>
+          <input type="checkbox" id="showSubgraph" checked>
+        </div>
+      </div>
+    </div>
+    <div class="info" id="formulaInfo"></div>
+    <div id="stepByStepBox" class="step-by-step" style="display:none;"></div>
+    <div id="quizBox" class="quiz-box" style="display:none;"></div>
+  </div>
+
+  <div id="resultPanel" class="result-panel">
+    <div class="result-line" id="resultComposition"></div>
+    <div class="result-line" id="resultPE"></div>
+    <div class="result-line" id="resultShape"></div>
+    <div class="result-diagram" id="resultDiagram"></div>
+    <div class="result-steps" id="resultSteps"></div>
+  </div>
+  </div>
+
+  <div class="main-row">
+    <div id="canvas-container"></div>
+    <div id="pathsPanel" class="paths-panel" style="display:none;">
+      <h4>All shortest paths (P → E)</h4>
+      <div id="pathsList"></div>
+    </div>
+  </div>
+
+  <div id="tryOverlay" class="try-overlay">
+    <div class="try-modal">
+      <h3>Select composition (r, a₀, …, aᵣ₋₁)</h3>
+      <p style="margin:0 0 12px;font-size:0.9rem;color:#c00;font-weight:600;">Larger r values require more resources !!!</p>
+      <p style="margin-bottom:12px;font-size:0.9rem;">Choose one, then click GO:</p>
+      <div id="tryOptions"></div>
+      <button type="button" class="go" id="btnTryGo">GO</button>
+      <p style="margin-top:8px;font-size:0.8rem;color:#6b5b45;">Press Enter to confirm.</p>
+    </div>
+  </div>
+
+  <div id="helpOverlay" class="help-overlay">
+    <div class="help-modal">
+      <h3>What this app does</h3>
+      <p>This app illustrates the <strong>hook-length formula</strong> for multi-symbol shortest paths. Given a word P (e.g. 22100) and its reverse-sorted version E (e.g. 00122), the formula computes:</p>
+      <ul>
+        <li><strong>d(P,E)</strong> — the shortest distance (number of adjacent swaps needed to go from E to P)</li>
+        <li><strong>The number of shortest paths</strong> from E to P using only adjacent symbol swaps</li>
+      </ul>
+      <p>The Young diagram displays the shape determined by your symbol counts. Each cell shows its hook length; the formula uses the product of hook lengths and factorials.</p>
+
+      <h4>Sliders</h4>
+      <ul>
+        <li><strong>r</strong> — number of symbol types (2–6)</li>
+        <li><strong>a0, a1, a2, …</strong> — count of each symbol in the word</li>
+        <li><strong>Cell</strong> — cell size (px) in the Young diagram</li>
+        <li><strong>Top, Canvas W/H, Paths W/H, Result W</strong> — layout dimensions (config, canvas, paths panel, result panel)</li>
+      </ul>
+
+      <h4>Checkboxes</h4>
+      <ul>
+        <li><strong>Show hook lengths</strong> — show hook length in each cell</li>
+        <li><strong>Show formula steps</strong> — show step-by-step computation (n!, hook product, etc.)</li>
+        <li><strong>Step-by-step</strong> — expandable explanation of the theorem</li>
+        <li><strong>Quiz mode</strong> — practice by answering questions about d(P,E) and path count</li>
+        <li><strong>Show paths</strong> — list all shortest paths from E to P in the right panel</li>
+        <li><strong>Show subgraph</strong> — draw the path graph (layered nodes) under the Young diagram</li>
+      </ul>
+      <p><strong>"Show paths" / "Show subgraph"</strong> — both rely on enumerating all shortest paths. That drives the main cost: memory and CPU are proportional to f^λ.</p>
+      <p>Example compositions (r, composition, N, f^λ, effect):</p>
+      <table class="help-table" style="width:100%;border-collapse:collapse;font-size:0.85rem;margin:8px 0;">
+        <thead><tr style="background:#c8e6c9;"><th>r</th><th>Composition</th><th>N</th><th>f^λ (approx)</th><th>Effect</th></tr></thead>
+        <tbody>
+          <tr><td>5</td><td>(2,2,2,2,2)</td><td>10</td><td>42</td><td>Fine</td></tr>
+          <tr><td>5</td><td>(3,2,2,2,2)</td><td>11</td><td>~1,500</td><td>Fine</td></tr>
+          <tr><td>5</td><td>(4,3,2,2,2)</td><td>13</td><td>~100k</td><td>Slow, high memory</td></tr>
+          <tr><td>6</td><td>(2,2,2,2,2,2)</td><td>12</td><td>~6,000</td><td>Usually OK</td></tr>
+          <tr><td>6</td><td>(3,2,2,2,2,2)</td><td>13</td><td>~50k+</td><td>Can be heavy</td></tr>
+        </tbody>
+      </table>
+
+      <h4>Buttons</h4>
+      <ul>
+        <li><strong>TRY</strong> — select a preset composition (r,1,…,1) for r=2–6, then GO to show results</li>
+        <li><strong>RESET</strong> — reset to initial state</li>
+        <li><strong>HELP</strong> — show this help</li>
+      </ul>
+      <button type="button" class="close" id="btnHelpClose">Close</button>
+    </div>
+  </div>
+
+  <script>
+    const COLORS = {
+      bg: [232, 245, 233],
+      cells: [[230, 218, 200], [218, 228, 210], [210, 220, 235], [235, 218, 228], [228, 232, 210]],
+      stroke: [180, 165, 145], text: [60, 50, 40], accent: [107, 91, 69]
+    };
+
+    function buildShape(composition) {
+      const r = composition.length;
+      const shape = [];
+      for (let k = r - 1; k >= 1; k--) {
+        let width = 0;
+        for (let s = 0; s < k; s++) width += composition[s];
+        for (let _ = 0; _ < composition[k]; _++) shape.push(width);
+      }
+      return shape;
+    }
+
+    function computeD(composition) {
+      let d = 0;
+      for (let s = 0; s < composition.length; s++)
+        for (let t = s + 1; t < composition.length; t++)
+          d += composition[s] * composition[t];
+      return d;
+    }
+
+    function factorial(n) {
+      if (n <= 1) return 1n;
+      let r = 1n;
+      for (let i = 2; i <= n; i++) r *= BigInt(i);
+      return r;
+    }
+
+    function getHookLengths(shape) {
+      const hooks = [];
+      for (let i = 0; i < shape.length; i++) {
+        const row = [];
+        for (let j = 0; j < shape[i]; j++) {
+          const arm = shape[i] - j - 1;
+          let leg = 0;
+          for (let ii = i + 1; ii < shape.length && shape[ii] > j; ii++) leg++;
+          row.push(arm + leg + 1);
+        }
+        hooks.push(row);
+      }
+      return hooks;
+    }
+
+    function computeF(shape) {
+      const hooks = getHookLengths(shape);
+      let prod = 1n;
+      for (const row of hooks) for (const h of row) prod *= BigInt(h);
+      const d = shape.reduce((a, b) => a + b, 0);
+      return factorial(d) / prod;
+    }
+
+    function getWords(composition) {
+      const r = composition.length;
+      let P = '';
+      for (let k = r - 1; k >= 0; k--) P += String(k).repeat(composition[k]);
+      let E = '';
+      for (let k = 0; k < r; k++) E += String(k).repeat(composition[k]);
+      return { P, E, composition };
+    }
+
+    // Path-finding (JS port of Python):
+    // def neighbors_anyswap(w): ...
+    // def bfs_dist_and_counts(start, target): ...
+    // def all_shortest_paths(start, target, dist): ...
+    // def get_all_paths(P,E): d, count, paths = bfs+all_shortest_paths
+    function neighborsAnyswap(w) {
+      const arr = Array.isArray(w) ? [...w] : [...String(w)].map(Number);
+      const out = [];
+      for (let i = 0; i < arr.length - 1; i++) {
+        if (arr[i] !== arr[i + 1]) {
+          const v = [...arr];
+          [v[i], v[i + 1]] = [v[i + 1], v[i]];
+          out.push(v);
+        }
+      }
+      return out;
+    }
+    function wordKey(w) { return (Array.isArray(w) ? w : [...String(w)].map(Number)).join(','); }
+    function bfsDistAndCounts(start, target) {
+      const startArr = Array.isArray(start) ? [...start] : [...String(start)].map(Number);
+      const targetArr = Array.isArray(target) ? [...target] : [...String(target)].map(Number);
+      const dist = new Map();
+      const ways = new Map();
+      dist.set(wordKey(startArr), 0);
+      ways.set(wordKey(startArr), 1);
+      const q = [startArr];
+      while (q.length > 0) {
+        const w = q.shift();
+        const wk = wordKey(w);
+        const dw = dist.get(wk);
+        for (const nb of neighborsAnyswap(w)) {
+          const nbk = wordKey(nb);
+          const dnb = dist.get(nbk);
+          if (dnb === undefined) {
+            dist.set(nbk, dw + 1);
+            ways.set(nbk, ways.get(wk));
+            q.push(nb);
+          } else if (dnb === dw + 1) {
+            ways.set(nbk, (ways.get(nbk) || 0) + ways.get(wk));
+          }
+        }
+      }
+      const targetKey = wordKey(targetArr);
+      return [dist.get(targetKey), ways.get(targetKey) || 0, dist];
+    }
+    function allShortestPaths(start, target, dist) {
+      const startArr = Array.isArray(start) ? [...start] : [...String(start)].map(Number);
+      const targetArr = Array.isArray(target) ? [...target] : [...String(target)].map(Number);
+      const targetKey = wordKey(targetArr);
+      const D = dist.get(targetKey);
+      if (D === undefined) return [];
+      const shortNext = new Map();
+      for (const [wk, dw] of dist) {
+        if (dw < D) {
+          const w = wk.split(',').map(Number);
+          const next = neighborsAnyswap(w).filter(nb => dist.get(wordKey(nb)) === dw + 1);
+          if (next.length) shortNext.set(wk, next);
+        }
+      }
+      const paths = [];
+      function dfs(w, path) {
+        if (wordKey(w) === targetKey) {
+          paths.push(path.map(x => [...x]));
+          return;
+        }
+        const wk = wordKey(w);
+        for (const nb of shortNext.get(wk) || []) {
+          path.push(nb);
+          dfs(nb, path);
+          path.pop();
+        }
+      }
+      dfs(startArr, [startArr]);
+      return paths;
+    }
+    function tuplesToStrings(path) {
+      return path.map(step => step.join(''));
+    }
+    function getAllPaths(P, E) {
+      const start = [...String(P)].map(Number);
+      const target = [...String(E)].map(Number);
+      const [d, count, dist] = bfsDistAndCounts(start, target);
+      const rawPaths = allShortestPaths(start, target, dist);
+      const paths = rawPaths.map(p => tuplesToStrings(p));
+      return { d, count, paths };
+    }
+
+    function getQuizContext() {
+      const sliderComp = getComposition();
+      const { P, E, composition } = getWords(sliderComp);
+      const atDestination = (P === E);
+      const shape = buildShape(composition);
+      const d = atDestination ? 0 : computeD(composition);
+      const hooks = getHookLengths(shape);
+      const prodParts = [];
+      for (const row of hooks) for (const h of row) prodParts.push(h);
+      const prod = prodParts.reduce((a, b) => a * b, 1);
+      const f = atDestination ? 1 : Number(computeF(shape));
+      return { composition, shape, d, hooks, prod, f, r: composition.length, N: composition.reduce((a,b)=>a+b,0), atDestination };
+    }
+
+    const QUIZ_ITEMS = [
+      { step: 1, q: "What is N (the total word length)?", key: 'N',
+        check: (ans, ctx) => parseInt(String(ans).trim()) === ctx.N,
+        hintFn: (ctx) => `N = a₀ + a₁ + ... = ${ctx.composition.join(' + ')} = ${ctx.N}` },
+      { step: 2, q: "What is the shape λ? (comma-separated, e.g. 3,3,2)", key: 'shape',
+        check: (ans, ctx) => {
+          const s = String(ans).trim().replace(/[()]/g, '');
+          const nums = s.split(/[,\s]+/).filter(x=>x).map(x=>parseInt(x,10));
+          return nums.length === ctx.shape.length && nums.every((n,i)=>n===ctx.shape[i]);
+        },
+        hintFn: (ctx) => `For each symbol k, add aₖ rows of width a₀+...+aₖ₋₁. Result: λ = (${ctx.shape.join(', ')})` },
+      { step: 3, q: "What is d (the number of inversions)?", key: 'd',
+        check: (ans, ctx) => parseInt(String(ans).trim()) === ctx.d,
+        hintFn: (ctx) => `d = ∑(s<t) aₛaₜ = ${Array.from((function*(){for(let s=0;s<ctx.composition.length;s++)for(let t=s+1;t<ctx.composition.length;t++)yield `${ctx.composition[s]}×${ctx.composition[t]}`})()).join(' + ')} = ${ctx.d}` },
+      { step: 4, q: "What is the hook length of cell (0,0)?", key: 'h00',
+        check: (ans, ctx) => parseInt(String(ans).trim()) === ctx.hooks[0][0],
+        hintFn: (ctx) => `h = arm (cells right) + leg (cells below) + 1. For (0,0): arm=${ctx.shape[0]-1}, leg=${ctx.shape.filter((r,i)=>i>0&&r>0).length} → h = ${ctx.hooks[0][0]}` },
+      { step: 5, q: "What is the product of all hook lengths (∏ hᵢⱼ)?", key: 'prod',
+        check: (ans, ctx) => parseInt(String(ans).trim()) === ctx.prod,
+        hintFn: (ctx) => `Multiply all numbers shown in the diagram: ${([].concat(...ctx.hooks).slice(0,6).join(' × '))}${ctx.hooks.flat().length>6?' × ...' : ''} = ${ctx.prod}` },
+      { step: 6, q: "What is f^λ (the number of shortest paths)?", key: 'f',
+        check: (ans, ctx) => parseInt(String(ans).trim()) === ctx.f,
+        hintFn: (ctx) => `f^λ = d! / (∏ hooks) = ${ctx.d}! / ${ctx.prod} = ${ctx.f}` }
+    ];
+
+    let quizIndex = 0;
+    let hintShown = false;
+
+    function buildQuizHint(ctx, idx) {
+      return QUIZ_ITEMS[idx].hintFn ? QUIZ_ITEMS[idx].hintFn(ctx) : QUIZ_ITEMS[idx].hint || '';
+    }
+
+    function renderQuiz() {
+      const box = document.getElementById('quizBox');
+      if (!document.getElementById('quizMode').checked || !document.getElementById('showStepByStep').checked) {
+        box.style.display = 'none';
+        return;
+      }
+      box.style.display = 'block';
+      const ctx = getQuizContext();
+      const item = QUIZ_ITEMS[quizIndex];
+      const progress = `Step ${item.step} of 6 — Question ${quizIndex + 1} of ${QUIZ_ITEMS.length}`;
+      box.innerHTML = `
+        <div class="quiz-progress">${progress}</div>
+        <div class="quiz-question">Step ${item.step}: ${item.q}</div>
+        <input type="text" id="quizAnswer" placeholder="Your answer" autocomplete="off">
+        <div><button type="button" class="hint-btn" id="quizHint">Need a hint?</button></div>
+        <div id="quizFeedback"></div>
+        <div id="quizHintArea" class="quiz-hint" style="display:none;"></div>
+      `;
+      document.getElementById('quizAnswer').onkeydown = (e) => {
+        if (e.key === 'Enter') checkAnswer();
+      };
+      document.getElementById('quizAnswer').focus();
+      document.getElementById('quizHint').onclick = () => {
+        hintShown = true;
+        document.getElementById('quizHintArea').style.display = 'block';
+        document.getElementById('quizHintArea').innerHTML = buildQuizHint(ctx, quizIndex);
+        document.getElementById('quizHint').disabled = true;
+      };
+      document.getElementById('quizAnswer').oninput = () => {
+        document.getElementById('quizFeedback').innerHTML = '';
+      };
+    }
+
+    function checkAnswer() {
+      const inp = document.getElementById('quizAnswer');
+      if (!inp) return;
+      const ans = inp.value;
+      const ctx = getQuizContext();
+      const item = QUIZ_ITEMS[quizIndex];
+      const fb = document.getElementById('quizFeedback');
+      if (item.check(ans, ctx)) {
+        fb.className = 'quiz-feedback correct';
+        fb.innerHTML = `✓ Correct! ${quizIndex < QUIZ_ITEMS.length - 1 ? 'Well done! Click "Next" or adjust sliders to continue.' : '🎉 Congratulations! You\'ve completed all steps!'}`;
+        inp.disabled = true;
+        document.getElementById('quizHint').style.display = 'none';
+        if (quizIndex < QUIZ_ITEMS.length - 1) {
+          const nextBtn = document.createElement('button');
+          nextBtn.className = 'start';
+          nextBtn.textContent = 'Next question →';
+          nextBtn.style.marginTop = '10px';
+          nextBtn.onclick = () => {
+            quizIndex++;
+            hintShown = false;
+            renderQuiz();
+            redraw();
+          };
+          fb.appendChild(document.createElement('br'));
+          fb.appendChild(nextBtn);
+        } else {
+          const restartBtn = document.createElement('button');
+          restartBtn.className = 'reset';
+          restartBtn.textContent = 'Start over';
+          restartBtn.style.marginTop = '10px';
+          restartBtn.onclick = () => {
+            quizIndex = 0;
+            hintShown = false;
+            renderQuiz();
+            redraw();
+          };
+          fb.appendChild(document.createElement('br'));
+          fb.appendChild(restartBtn);
+        }
+      } else {
+        fb.className = 'quiz-feedback wrong';
+        fb.innerHTML = 'Incorrect. Try again, or click "Need a hint?" for help.';
+      }
+    }
+
+    let mainCanvasH = 520;
+
+    function applyLayout() {
+      const tw = document.getElementById('topWidth');
+      const cw = document.getElementById('canvasW');
+      const ch = document.getElementById('canvasH');
+      const pw = document.getElementById('pathsW');
+      const ph = document.getElementById('pathsH');
+      if (tw) {
+        const v = parseInt(tw.value);
+        const ct = document.querySelector('.controls');
+        if (ct) ct.style.maxWidth = v + 'px';
+        const vEl = document.getElementById('topWidthVal');
+        if (vEl) vEl.textContent = v;
+      }
+      const canvasW = cw ? parseInt(cw.value) || 794 : 794;
+      const canvasH = ch ? parseInt(ch.value) || 838 : 838;
+      if (cw) {
+        const cc = document.getElementById('canvas-container');
+        if (cc) cc.style.width = (canvasW + 40) + 'px';
+        const vEl = document.getElementById('canvasWVal');
+        if (vEl) vEl.textContent = canvasW;
+      }
+      if (ch) {
+        const vEl = document.getElementById('canvasHVal');
+        if (vEl) vEl.textContent = canvasH;
+      }
+      if (typeof resizeCanvas === 'function') resizeCanvas(canvasW, canvasH);
+      if (pw) {
+        const v = parseInt(pw.value);
+        const panel = document.getElementById('pathsPanel');
+        if (panel) { panel.style.minWidth = v + 'px'; panel.style.width = v + 'px'; panel.style.maxWidth = v + 'px'; }
+        const vEl = document.getElementById('pathsWVal');
+        if (vEl) vEl.textContent = v;
+      }
+      if (ph) {
+        const v = parseInt(ph.value);
+        const panel = document.getElementById('pathsPanel');
+        if (panel) panel.style.maxHeight = v + 'px';
+        const vEl = document.getElementById('pathsHVal');
+        if (vEl) vEl.textContent = v;
+      }
+      const rw = document.getElementById('resultW');
+      if (rw) {
+        const v = parseInt(rw.value);
+        const rp = document.getElementById('resultPanel');
+        if (rp) { rp.style.minWidth = v + 'px'; rp.style.maxWidth = v + 'px'; }
+        const vEl = document.getElementById('resultWVal');
+        if (vEl) vEl.textContent = v;
+      }
+    }
+
+    function setup() {
+      const loadHint = document.getElementById('loadHint');
+      if (loadHint) loadHint.style.display = 'none';
+      const canvasW = parseInt(document.getElementById('canvasW')?.value) || 794;
+      const canvasH = parseInt(document.getElementById('canvasH')?.value) || 838;
+      const c = createCanvas(canvasW, canvasH);
+      c.parent('canvas-container');
+      colorMode(RGB, 255);
+      noLoop();
+
+      const rEl = document.getElementById('r');
+      if (rEl) rEl.oninput = () => { updateR(); redraw(); };
+      const cellEl = document.getElementById('cellSize');
+      if (cellEl) cellEl.oninput = () => {
+        const v = document.getElementById('cellSizeVal');
+        if (v) v.textContent = cellEl.value;
+        redraw();
+      };
+      const shEl = document.getElementById('showHooks');
+      if (shEl) shEl.onchange = redraw;
+      const stEl = document.getElementById('showSteps');
+      if (stEl) stEl.onchange = redraw;
+      const sbEl = document.getElementById('showStepByStep');
+      if (sbEl) sbEl.onchange = () => {
+        updateStepByStep();
+        if (document.getElementById('quizMode') && document.getElementById('quizMode').checked) renderQuiz();
+        redraw();
+      };
+      const qmEl = document.getElementById('quizMode');
+      if (qmEl) qmEl.onchange = () => {
+        if (qmEl.checked) {
+          document.getElementById('showStepByStep').checked = true;
+          quizIndex = 0;
+          hintShown = false;
+          updateStepByStep();
+          renderQuiz();
+        } else {
+          document.getElementById('quizBox').style.display = 'none';
+          updateStepByStep();
+        }
+        redraw();
+      };
+      const spEl = document.getElementById('showPaths');
+      if (spEl) spEl.onchange = () => { updatePathsPanel(); redraw(); };
+      const sgEl = document.getElementById('showSubgraph');
+      if (sgEl) sgEl.onchange = () => {
+        mainCanvasH = sgEl.checked ? 880 : 520;
+        redraw();
+      };
+      const btnTry = document.getElementById('btnTry');
+      if (btnTry) btnTry.onclick = openTryModal;
+      const btnReset = document.getElementById('btnReset');
+      if (btnReset) btnReset.onclick = doReset;
+      const btnHelp = document.getElementById('btnHelp');
+      const helpOverlay = document.getElementById('helpOverlay');
+      const btnHelpClose = document.getElementById('btnHelpClose');
+      if (btnHelp && helpOverlay) btnHelp.onclick = () => helpOverlay.classList.add('visible');
+      if (btnHelpClose && helpOverlay) btnHelpClose.onclick = () => helpOverlay.classList.remove('visible');
+      if (helpOverlay) helpOverlay.onclick = (e) => { if (e.target === helpOverlay) helpOverlay.classList.remove('visible'); };
+      const btnTryGo = document.getElementById('btnTryGo');
+      const tryOverlay = document.getElementById('tryOverlay');
+      if (btnTryGo) btnTryGo.onclick = applyTrySelection;
+      if (tryOverlay) {
+        tryOverlay.onclick = (e) => { if (e.target === tryOverlay) tryOverlay.classList.remove('visible'); };
+        document.addEventListener('keydown', (e) => {
+          if (tryOverlay.classList.contains('visible') && e.key === 'Enter') { e.preventDefault(); applyTrySelection(); }
+        });
+      }
+
+      ['topWidth','canvasW','canvasH','pathsW','pathsH','resultW'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.oninput = () => { applyLayout(); redraw(); };
+      });
+
+      updateR();
+      updateStepByStep();
+      applyLayout();
+    }
+
+    function updateR() {
+      const r = parseInt(document.getElementById('r').value);
+      document.getElementById('rVal').textContent = r;
+      const div = document.getElementById('countControls');
+      div.innerHTML = '';
+      for (let k = 0; k < r; k++) {
+        const row = document.createElement('div');
+        row.className = 'control-row';
+        const label = document.createElement('label');
+        label.textContent = `a${k}:`;
+        const inp = document.createElement('input');
+        inp.type = 'range';
+        inp.id = `a${k}`;
+        inp.min = '1';
+        inp.max = k === 0 ? '6' : '5';
+        inp.value = k === 0 ? '2' : (k < r - 1 ? '1' : '2');
+        const span = document.createElement('span');
+        span.className = 'val';
+        span.id = `a${k}Val`;
+        span.textContent = inp.value;
+        inp.oninput = () => { span.textContent = inp.value; redraw(); if (document.getElementById('quizMode').checked) renderQuiz(); };
+        row.appendChild(label);
+        row.appendChild(inp);
+        row.appendChild(span);
+        div.appendChild(row);
+      }
+      redraw();
+    }
+
+    function applyValues(rVal, counts) {
+      document.getElementById('r').value = rVal;
+      document.getElementById('rVal').textContent = rVal;
+      updateR();
+      for (let k = 0; k < counts.length; k++) {
+        const inp = document.getElementById(`a${k}`);
+        if (inp) { inp.value = counts[k]; inp.nextElementSibling.textContent = counts[k]; }
+      }
+      document.getElementById('cellSize').value = 36;
+      document.getElementById('cellSizeVal').textContent = 36;
+      document.getElementById('showHooks').checked = true;
+      document.getElementById('showSteps').checked = true;
+      document.getElementById('showStepByStep').checked = false;
+      document.getElementById('quizMode').checked = false;
+      document.getElementById('showPaths').checked = true;
+      document.getElementById('showSubgraph').checked = true;
+      quizIndex = 0;
+      mainCanvasH = 880;
+      const pp = document.getElementById('pathsPanel');
+      if (pp) pp.style.display = 'none';
+      updateStepByStep();
+      document.getElementById('quizBox').style.display = 'none';
+      redraw();
+    }
+
+    const TRY_COMPOSITIONS = [
+      { r: 2, counts: [1, 1] },
+      { r: 2, counts: [4, 3] },
+      { r: 3, counts: [1, 1, 1] },
+      { r: 3, counts: [2, 1, 2] },
+      { r: 3, counts: [2, 1, 3] },
+      { r: 4, counts: [1, 1, 1, 1] },
+      { r: 4, counts: [2, 1, 1, 2] },
+      { r: 5, counts: [1, 1, 1, 1, 1] },
+      { r: 6, counts: [1, 1, 1, 1, 1, 1] }
+    ];
+
+    function openTryModal() {
+      const overlay = document.getElementById('tryOverlay');
+      const container = document.getElementById('tryOptions');
+      if (!overlay || !container) return;
+      container.innerHTML = '';
+      TRY_COMPOSITIONS.forEach((opt, idx) => {
+        const vars = Array.from({length: opt.r}, (_, i) => `a${i}`).join(',');
+        const label = `(r,${vars})=(${opt.r},${opt.counts.join(',')})`;
+        const div = document.createElement('div');
+        div.className = 'try-option' + (idx === 0 ? ' selected' : '');
+        div.dataset.idx = String(idx);
+        div.innerHTML = `<input type="radio" name="tryComp" value="${idx}" ${idx === 0 ? 'checked' : ''}> <span>${label}</span>`;
+        div.onclick = () => {
+          container.querySelectorAll('.try-option').forEach(o => o.classList.remove('selected'));
+          div.classList.add('selected');
+          div.querySelector('input').checked = true;
+        };
+        div.querySelector('input').onclick = (e) => e.stopPropagation();
+        container.appendChild(div);
+      });
+      overlay.classList.add('visible');
+    }
+
+    function applyTrySelection() {
+      const checked = document.querySelector('input[name="tryComp"]:checked');
+      if (!checked) return;
+      const idx = parseInt(checked.value, 10);
+      const opt = TRY_COMPOSITIONS[idx];
+      if (!opt) return;
+      const overlay = document.getElementById('tryOverlay');
+      if (overlay) overlay.classList.remove('visible');
+      applyValues(opt.r, opt.counts);
+    }
+
+    function doReset() { applyValues(2, [2, 2]); }
+
+    function updateStepByStep() {
+      const show = document.getElementById('showStepByStep').checked;
+      const quizOn = document.getElementById('quizMode').checked;
+      document.getElementById('stepByStepBox').style.display = show && !quizOn ? 'block' : 'none';
+      if (show && !quizOn) fillStepByStep();
+    }
+
+    function fillStepByStep() {
+      const sliderComp = getComposition();
+      const { P, E, composition } = getWords(sliderComp);
+      const shape = buildShape(composition);
+      const hooks = getHookLengths(shape);
+      const prodParts = [];
+      for (const row of hooks) for (const h of row) prodParts.push(h);
+      const prod = prodParts.reduce((a, b) => a * b, 1);
+      const r = composition.length;
+
+      const aVals = composition.map((v, i) => `a${i} = ${v}`).join(';   ');
+      let shapeSteps = `<p><strong>${aVals}</strong></p>`;
+      for (let k = r - 1; k >= 1; k--) {
+        let width = 0;
+        const syms = [], vals = [];
+        for (let s = 0; s < k; s++) {
+          syms.push(`a${s}`);
+          vals.push(composition[s]);
+          width += composition[s];
+        }
+        const numExp = vals.join(' + ');
+        shapeSteps += `<p>Symbol ${k} (a<sub>${k}</sub>): width = ${syms.join(' + ')} = ${numExp} = ${width}; add a<sub>${k}</sub> = ${composition[k]} rows → ${composition[k]} rows of length ${width}</p>`;
+      }
+
+      const dTerms = [];
+      for (let s = 0; s < composition.length; s++)
+        for (let t = s + 1; t < composition.length; t++)
+          dTerms.push(`a<sub>${s}</sub>a<sub>${t}</sub>(=${composition[s]}×${composition[t]}=${composition[s]*composition[t]})`);
+      const atDestination = (P === E);
+      const d = atDestination ? 0 : computeD(composition);
+      const f = atDestination ? 1 : Number(computeF(shape));
+
+      let hookExpl = '';
+      for (let i = 0; i < Math.min(3, shape.length); i++) {
+        for (let j = 0; j < Math.min(3, shape[i]); j++) {
+          const arm = shape[i] - j - 1;
+          let leg = 0;
+          for (let ii = i + 1; ii < shape.length && shape[ii] > j; ii++) leg++;
+          hookExpl += `Cell (${i},${j}): arm=${arm}, leg=${leg} → h=${arm+leg+1}. `;
+        }
+        if (i < 2) hookExpl += '<br>';
+      }
+      if (shape.length * (shape[0]||0) > 9) hookExpl += '… (see diagram)';
+
+      const stepBlocks = [
+        { n: 1, title: 'Composition', body: `<p>r = ${r}, (a₀,…,aᵣ₋₁) = (${composition.join(', ')})</p><p>N = ${composition.reduce((a,b)=>a+b,0)}</p>` },
+        { n: 2, title: 'Shape λ', body: `<p>For k from ${r-1} down to 1: add aₖ rows of width a₀+…+aₖ₋₁</p>${shapeSteps}<p><strong>Result:</strong> λ = (${shape.join(', ')})</p>` },
+        { n: 3, title: 'd (inversions)', body: atDestination
+          ? `<p><strong>Our example:</strong> P = <code>${P}</code> &nbsp; &nbsp; E = <code>${E}</code></p><p><strong>P = E:</strong> Already at destination! d = 0 inversions, 1 path.</p>`
+          : `<p><strong>Our example:</strong> P = <code>${P}</code> &nbsp; &nbsp; E = <code>${E}</code></p><p>P is <strong>not random</strong> — it is the unique reverse-sorted word. E is the sorted word.</p><p><strong>What is d?</strong> d counts inversions. Formula: d = ∑<sub>s&lt;t</sub> aₛaₜ = ${dTerms.join(' + ')} = <strong>${d}</strong></p><p>d equals the length of every shortest path from P to E.</p>` },
+        { n: 4, title: 'Hook lengths', body: `<p><strong>Arm</strong> = cells to the RIGHT of (i,j) in the same row.</p><p><strong>Leg</strong> = cells BELOW (i,j) in the same column.</p><p>The <strong>hook</strong> of (i,j) is the L-shaped set: the cell itself, its arm, and its leg. <strong>Hook length</strong> h = arm + leg + 1 (the +1 counts the cell).</p><p><strong>Examples:</strong></p><p>${hookExpl}</p>` },
+        { n: 5, title: 'Product', body: `<p>∏ hᵢⱼ = ${prodParts.join(' × ')} = <strong>${prod}</strong></p>` },
+        { n: 6, title: 'Result', body: atDestination
+          ? `<p>P = E: <strong>1</strong> path (already at destination).</p>`
+          : `<p>f^λ = d! / (∏ hᵢⱼ) = ${d}! / ${prod} = <strong>${f}</strong></p>` }
+      ];
+      const html = stepBlocks.map((s, i) =>
+        `<div class="step-block step-${i % 2 === 0 ? 'black' : 'blue'}"><h4>Step ${s.n}: ${s.title}</h4>${s.body}</div>`
+      ).join('');
+      document.getElementById('stepByStepBox').innerHTML = html;
+    }
+
+    function getComposition() {
+      const rEl = document.getElementById('r');
+      const r = rEl ? parseInt(rEl.value) || 2 : 2;
+      const comp = [];
+      for (let k = 0; k < r; k++) {
+        const inp = document.getElementById(`a${k}`);
+        comp.push(inp ? (parseInt(inp.value) || 1) : 1);
+      }
+      return comp;
+    }
+
+    function updatePathsPanel() {
+      const panel = document.getElementById('pathsPanel');
+      const list = document.getElementById('pathsList');
+      const showPathsEl = document.getElementById('showPaths');
+      if (!panel || !list || !showPathsEl || !showPathsEl.checked) {
+        if (panel) panel.style.display = 'none';
+        return;
+      }
+      panel.style.display = 'block';
+      try {
+        const comp = getComposition();
+        const { P, E } = getWords(comp);
+        if (P === E) {
+          let h = 0;
+          for (let i = 0; i < P.length; i++) h = ((h << 5) - h + P.charCodeAt(i)) | 0;
+          const bg = ['#ffb3ba','#ffdfba','#ffffba','#baffc9','#bae1ff','#dbc9ff','#ffbaea','#f0b48c'][Math.abs(h) % 8];
+          list.innerHTML = '<table><tr><th>#</th><th>Path (→ denotes one adjacent swap)</th></tr>' +
+            '<tr><td class="path-num">1</td><td class="path-chain"><span class="word-chip" style="background:' + bg + '">' + P + '</span> (P = E)</td></tr></table>';
+          const h4 = panel.querySelector('h4');
+          if (h4) h4.textContent = 'All shortest paths (1 path, length 0)';
+          return;
+        }
+        const { d, count, paths } = getAllPaths(P, E);
+        const PALETTE = ['#ffb3ba','#ffdfba','#ffffba','#baffc9','#bae1ff','#dbc9ff','#ffbaea','#f0b48c','#add8e6','#90ee90','#ffdab9','#dda0dd','#b0e0e6','#ffe4b5','#98fb98','#ffb6c1','#e6e6fa','#ffffe0','#bc8f8f','#87ceeb','#ffa07a','#9acd32','#9370db','#3cb371','#ff4500'];
+        function wordToHex(w) {
+          let h = 0;
+          for (let i = 0; i < w.length; i++) h = ((h << 5) - h + w.charCodeAt(i)) | 0;
+          return PALETTE[Math.abs(h) % PALETTE.length];
+        }
+        const howText = 'How we calculate: (1) BFS from P to find shortest distance d and all reachable nodes. (2) DFS following only edges that increase distance by 1 toward E; each leaf at E is one path.';
+        const rows = paths.map((p, i) => {
+          const chips = p.map(w => `<span class="word-chip" style="background:${wordToHex(w)}">${w}</span>`).join(' → ');
+          return `<tr><td class="path-num">${i + 1}</td><td class="path-chain">${chips}</td></tr>`;
+        }).join('');
+        list.innerHTML = '<div class="paths-how">' + howText + '</div>' +
+          '<table><tr><th>#</th><th>Path (→ denotes one adjacent swap)</th></tr>' + rows + '</table>';
+        const h4 = panel.querySelector('h4');
+        if (h4) h4.textContent = `All shortest paths (${count} paths, length ${d})`;
+      } catch (err) {
+        list.innerHTML = '<div class="path-item" style="color:#721c24;">Error: ' + (err.message || err) + '</div>';
+      }
+    }
+
+    function getSubgraphData(P, E) {
+      const start = [...String(P)].map(Number);
+      const target = [...String(E)].map(Number);
+      const targetKey = wordKey(target);
+      const [d, , dist] = bfsDistAndCounts(start, target);
+      const D = dist.get(targetKey);
+      if (D === undefined || D === 0) return { nodes: [], edges: [], layers: [] };
+      const nodes = new Set();
+      const edges = [];
+      for (const p of allShortestPaths(start, target, dist)) {
+        for (let i = 0; i < p.length; i++) {
+          nodes.add(wordKey(p[i]));
+          if (i < p.length - 1) edges.push([wordKey(p[i]), wordKey(p[i + 1])]);
+        }
+      }
+      const layerMap = new Map();
+      for (const [k, v] of dist) {
+        if (nodes.has(k)) layerMap.set(k, v);
+      }
+      const layers = [];
+      for (let L = 0; L <= D; L++) {
+        layers.push([...layerMap].filter(([, v]) => v === L).map(([k]) => k));
+      }
+      return { nodes: [...nodes], edges, layers, D };
+    }
+
+    const CELL_COLORS_HEX = ['#e6dac8', '#dae4d2', '#d2dceb', '#ebdae4', '#e4e8d2'];
+
+    function updateResultPanel() {
+      const sliderComp = getComposition();
+      const { P, E, composition } = getWords(sliderComp);
+      const atDestination = (P === E);
+      const shape = buildShape(composition);
+      const d = atDestination ? 0 : computeD(composition);
+      const f = atDestination ? 1 : Number(computeF(shape));
+      const hooks = getHookLengths(shape);
+      const showHooks = document.getElementById('showHooks')?.checked ?? true;
+      const showSteps = document.getElementById('showSteps')?.checked ?? true;
+      const cellSize = Math.min(36, Math.max(24, parseInt(document.getElementById('cellSize')?.value) || 36));
+
+      const compEl = document.getElementById('resultComposition');
+      const peEl = document.getElementById('resultPE');
+      const shapeEl = document.getElementById('resultShape');
+      const diagramEl = document.getElementById('resultDiagram');
+      const stepsEl = document.getElementById('resultSteps');
+      if (compEl) compEl.textContent = `Composition (a₀,…,aᵣ₋₁) = (${composition.join(', ')})`;
+      if (peEl) peEl.textContent = `P = ${P}  →  E = ${E}`;
+      if (shapeEl) shapeEl.textContent = `Shape λ = (${shape.join(', ')})  |  d(P,E) = ${d}  |  ${atDestination ? '1 path (P=E)' : 'f^λ = ' + f}`;
+
+      let tableHTML = '<table><tbody>';
+      for (let i = 0; i < shape.length; i++) {
+        tableHTML += '<tr>';
+        for (let j = 0; j < shape[i]; j++) {
+          const bg = CELL_COLORS_HEX[i % CELL_COLORS_HEX.length];
+          const hookVal = showHooks ? hooks[i][j] : '';
+          tableHTML += `<td style="background:${bg};width:${cellSize}px;height:${cellSize}px;font-size:${cellSize*0.45}px">${hookVal}</td>`;
+        }
+        tableHTML += '</tr>';
+      }
+      tableHTML += '</tbody></table>';
+      if (diagramEl) diagramEl.innerHTML = tableHTML;
+
+      if (stepsEl) {
+        if (showSteps) {
+          if (atDestination) {
+            stepsEl.innerHTML = '<div>P = E: already at destination</div><div>d(P,E) = 0, 1 path</div>';
+          } else {
+            const prodParts = [];
+            for (const row of hooks) for (const h of row) prodParts.push(h);
+            const prod = prodParts.reduce((a,b)=>a*b,1);
+            stepsEl.innerHTML = `<div>Formula: f^λ = d! / ∏(hook lengths)</div><div>d! = ${d}! = ${factorial(d)}</div><div>∏ hooks = ${prodParts.join(' × ')} = ${prod}</div><div>f^λ = ${f}</div>`;
+          }
+          stepsEl.style.display = 'block';
+        } else {
+          stepsEl.style.display = 'none';
+        }
+      }
+    }
+
+    function draw() {
+      colorMode(RGB, 255);
+      background(...COLORS.bg);
+
+      const sliderComp = getComposition();
+      const { P, E, composition } = getWords(sliderComp);
+      const atDestination = (P === E);
+      const d = atDestination ? 0 : computeD(composition);
+      updateResultPanel();
+
+      document.getElementById('formulaInfo').innerHTML = atDestination
+        ? `<strong>P = E</strong>: d = 0, 1 path`
+        : `<strong>d</strong> = ∑<sub>s&lt;t</sub> a<sub>s</sub>a<sub>t</sub> = ${d}`;
+
+      const showSubgraph = document.getElementById('showSubgraph') && document.getElementById('showSubgraph').checked;
+      const cc = document.getElementById('canvas-container');
+      if (cc) cc.style.display = showSubgraph ? 'inline-block' : 'none';
+      if (showSubgraph && !atDestination) {
+        const subY = 20;
+        const subH = Math.max(100, height - subY - 20);
+        const subW = 760;
+        const subX = 20;
+        const sg = getSubgraphData(P, E);
+        try {
+        if (sg.nodes.length > 0) {
+          const pad = 12;
+          const nodeR = 18;
+          const layers = sg.layers;
+          const pos = new Map();
+          const lw = subW - 2 * pad;
+          for (let L = 0; L < layers.length; L++) {
+            const nodes = layers[L];
+            const ly = subY + pad + (subH - 2 * pad) * (L / Math.max(1, sg.D));
+            const step = nodes.length > 1 ? lw / (nodes.length - 1) : 0;
+            for (let i = 0; i < nodes.length; i++) {
+              const lx = subX + pad + (nodes.length > 1 ? step * i : lw / 2);
+              pos.set(nodes[i], [lx, ly]);
+            }
+          }
+          noFill();
+          stroke(100, 120, 160);
+          strokeWeight(1);
+          for (const [a, b] of sg.edges) {
+            const p1 = pos.get(a), p2 = pos.get(b);
+            if (p1 && p2) line(p1[0], p1[1], p2[0], p2[1]);
+          }
+          const NODE_PALETTE = [
+            [255, 179, 186], [255, 223, 186], [255, 255, 186], [186, 255, 201], [186, 225, 255],
+            [219, 186, 255], [255, 186, 234], [240, 180, 140], [173, 216, 230], [144, 238, 144],
+            [255, 218, 185], [221, 160, 221], [176, 224, 230], [255, 228, 196], [152, 251, 152],
+            [255, 182, 193], [230, 230, 250], [255, 255, 224], [188, 143, 143], [135, 206, 235],
+            [255, 160, 122], [154, 205, 50], [147, 112, 219], [60, 179, 113], [255, 69, 0]
+          ];
+          const nodeList = [...pos.keys()];
+          for (let idx = 0; idx < nodeList.length; idx++) {
+            const k = nodeList[idx];
+            const [px, py] = pos.get(k);
+            const label = k.replace(/,/g, '');
+            const rgb = NODE_PALETTE[idx % NODE_PALETTE.length];
+            colorMode(RGB, 255);
+            fill(rgb[0], rgb[1], rgb[2]);
+            stroke(80, 80, 90);
+            strokeWeight(1.5);
+            circle(px, py, nodeR * 2);
+            noStroke();
+            fill(40, 35, 30);
+            textSize(10);
+            textAlign(CENTER, CENTER);
+            text(label, px, py);
+          }
+        }
+        } catch (sgErr) { /* ignore subgraph draw errors */ }
+      }
+
+      const spEl = document.getElementById('showPaths');
+      if (spEl && spEl.checked) updatePathsPanel();
+      if (document.getElementById('showStepByStep').checked && !document.getElementById('quizMode').checked) fillStepByStep();
+      if (document.getElementById('quizMode').checked) renderQuiz();
+    }
+  </script>
+</body>
+</html>
