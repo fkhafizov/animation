@@ -106,9 +106,23 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     padding: 14px 20px 20px;
     flex-wrap: wrap;
+  }
+
+  .params-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .params-line {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
   }
 
   .params label {
@@ -116,6 +130,39 @@
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--text-dim);
+  }
+
+  .btn-help {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: #fff;
+    background: linear-gradient(180deg, #4a9eff 0%, #1a6fc4 50%, #0d5aa7 100%);
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    cursor: pointer;
+    box-shadow:
+      0 4px 0 #0a4a8c,
+      0 6px 8px rgba(0,0,0,0.25),
+      inset 0 1px 0 rgba(255,255,255,0.3);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+  .btn-help:hover {
+    background: linear-gradient(180deg, #5aaeff 0%, #2a7fd4 50%, #1a6ab7 100%);
+    transform: translateY(1px);
+    box-shadow:
+      0 3px 0 #0a4a8c,
+      0 5px 6px rgba(0,0,0,0.2),
+      inset 0 1px 0 rgba(255,255,255,0.35);
+  }
+  .btn-help:active {
+    transform: translateY(3px);
+    box-shadow:
+      0 1px 0 #0a4a8c,
+      0 2px 4px rgba(0,0,0,0.2),
+      inset 0 2px 4px rgba(0,0,0,0.2);
   }
 
   .params select {
@@ -374,6 +421,49 @@
   @keyframes slideUp {
     to { opacity: 1; transform: translateY(0); }
   }
+
+  .help-modal {
+    display: none;
+    position: fixed; inset: 0;
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .help-modal.active { display: flex; }
+  .help-modal-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.4);
+    cursor: pointer;
+  }
+  .help-modal-content {
+    position: relative;
+    max-width: 480px;
+    max-height: 85vh;
+    overflow: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  }
+  .help-modal-content h2 {
+    margin: 0 0 12px;
+    font-size: 1.1rem;
+    color: var(--text);
+  }
+  .help-modal-intro {
+    margin: 0 0 16px;
+    font-size: 0.85rem;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .help-modal-body { margin-bottom: 16px; }
+  .help-modal-hint {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    margin: 0;
+  }
 </style>
 </head>
 <body>
@@ -391,20 +481,27 @@
 </div>
 
 <div class="params">
-  <label>n =</label>
-  <select id="selN">
-    <option value="4">4</option>
-    <option value="5" selected>5</option>
-    <option value="6">6</option>
-  </select>
-  <label>k =</label>
-  <select id="selK">
-    <option value="2" selected>2</option>
-  </select>
-  <span style="font-size:0.6rem;color:var(--text-dim);margin-left:8px;">
-    Gr(<span id="showK">2</span>, <span id="showN">5</span>) over 𝔽₁ &nbsp;—&nbsp;
-    <span id="showCount">10</span> nodes
-  </span>
+  <div class="params-row">
+    <span class="params-line">
+      <label>n =</label>
+      <select id="selN">
+        <option value="4">4</option>
+        <option value="5" selected>5</option>
+        <option value="6">6</option>
+      </select>
+    </span>
+    <span class="params-line">
+      <label>k =</label>
+      <select id="selK">
+        <option value="2" selected>2</option>
+      </select>
+    </span>
+    <span class="params-gr" style="font-size:0.6rem;color:var(--text-dim);">
+      Gr(<span id="showK">2</span>, <span id="showN">5</span>) over 𝔽₁ &nbsp;—&nbsp;
+      <span id="showCount">10</span> nodes
+    </span>
+    <button type="button" id="btnHelp" class="btn-help" title="Show help">HELP</button>
+  </div>
 </div>
 
 <div class="main-layout">
@@ -445,6 +542,20 @@
   </label>
   <div class="pair-canvas-wrap" id="pairCanvasWrap">
     <canvas id="pairCanvas" role="img" aria-label="Pair comparison: area between two lattice paths"></canvas>
+  </div>
+</div>
+
+<div id="helpModal" class="help-modal" role="dialog" aria-label="Help" aria-hidden="true">
+  <div class="help-modal-backdrop"></div>
+  <div class="help-modal-content">
+    <h2>Help</h2>
+    <p class="help-modal-intro">Click on any two nodes of the Schreier Graph: 1st click=A; 2nd click=B.</p>
+    <div class="legend-content help-modal-body">
+      <strong>Holography map:</strong> Given a binary vector (graph node), read left to right — each <span class="holo">1 = step UP</span>, each <span class="holo">0 = step RIGHT</span>. This gives a bijection from <span class="cft">graph nodes</span> to <span class="ads">lattice paths</span> on the k × (n−k) rectangle.<br>
+      <strong>Graph edges:</strong> two nodes are connected if an <span class="cft">adjacent transposition (i, i+1)</span> sends one vector to the other.<br>
+      <strong>Complexity = Area:</strong> The <span class="area-c">graph distance</span> (minimum adjacent transpositions) between two nodes equals the <span class="area-c">area between</span> their corresponding paths. This is the <span class="area-c">Mann-Whitney U statistic</span> = area between ROC curves.
+    </div>
+    <p class="help-modal-hint">Click anywhere to close</p>
   </div>
 </div>
 
@@ -1293,6 +1404,20 @@ graphCanvas.addEventListener('click', e => {
 });
 
 document.getElementById('btnClearPair').addEventListener('click', clearSelection);
+
+const helpModal = document.getElementById('helpModal');
+document.getElementById('btnHelp').addEventListener('click', () => {
+  helpModal.classList.add('active');
+  helpModal.setAttribute('aria-hidden', 'false');
+});
+function closeHelpModal() {
+  helpModal.classList.remove('active');
+  helpModal.setAttribute('aria-hidden', 'true');
+}
+helpModal.querySelector('.help-modal-backdrop').addEventListener('click', closeHelpModal);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && helpModal.classList.contains('active')) closeHelpModal();
+});
 
 document.getElementById('chkHighlightArea').addEventListener('change', e => {
   highlightAreaPath = e.target.checked;
