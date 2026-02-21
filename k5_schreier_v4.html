@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K₅ Inside G₄ — 3D View</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&family=Literata:ital,wght@0,300;0,400;0,600;1,300&display=swap');
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --bg: #edf2f9; --surface: #dce4ef; --border: #b0c0d6;
+    --text: #1b2a3d; --dim: #6a7f95;
+    --dyck: #c0392b; --dyck-glow: rgba(192,57,43,0.2);
+    --non-dyck: #2471a3; --non-dyck-dim: rgba(36,113,163,0.35);
+    --tamari: #c0392b; --tamari-dim: rgba(192,57,43,0.45);
+    --gold: #b8860b; --gold-dim: rgba(30,132,73,0.5);
+    --wrong: rgba(230,126,34,0.4);
+    --green: #1e8449;
+  }
+
+  body {
+    font-family:'Literata',Georgia,serif;
+    background:var(--bg); color:var(--text);
+    height:100vh; overflow:hidden;
+  }
+
+  .app {
+    display:grid;
+    grid-template-columns:1fr 310px;
+    grid-template-rows:auto 1fr;
+    height:100vh;
+  }
+  @media(max-width:900px) { .app{grid-template-columns:1fr;} .side{display:none;} }
+
+  .header {
+    grid-column:1/-1;
+    padding:0.8rem 1.6rem 0.5rem;
+    border-bottom:2px solid var(--border);
+    background:linear-gradient(180deg,rgba(192,57,43,0.03) 0%,transparent 100%);
+    display:flex; align-items:baseline; gap:1rem; flex-wrap:wrap;
+  }
+  .header h1 { font-family:'DM Serif Display',serif; font-weight:400; font-size:1.3rem; }
+  .header h1 .r { color:var(--dyck); }
+  .header h1 .b { color:var(--non-dyck); }
+  .header .sub { font-family:'IBM Plex Mono',monospace; font-size:0.62rem; color:var(--dim); }
+  .badges { display:flex; gap:0.35rem; margin-left:auto; flex-wrap:wrap; }
+  .badge {
+    font-family:'IBM Plex Mono',monospace; font-size:0.6rem;
+    padding:0.18rem 0.5rem; border-radius:10px;
+    border:1px solid var(--border); background:var(--surface);
+  }
+  .badge .v { font-weight:600; }
+  .badge .v.r { color:var(--dyck); }
+  .badge .v.b { color:var(--non-dyck); }
+  .badge .v.g { color:var(--green); }
+
+  .canvas-wrap { position:relative; overflow:hidden; }
+  #c { display:block; width:100%; height:100%; cursor:grab; }
+  #c:active { cursor:grabbing; }
+
+  .hint {
+    position:absolute; bottom:8px; left:12px;
+    font-family:'IBM Plex Mono',monospace; font-size:0.55rem;
+    color:var(--dim); opacity:0.5; pointer-events:none;
+  }
+
+  .toggle-bar {
+    position:absolute; top:8px; left:12px;
+    display:flex; gap:3px; flex-wrap:wrap; max-width:360px;
+  }
+  .tb {
+    font-family:'IBM Plex Mono',monospace; font-size:0.58rem;
+    padding:0.22rem 0.45rem; border:1px solid var(--border);
+    border-radius:4px; background:var(--surface); color:var(--dim);
+    cursor:pointer; user-select:none; transition:all 0.12s;
+  }
+  .tb:hover { border-color:var(--dyck); }
+  .tb.on { background:var(--dyck); color:#fff; border-color:var(--dyck); }
+  .tb.on.bl { background:var(--non-dyck); border-color:var(--non-dyck); }
+
+  .legend {
+    position:absolute; top:8px; right:12px;
+    display:flex; flex-direction:column; gap:4px;
+    background:rgba(237,242,249,0.9); padding:0.4rem 0.6rem;
+    border-radius:5px; border:1px solid var(--border);
+  }
+  .lg {
+    font-family:'IBM Plex Mono',monospace; font-size:0.52rem;
+    display:flex; align-items:center; gap:5px; color:var(--dim);
+  }
+  .ld { width:8px; height:8px; border-radius:50%; border:1.5px solid; flex-shrink:0; }
+  .ls { width:20px; height:0; flex-shrink:0; }
+
+  .side {
+    border-left:1px solid var(--border); background:var(--surface); overflow-y:auto;
+  }
+  .ss { padding:0.8rem 1rem; border-bottom:1px solid var(--border); }
+  .ss h3 {
+    font-family:'IBM Plex Mono',monospace; font-size:0.58rem;
+    text-transform:uppercase; letter-spacing:0.1em; color:var(--dim); margin-bottom:0.4rem;
+  }
+  .ir { font-family:'IBM Plex Mono',monospace; font-size:0.7rem; line-height:1.7; }
+  .ir .l { color:var(--dim); }
+  .ir .v { font-weight:500; }
+  .ir .v.r { color:var(--dyck); }
+  .ir .v.b { color:var(--non-dyck); }
+  .ir .v.gold { color:var(--gold); }
+
+  .el { display:flex; flex-direction:column; gap:3px; margin-top:0.4rem; }
+  .er {
+    display:flex; align-items:center; gap:6px;
+    font-family:'IBM Plex Mono',monospace; font-size:0.6rem; color:var(--dim);
+  }
+  .ew { width:20px; height:3px; border-radius:1px; flex-shrink:0; }
+
+  .ph { font-style:italic; color:var(--dim); font-size:0.82rem; padding:0.3rem 0; text-align:center; }
+
+  .vl { max-height:280px; overflow-y:auto; display:flex; flex-direction:column; gap:1px; }
+  .vl::-webkit-scrollbar { width:3px; }
+  .vl::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+  .vr {
+    display:flex; align-items:center; gap:0.3rem;
+    padding:0.2rem 0.35rem; border-radius:3px; cursor:pointer;
+    font-family:'IBM Plex Mono',monospace; font-size:0.65rem; color:var(--dim);
+  }
+  .vr:hover { background:rgba(192,57,43,0.08); color:var(--text); }
+  .vr.sel { background:rgba(192,57,43,0.12); color:var(--dyck); font-weight:600; }
+  .vr .d { width:6px; height:6px; border-radius:50%; background:var(--dyck); flex-shrink:0; }
+
+  /* Config panel */
+  .cfg-row {
+    display:flex; align-items:center; gap:0.5rem;
+    margin-bottom:0.5rem;
+    font-family:'IBM Plex Mono',monospace; font-size:0.65rem; color:var(--dim);
+  }
+  .cfg-row label { min-width:70px; flex-shrink:0; }
+  .cfg-row input[type=range] {
+    flex:1; height:4px; -webkit-appearance:none; appearance:none;
+    background:var(--border); border-radius:2px; outline:none;
+  }
+  .cfg-row input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance:none; width:14px; height:14px; border-radius:50%;
+    background:var(--dyck); cursor:pointer; border:2px solid #922b21;
+  }
+  .cfg-row .cfg-val {
+    min-width:28px; text-align:right; font-weight:600; color:var(--text);
+  }
+  .cfg-check {
+    display:flex; align-items:center; gap:0.5rem;
+    margin-bottom:0.4rem;
+    font-family:'IBM Plex Mono',monospace; font-size:0.65rem; color:var(--dim);
+    cursor:pointer;
+  }
+  .cfg-check input[type=checkbox] { accent-color:var(--dyck); cursor:pointer; }
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="header">
+  <h1><span class="r">K₅</span> Inside <span class="b">G₄</span> — 3D</h1>
+  <span class="sub">70 vertices · 140 Schreier edges · 21 Tamari edges · drag to rotate</span>
+  <div class="badges">
+    <div class="badge"><span class="v r">14</span> Dyck</div>
+    <div class="badge"><span class="v b">56</span> other</div>
+    <div class="badge"><span class="v g">21</span> K₅ edges</div>
+  </div>
+</div>
+
+<div class="canvas-wrap">
+  <canvas id="c"></canvas>
+  <div class="hint">drag = rotate · scroll = zoom · click = inspect</div>
+  <div class="toggle-bar">
+    <button class="tb on" id="bSch" onclick="tog('sch')">Schreier edges</button>
+    <button class="tb on" id="bTam" onclick="tog('tam')">K₅ edges (solid)</button>
+    <button class="tb on" id="bGho" onclick="tog('gho')">Rotation-only (green)</button>
+    <button class="tb on" id="bWro" onclick="tog('wro')">Adj-trans ≠ Tamari</button>
+    <button class="tb on bl" id="bNon" onclick="tog('non')">Non-Dyck</button>
+    <button class="tb" id="bSpin" onclick="tog('spin')">Auto-spin</button>
+  </div>
+  <div class="legend">
+    <div class="lg"><div class="ld" style="background:var(--dyck);border-color:#922b21;"></div>Dyck (K₅)</div>
+    <div class="lg"><div class="ld" style="background:var(--non-dyck);border-color:#1a5276;"></div>Non-Dyck</div>
+    <div class="lg"><div class="ls" style="border-top:2px solid rgba(36,113,163,0.1);"></div>Schreier</div>
+    <div class="lg"><div class="ls" style="border-top:2.5px solid var(--dyck);"></div>Tamari ∩ Schreier</div>
+    <div class="lg"><div class="ls" style="border-top:2px dashed var(--green);"></div>Rotation-only</div>
+    <div class="lg"><div class="ls" style="border-top:2px dashed rgba(230,126,34,0.5);"></div>Adj-trans only</div>
+  </div>
+</div>
+
+<div class="side">
+  <div class="ss">
+    <h3>Display Config</h3>
+    <div class="cfg-row">
+      <label>Vertex size</label>
+      <input type="range" id="cfgVSize" min="0.3" max="3" step="0.1" value="1" oninput="CFG.vsize=+this.value;document.getElementById('cfgVSizeV').textContent=this.value;draw();">
+      <span class="cfg-val" id="cfgVSizeV">1</span>
+    </div>
+    <div class="cfg-row">
+      <label>Label size</label>
+      <input type="range" id="cfgFSize" min="4" max="18" step="1" value="8" oninput="CFG.fsize=+this.value;document.getElementById('cfgFSizeV').textContent=this.value;draw();">
+      <span class="cfg-val" id="cfgFSizeV">8</span>
+    </div>
+    <label class="cfg-check"><input type="checkbox" id="cfgAllLbl" onchange="CFG.allLabels=this.checked;draw();">Show all vertex labels</label>
+    <label class="cfg-check"><input type="checkbox" id="cfgBinLbl" onchange="CFG.binLabels=this.checked;draw();" checked>Show binary above parens</label>
+  </div>
+  <div class="ss"><h3>Selected Vertex</h3><div id="det"><div class="ph">Click any vertex</div></div></div>
+  <div class="ss">
+    <h3>Edge Breakdown</h3>
+    <div class="el">
+      <div class="er"><div class="ew" style="background:rgba(36,113,163,0.12);"></div>119 Schreier (≥1 non-Dyck)</div>
+      <div class="er"><div class="ew" style="background:var(--dyck);"></div>15 Tamari ∩ Schreier</div>
+      <div class="er"><div class="ew" style="background:var(--green);"></div>6 Tamari rotation-only</div>
+      <div class="er"><div class="ew" style="background:rgba(230,126,34,0.5);"></div>6 Adj-trans not Tamari</div>
+    </div>
+  </div>
+  <div class="ss"><h3>K₅ Vertices</h3><div class="vl" id="dList"></div></div>
+</div>
+
+</div>
+<script>
+const D={"vertices": [{"bits": [1, 1, 1, 1, 0, 0, 0, 0], "isDyck": true, "bstr": "11110000"}, {"bits": [1, 1, 1, 0, 1, 0, 0, 0], "isDyck": true, "bstr": "11101000"}, {"bits": [1, 1, 1, 0, 0, 1, 0, 0], "isDyck": true, "bstr": "11100100"}, {"bits": [1, 1, 1, 0, 0, 0, 1, 0], "isDyck": true, "bstr": "11100010"}, {"bits": [1, 1, 1, 0, 0, 0, 0, 1], "isDyck": false, "bstr": "11100001"}, {"bits": [1, 1, 0, 1, 1, 0, 0, 0], "isDyck": true, "bstr": "11011000"}, {"bits": [1, 1, 0, 1, 0, 1, 0, 0], "isDyck": true, "bstr": "11010100"}, {"bits": [1, 1, 0, 1, 0, 0, 1, 0], "isDyck": true, "bstr": "11010010"}, {"bits": [1, 1, 0, 1, 0, 0, 0, 1], "isDyck": false, "bstr": "11010001"}, {"bits": [1, 1, 0, 0, 1, 1, 0, 0], "isDyck": true, "bstr": "11001100"}, {"bits": [1, 1, 0, 0, 1, 0, 1, 0], "isDyck": true, "bstr": "11001010"}, {"bits": [1, 1, 0, 0, 1, 0, 0, 1], "isDyck": false, "bstr": "11001001"}, {"bits": [1, 1, 0, 0, 0, 1, 1, 0], "isDyck": false, "bstr": "11000110"}, {"bits": [1, 1, 0, 0, 0, 1, 0, 1], "isDyck": false, "bstr": "11000101"}, {"bits": [1, 1, 0, 0, 0, 0, 1, 1], "isDyck": false, "bstr": "11000011"}, {"bits": [1, 0, 1, 1, 1, 0, 0, 0], "isDyck": true, "bstr": "10111000"}, {"bits": [1, 0, 1, 1, 0, 1, 0, 0], "isDyck": true, "bstr": "10110100"}, {"bits": [1, 0, 1, 1, 0, 0, 1, 0], "isDyck": true, "bstr": "10110010"}, {"bits": [1, 0, 1, 1, 0, 0, 0, 1], "isDyck": false, "bstr": "10110001"}, {"bits": [1, 0, 1, 0, 1, 1, 0, 0], "isDyck": true, "bstr": "10101100"}, {"bits": [1, 0, 1, 0, 1, 0, 1, 0], "isDyck": true, "bstr": "10101010"}, {"bits": [1, 0, 1, 0, 1, 0, 0, 1], "isDyck": false, "bstr": "10101001"}, {"bits": [1, 0, 1, 0, 0, 1, 1, 0], "isDyck": false, "bstr": "10100110"}, {"bits": [1, 0, 1, 0, 0, 1, 0, 1], "isDyck": false, "bstr": "10100101"}, {"bits": [1, 0, 1, 0, 0, 0, 1, 1], "isDyck": false, "bstr": "10100011"}, {"bits": [1, 0, 0, 1, 1, 1, 0, 0], "isDyck": false, "bstr": "10011100"}, {"bits": [1, 0, 0, 1, 1, 0, 1, 0], "isDyck": false, "bstr": "10011010"}, {"bits": [1, 0, 0, 1, 1, 0, 0, 1], "isDyck": false, "bstr": "10011001"}, {"bits": [1, 0, 0, 1, 0, 1, 1, 0], "isDyck": false, "bstr": "10010110"}, {"bits": [1, 0, 0, 1, 0, 1, 0, 1], "isDyck": false, "bstr": "10010101"}, {"bits": [1, 0, 0, 1, 0, 0, 1, 1], "isDyck": false, "bstr": "10010011"}, {"bits": [1, 0, 0, 0, 1, 1, 1, 0], "isDyck": false, "bstr": "10001110"}, {"bits": [1, 0, 0, 0, 1, 1, 0, 1], "isDyck": false, "bstr": "10001101"}, {"bits": [1, 0, 0, 0, 1, 0, 1, 1], "isDyck": false, "bstr": "10001011"}, {"bits": [1, 0, 0, 0, 0, 1, 1, 1], "isDyck": false, "bstr": "10000111"}, {"bits": [0, 1, 1, 1, 1, 0, 0, 0], "isDyck": false, "bstr": "01111000"}, {"bits": [0, 1, 1, 1, 0, 1, 0, 0], "isDyck": false, "bstr": "01110100"}, {"bits": [0, 1, 1, 1, 0, 0, 1, 0], "isDyck": false, "bstr": "01110010"}, {"bits": [0, 1, 1, 1, 0, 0, 0, 1], "isDyck": false, "bstr": "01110001"}, {"bits": [0, 1, 1, 0, 1, 1, 0, 0], "isDyck": false, "bstr": "01101100"}, {"bits": [0, 1, 1, 0, 1, 0, 1, 0], "isDyck": false, "bstr": "01101010"}, {"bits": [0, 1, 1, 0, 1, 0, 0, 1], "isDyck": false, "bstr": "01101001"}, {"bits": [0, 1, 1, 0, 0, 1, 1, 0], "isDyck": false, "bstr": "01100110"}, {"bits": [0, 1, 1, 0, 0, 1, 0, 1], "isDyck": false, "bstr": "01100101"}, {"bits": [0, 1, 1, 0, 0, 0, 1, 1], "isDyck": false, "bstr": "01100011"}, {"bits": [0, 1, 0, 1, 1, 1, 0, 0], "isDyck": false, "bstr": "01011100"}, {"bits": [0, 1, 0, 1, 1, 0, 1, 0], "isDyck": false, "bstr": "01011010"}, {"bits": [0, 1, 0, 1, 1, 0, 0, 1], "isDyck": false, "bstr": "01011001"}, {"bits": [0, 1, 0, 1, 0, 1, 1, 0], "isDyck": false, "bstr": "01010110"}, {"bits": [0, 1, 0, 1, 0, 1, 0, 1], "isDyck": false, "bstr": "01010101"}, {"bits": [0, 1, 0, 1, 0, 0, 1, 1], "isDyck": false, "bstr": "01010011"}, {"bits": [0, 1, 0, 0, 1, 1, 1, 0], "isDyck": false, "bstr": "01001110"}, {"bits": [0, 1, 0, 0, 1, 1, 0, 1], "isDyck": false, "bstr": "01001101"}, {"bits": [0, 1, 0, 0, 1, 0, 1, 1], "isDyck": false, "bstr": "01001011"}, {"bits": [0, 1, 0, 0, 0, 1, 1, 1], "isDyck": false, "bstr": "01000111"}, {"bits": [0, 0, 1, 1, 1, 1, 0, 0], "isDyck": false, "bstr": "00111100"}, {"bits": [0, 0, 1, 1, 1, 0, 1, 0], "isDyck": false, "bstr": "00111010"}, {"bits": [0, 0, 1, 1, 1, 0, 0, 1], "isDyck": false, "bstr": "00111001"}, {"bits": [0, 0, 1, 1, 0, 1, 1, 0], "isDyck": false, "bstr": "00110110"}, {"bits": [0, 0, 1, 1, 0, 1, 0, 1], "isDyck": false, "bstr": "00110101"}, {"bits": [0, 0, 1, 1, 0, 0, 1, 1], "isDyck": false, "bstr": "00110011"}, {"bits": [0, 0, 1, 0, 1, 1, 1, 0], "isDyck": false, "bstr": "00101110"}, {"bits": [0, 0, 1, 0, 1, 1, 0, 1], "isDyck": false, "bstr": "00101101"}, {"bits": [0, 0, 1, 0, 1, 0, 1, 1], "isDyck": false, "bstr": "00101011"}, {"bits": [0, 0, 1, 0, 0, 1, 1, 1], "isDyck": false, "bstr": "00100111"}, {"bits": [0, 0, 0, 1, 1, 1, 1, 0], "isDyck": false, "bstr": "00011110"}, {"bits": [0, 0, 0, 1, 1, 1, 0, 1], "isDyck": false, "bstr": "00011101"}, {"bits": [0, 0, 0, 1, 1, 0, 1, 1], "isDyck": false, "bstr": "00011011"}, {"bits": [0, 0, 0, 1, 0, 1, 1, 1], "isDyck": false, "bstr": "00010111"}, {"bits": [0, 0, 0, 0, 1, 1, 1, 1], "isDyck": false, "bstr": "00001111"}], "dyckData": [{"globalIdx": 0, "paren": "(((ab)c)d)e"}, {"globalIdx": 1, "paren": "((a(bc))d)e"}, {"globalIdx": 2, "paren": "((ab)(cd))e"}, {"globalIdx": 3, "paren": "((ab)c)(de)"}, {"globalIdx": 5, "paren": "(a((bc)d))e"}, {"globalIdx": 6, "paren": "(a(b(cd)))e"}, {"globalIdx": 7, "paren": "(a(bc))(de)"}, {"globalIdx": 9, "paren": "(ab)((cd)e)"}, {"globalIdx": 10, "paren": "(ab)(c(de))"}, {"globalIdx": 15, "paren": "a(((bc)d)e)"}, {"globalIdx": 16, "paren": "a((b(cd))e)"}, {"globalIdx": 17, "paren": "a((bc)(de))"}, {"globalIdx": 19, "paren": "a(b((cd)e))"}, {"globalIdx": 20, "paren": "a(b(c(de)))"}], "schreierEdges": [[0, 1], [1, 2], [1, 5], [2, 3], [2, 6], [3, 4], [3, 7], [4, 8], [5, 6], [5, 15], [6, 7], [6, 9], [6, 16], [7, 8], [7, 10], [7, 17], [8, 11], [8, 18], [9, 10], [9, 19], [10, 11], [10, 12], [10, 20], [11, 13], [11, 21], [12, 13], [12, 22], [13, 14], [13, 23], [14, 24], [15, 16], [15, 35], [16, 17], [16, 19], [16, 36], [17, 18], [17, 20], [17, 37], [18, 21], [18, 38], [19, 20], [19, 25], [19, 39], [20, 21], [20, 22], [20, 26], [20, 40], [21, 23], [21, 27], [21, 41], [22, 23], [22, 28], [22, 42], [23, 24], [23, 29], [23, 43], [24, 30], [24, 44], [25, 26], [25, 45], [26, 27], [26, 28], [26, 46], [27, 29], [27, 47], [28, 29], [28, 31], [28, 48], [29, 30], [29, 32], [29, 49], [30, 33], [30, 50], [31, 32], [31, 51], [32, 33], [32, 52], [33, 34], [33, 53], [34, 54], [35, 36], [36, 37], [36, 39], [37, 38], [37, 40], [38, 41], [39, 40], [39, 45], [40, 41], [40, 42], [40, 46], [41, 43], [41, 47], [42, 43], [42, 48], [43, 44], [43, 49], [44, 50], [45, 46], [45, 55], [46, 47], [46, 48], [46, 56], [47, 49], [47, 57], [48, 49], [48, 51], [48, 58], [49, 50], [49, 52], [49, 59], [50, 53], [50, 60], [51, 52], [51, 61], [52, 53], [52, 62], [53, 54], [53, 63], [54, 64], [55, 56], [56, 57], [56, 58], [57, 59], [58, 59], [58, 61], [59, 60], [59, 62], [60, 63], [61, 62], [61, 65], [62, 63], [62, 66], [63, 64], [63, 67], [64, 68], [65, 66], [66, 67], [67, 68], [68, 69]], "tamariEdges": [[0, 1], [0, 2], [0, 3], [1, 5], [1, 7], [2, 6], [2, 9], [3, 7], [3, 10], [5, 6], [5, 15], [6, 16], [7, 17], [9, 10], [9, 19], [10, 20], [15, 16], [15, 17], [16, 19], [17, 20], [19, 20]], "tamariAlsoSchreier": [[0, 1], [1, 5], [2, 6], [3, 7], [5, 6], [5, 15], [6, 16], [7, 17], [9, 10], [9, 19], [10, 20], [15, 16], [16, 19], [17, 20], [19, 20]], "tamariOnly": [[0, 2], [0, 3], [1, 7], [2, 9], [3, 10], [15, 17]], "schreierDyckNotTamari": [[1, 2], [2, 3], [6, 7], [6, 9], [7, 10], [16, 17]]};
+const P=[[0.2662, -0.836, 0.2968], [0.3789, -0.6955, 0.3335], [0.3399, -0.7575, 0.1169], [0.1105, -0.7175, 0.2023], [-0.1699, -0.6067, 0.5594], [0.5318, -0.5667, 0.2856], [0.4577, -0.6035, 0.1088], [0.2071, -0.5687, 0.2187], [-0.2412, -0.6485, 0.3281], [0.2942, -0.6031, -0.0743], [0.0911, -0.5649, -0.0115], [-0.3746, -0.5816, 0.0565], [-0.3382, -0.5031, -0.212], [-0.6542, -0.3999, 0.0045], [-0.8875, -0.2168, 0.2286], [0.5351, -0.3801, 0.2094], [0.4982, -0.4137, 0.029], [0.2753, -0.3817, 0.1322], [-0.1428, -0.4177, 0.2291], [0.3703, -0.3981, -0.1429], [0.1685, -0.3541, -0.0769], [-0.2595, -0.286, -0.0936], [-0.1695, -0.1141, -0.2446], [-0.5047, -0.1037, -0.104], [-0.7791, -0.045, 0.0152], [0.4434, -0.0419, -0.5519], [0.1216, 0.0583, -0.5182], [-0.2603, 0.047, -0.5345], [-0.0062, 0.3136, -0.3533], [-0.3282, 0.1637, -0.3386], [-0.561, -0.0305, -0.3313], [0.2873, 0.5056, -0.1338], [0.0517, 0.1663, -0.292], [-0.1359, -0.1909, -0.4789], [0.0738, -0.4794, -0.6126], [0.8118, -0.0534, 0.2735], [0.6653, -0.0826, 0.0591], [0.3218, -0.1054, 0.2862], [-0.04, -0.1928, 0.4045], [0.5583, 0.0184, -0.2498], [0.2169, 0.0698, -0.0823], [-0.178, 0.0067, 0.0744], [-0.0765, 0.2528, -0.0746], [-0.3784, 0.1674, 0.1218], [-0.643, 0.0821, 0.2703], [0.4602, 0.3385, -0.5469], [0.1004, 0.4664, -0.4061], [-0.2837, 0.3986, -0.3497], [-0.023, 0.6001, -0.1162], [-0.328, 0.4254, -0.0769], [-0.516, 0.173, -0.0189], [0.1452, 0.6799, 0.1635], [-0.0251, 0.3984, 0.0942], [-0.0564, 0.012, -0.0811], [0.2337, -0.2385, -0.3485], [0.2803, 0.7369, -0.5817], [-0.0448, 0.8229, -0.3603], [-0.3814, 0.7432, -0.2925], [-0.1552, 0.8536, 0.0456], [-0.4031, 0.6697, 0.0895], [-0.4811, 0.4028, 0.2459], [-0.1109, 0.7518, 0.4355], [-0.1917, 0.4951, 0.4071], [-0.04, 0.2216, 0.3339], [0.3481, 0.0861, 0.1212], [-0.267, 0.5875, 0.7639], [-0.1457, 0.3503, 0.7299], [0.1545, 0.2908, 0.5803], [0.3951, 0.3647, 0.1856], [0.3872, 0.4584, -0.3504]];
+const V=D.vertices,N=V.length,SCH=D.schreierEdges,TAM=D.tamariEdges;
+const TAS=new Set(D.tamariAlsoSchreier.map(e=>e[0]+','+e[1]));
+const TO=new Set(D.tamariOnly.map(e=>e[0]+','+e[1]));
+const SNT=new Set(D.schreierDyckNotTamari.map(e=>e[0]+','+e[1]));
+const DS=new Set(V.map((v,i)=>v.isDyck?i:-1).filter(i=>i>=0));
+
+const L={sch:true,tam:true,gho:true,wro:true,non:true,spin:false};
+const CFG={vsize:1, fsize:8, allLabels:false, binLabels:true};
+const bm={sch:'bSch',tam:'bTam',gho:'bGho',wro:'bWro',non:'bNon',spin:'bSpin'};
+function tog(k){L[k]=!L[k];document.getElementById(bm[k]).classList.toggle('on',L[k]);if(k==='spin'&&L.spin)animLoop();else draw();}
+
+const cv=document.getElementById('c'),cx=cv.getContext('2d');
+let dpr=1,rX=0.4,rY=0.6,rZ=0,zm=1.0,sel=-1;
+
+function rsz(){dpr=devicePixelRatio||1;const r=cv.parentElement.getBoundingClientRect();cv.width=r.width*dpr;cv.height=r.height*dpr;cv.style.width=r.width+'px';cv.style.height=r.height+'px';}
+
+function rot(p){
+  let[x,y,z]=p,c,s,t;
+  c=Math.cos(rY);s=Math.sin(rY);t=c*x+s*z;z=-s*x+c*z;x=t;
+  c=Math.cos(rX);s=Math.sin(rX);t=c*y-s*z;z=s*y+c*z;y=t;
+  c=Math.cos(rZ);s=Math.sin(rZ);t=c*x-s*y;y=s*x+c*y;x=t;
+  return[x,y,z];
+}
+
+function prj(p3,W,H){const[x,y,z]=rot(p3);const s=zm*Math.min(W,H)*0.38;return{x:W/2+x*s,y:H/2-y*s,z};}
+
+function draw(){
+  cx.setTransform(dpr,0,0,dpr,0,0);
+  const W=cv.width/dpr,H=cv.height/dpr;
+  cx.clearRect(0,0,W,H);
+  const pts=P.map(p=>prj(p,W,H));
+  const allZ=pts.map(p=>p.z);
+  const medZ=[...allZ].sort((a,b)=>a-b)[Math.floor(N/2)];
+
+  // Helper: is edge in front?
+  function eFront(i,j){return(rot(P[i])[2]+rot(P[j])[2])/2>=medZ-0.02;}
+
+  // --- BACK PASS ---
+  // Schreier back
+  if(L.sch){cx.lineWidth=0.5;
+    for(const[i,j]of SCH){
+      if(!L.non&&(!V[i].isDyck||!V[j].isDyck))continue;
+      const k=Math.min(i,j)+','+Math.max(i,j);
+      if(TAS.has(k)||SNT.has(k))continue;
+      if(eFront(i,j))continue;
+      cx.beginPath();cx.moveTo(pts[i].x,pts[i].y);cx.lineTo(pts[j].x,pts[j].y);
+      cx.strokeStyle='rgba(36,113,163,0.03)';cx.stroke();
+    }
+  }
+
+  // Wrong back
+  if(L.wro){cx.setLineDash([4,4]);cx.lineWidth=1.2;
+    for(const[i,j]of D.schreierDyckNotTamari){
+      if(eFront(i,j))continue;
+      cx.beginPath();cx.moveTo(pts[i].x,pts[i].y);cx.lineTo(pts[j].x,pts[j].y);
+      cx.strokeStyle='rgba(230,126,34,0.12)';cx.stroke();
+    }cx.setLineDash([]);
+  }
+
+  // Tamari∩Sch back
+  if(L.tam){
+    for(const[i,j]of D.tamariAlsoSchreier){
+      if(eFront(i,j))continue;
+      const s=i===sel||j===sel;
+      cx.beginPath();cx.moveTo(pts[i].x,pts[i].y);cx.lineTo(pts[j].x,pts[j].y);
+      cx.strokeStyle=s?'rgba(192,57,43,0.3)':'rgba(192,57,43,0.12)';
+      cx.lineWidth=s?2:1.5;cx.setLineDash([3,3]);cx.stroke();cx.setLineDash([]);
+    }
+  }
+
+  // Ghost back
+  if(L.gho){cx.setLineDash([2,3]);
+    for(const[i,j]of D.tamariOnly){
+      if(eFront(i,j))continue;
+      const pi=pts[i],pj=pts[j],mx=(pi.x+pj.x)/2,my=(pi.y+pj.y)/2;
+      const dx=pj.x-pi.x,dy=pj.y-pi.y;
+      cx.beginPath();cx.moveTo(pi.x,pi.y);cx.quadraticCurveTo(mx-dy*0.15,my+dx*0.15,pj.x,pj.y);
+      cx.strokeStyle='rgba(30,132,73,0.15)';cx.lineWidth=1.5;cx.stroke();
+    }cx.setLineDash([]);
+  }
+
+  // Back vertices
+  const sv=P.map((_,i)=>({i,z:rot(P[i])[2]})).sort((a,b)=>a.z-b.z);
+  for(const{i:vi}of sv){
+    if(rot(P[vi])[2]>=medZ-0.02)continue;
+    if(!L.non&&!V[vi].isDyck)continue;
+    const p=pts[vi],dy=V[vi].isDyck,s=vi===sel;
+    const r=(dy?(s?6:3.5):(s?4:1.8))*CFG.vsize;
+    cx.beginPath();cx.arc(p.x,p.y,r,0,Math.PI*2);
+    cx.fillStyle=dy?'rgba(192,57,43,0.2)':'rgba(36,113,163,0.12)';
+    cx.fill();
+  }
+
+  // --- FRONT PASS ---
+  // Schreier front
+  if(L.sch){cx.lineWidth=0.6;
+    for(const[i,j]of SCH){
+      if(!L.non&&(!V[i].isDyck||!V[j].isDyck))continue;
+      const k=Math.min(i,j)+','+Math.max(i,j);
+      if(TAS.has(k)||SNT.has(k))continue;
+      if(!eFront(i,j))continue;
+      cx.beginPath();cx.moveTo(pts[i].x,pts[i].y);cx.lineTo(pts[j].x,pts[j].y);
+      const bd=V[i].isDyck&&V[j].isDyck;
+      cx.strokeStyle=bd?'rgba(192,57,43,0.06)':'rgba(36,113,163,0.07)';cx.stroke();
+    }
+  }
+
+  // Wrong front
+  if(L.wro){cx.setLineDash([4,4]);cx.lineWidth=1.8;
+    for(const[i,j]of D.schreierDyckNotTamari){
+      if(!eFront(i,j))continue;
+      cx.beginPath();cx.moveTo(pts[i].x,pts[i].y);cx.lineTo(pts[j].x,pts[j].y);
+      cx.strokeStyle='rgba(230,126,34,0.4)';cx.stroke();
+    }cx.setLineDash([]);
+  }
+
+  // Tamari∩Sch front
+  if(L.tam){
+    for(const[i,j]of D.tamariAlsoSchreier){
+      if(!eFront(i,j))continue;
+      const s=i===sel||j===sel;
+      cx.beginPath();cx.moveTo(pts[i].x,pts[i].y);cx.lineTo(pts[j].x,pts[j].y);
+      cx.strokeStyle=s?'rgba(192,57,43,0.9)':'rgba(192,57,43,0.55)';
+      cx.lineWidth=s?3:2.2;cx.stroke();
+    }
+  }
+
+  // Ghost front
+  if(L.gho){cx.setLineDash([2,3]);
+    for(const[i,j]of D.tamariOnly){
+      if(!eFront(i,j))continue;
+      const s=i===sel||j===sel;
+      const pi=pts[i],pj=pts[j],mx=(pi.x+pj.x)/2,my=(pi.y+pj.y)/2;
+      const dx=pj.x-pi.x,dy=pj.y-pi.y;
+      cx.beginPath();cx.moveTo(pi.x,pi.y);cx.quadraticCurveTo(mx-dy*0.15,my+dx*0.15,pj.x,pj.y);
+      cx.strokeStyle=s?'rgba(30,132,73,0.9)':'rgba(30,132,73,0.55)';
+      cx.lineWidth=s?2.8:2;cx.stroke();
+    }cx.setLineDash([]);
+  }
+
+  // Front vertices
+  const posLetters='s\u2081s\u2082s\u2083s\u2084s\u2085s\u2086s\u2087s\u2088';
+  for(const{i:vi}of sv){
+    if(rot(P[vi])[2]<medZ-0.02)continue;
+    if(!L.non&&!V[vi].isDyck)continue;
+    const p=pts[vi],dy=V[vi].isDyck,s=vi===sel;
+    const r=(dy?(s?8:5):(s?5:2.5))*CFG.vsize;
+
+    if(s){cx.beginPath();cx.arc(p.x,p.y,r+10,0,Math.PI*2);
+      const g=cx.createRadialGradient(p.x,p.y,r,p.x,p.y,r+10);
+      g.addColorStop(0,dy?'rgba(192,57,43,0.25)':'rgba(36,113,163,0.25)');
+      g.addColorStop(1,'rgba(0,0,0,0)');cx.fillStyle=g;cx.fill();}
+
+    cx.beginPath();cx.arc(p.x,p.y,r,0,Math.PI*2);
+    cx.fillStyle=dy?(s?'#a93226':'#c0392b'):(s?'#1a5276':'#2471a3');
+    cx.fill();
+    cx.strokeStyle=dy?'#922b21':'#1a5276';cx.lineWidth=dy?1.5:1;cx.stroke();
+
+    // Labels
+    const showLabel=dy||(CFG.allLabels&&L.non);
+    if(showLabel&&zm>0.4){
+      const fs=CFG.fsize*(s?1.2:1);
+      const fsSmall=fs*0.75;
+      cx.textAlign='center';
+
+      if(CFG.binLabels){
+        // Row 1 (top): spaced binary digits, colored per bit
+        const bstr=V[vi].bstr;
+        const charW=fs*0.65;
+        const totalW=charW*8;
+        const startX=p.x-totalW/2+charW/2;
+        const binY=p.y-r-5-(dy?fs*0.9:0);
+
+        cx.font=`600 ${fs}px "IBM Plex Mono",monospace`;
+        for(let ci=0;ci<8;ci++){
+          const ch=bstr[ci];
+          cx.fillStyle=ch==='1'?
+            (dy?'rgba(192,57,43,0.7)':'rgba(36,113,163,0.6)'):
+            'rgba(106,127,149,0.35)';
+          cx.fillText(ch,startX+ci*charW,binY);
+        }
+
+        // Row 2: position labels s₁..s₈
+        cx.font=`400 ${fsSmall}px "IBM Plex Mono",monospace`;
+        cx.fillStyle='rgba(106,127,149,0.3)';
+        const posY=binY+fs*0.85;
+        for(let ci=0;ci<8;ci++){
+          cx.fillText((ci+1).toString(),startX+ci*charW,posY);
+        }
+
+        // Row 3: parenthesization (Dyck only)
+        if(dy){
+          const dd=D.dyckData.find(d=>d.globalIdx===vi);
+          if(dd){
+            cx.font=`${s?'600':'400'} ${fs}px "IBM Plex Mono",monospace`;
+            cx.fillStyle=s?'#922b21':'rgba(192,57,43,0.5)';
+            cx.fillText(dd.paren,p.x,p.y-r-5);
+          }
+        }
+      } else {
+        // Simple single-line label
+        if(dy){
+          const dd=D.dyckData.find(d=>d.globalIdx===vi);
+          const lb=dd?dd.paren:V[vi].bstr;
+          cx.font=`${s?'600':'400'} ${fs}px "IBM Plex Mono",monospace`;
+          cx.fillStyle=s?'#922b21':'rgba(192,57,43,0.5)';
+          cx.fillText(lb,p.x,p.y-r-5);
+        } else if(CFG.allLabels){
+          cx.font=`400 ${fs}px "IBM Plex Mono",monospace`;
+          cx.fillStyle='rgba(36,113,163,0.45)';
+          cx.fillText(V[vi].bstr,p.x,p.y-r-5);
+        }
+      }
+    }
+  }
+}
+
+// --- INTERACTION ---
+let drag=false,lx=0,ly=0,clickX=0,clickY=0;
+cv.addEventListener('mousedown',e=>{drag=true;lx=clickX=e.clientX;ly=clickY=e.clientY;});
+window.addEventListener('mousemove',e=>{
+  if(!drag)return;
+  rY+=(e.clientX-lx)*0.006;rX+=(e.clientY-ly)*0.006;
+  lx=e.clientX;ly=e.clientY;draw();
+});
+window.addEventListener('mouseup',e=>{
+  if(drag&&Math.abs(e.clientX-clickX)+Math.abs(e.clientY-clickY)<5){
+    const rect=cv.getBoundingClientRect();
+    const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+    const W=cv.width/dpr,H=cv.height/dpr;
+    let bi=-1,bd=18;
+    for(let i=0;i<N;i++){
+      if(!L.non&&!V[i].isDyck)continue;
+      const p=prj(P[i],W,H);
+      const d=Math.sqrt((mx-p.x)**2+(my-p.y)**2);
+      if(d<bd){bd=d;bi=i;}
+    }
+    selV(bi);
+  }
+  drag=false;
+});
+cv.addEventListener('wheel',e=>{e.preventDefault();zm*=e.deltaY>0?0.92:1.08;zm=Math.max(0.2,Math.min(4,zm));draw();},{passive:false});
+
+let ts=null;
+cv.addEventListener('touchstart',e=>{if(e.touches.length===1)ts={x:e.touches[0].clientX,y:e.touches[0].clientY};},{passive:true});
+cv.addEventListener('touchmove',e=>{if(e.touches.length===1&&ts){rY+=(e.touches[0].clientX-ts.x)*0.008;rX+=(e.touches[0].clientY-ts.y)*0.008;ts={x:e.touches[0].clientX,y:e.touches[0].clientY};draw();}},{passive:true});
+cv.addEventListener('touchend',()=>{ts=null;});
+
+// Auto-spin
+function animLoop(){if(!L.spin)return;rY+=0.004;draw();requestAnimationFrame(animLoop);}
+
+// --- SELECTION ---
+function selV(idx){
+  sel=idx;draw();updDet();
+  document.querySelectorAll('.vr').forEach((el,i)=>{
+    el.classList.toggle('sel',D.dyckData[i]?.globalIdx===idx);
+  });
+}
+
+function updDet(){
+  const el=document.getElementById('det');
+  if(sel<0){el.innerHTML='<div class="ph">Click any vertex</div>';return;}
+  const v=V[sel],dy=v.isDyck;
+  const snb=SCH.filter(([a,b])=>a===sel||b===sel).map(([a,b])=>a===sel?b:a);
+  const dnb=snb.filter(i=>V[i].isDyck),nnb=snb.filter(i=>!V[i].isDyck);
+  const tnb=TAM.filter(([a,b])=>a===sel||b===sel).map(([a,b])=>a===sel?b:a);
+  let ps='';if(dy){const dd=D.dyckData.find(d=>d.globalIdx===sel);ps=dd?dd.paren:'';}
+  const psums=[];let h=0;for(const b of v.bits){h+=b?1:-1;psums.push(h);}
+  const minPS=Math.min(...psums);
+  el.innerHTML=`
+    <div class="ir"><span class="l">Binary: </span><span class="v">${v.bstr}</span></div>
+    <div class="ir"><span class="l">Type: </span><span class="v ${dy?'r':'b'}">${dy?'Dyck (K₅)':'Non-Dyck'}</span></div>
+    ${dy?`<div class="ir"><span class="l">Parens: </span><span class="v r">${ps}</span></div>`:''}
+    <div class="ir"><span class="l">Prefix sums: </span><span class="v">${psums.join(',')}</span></div>
+    ${!dy?`<div class="ir"><span class="l">Min prefix: </span><span class="v b">${minPS} (violates ballot)</span></div>`:''}
+    <div class="ir"><span class="l">Schreier deg: </span><span class="v">${snb.length} (${dnb.length}D+${nnb.length})</span></div>
+    ${dy?`<div class="ir"><span class="l">K₅ deg: </span><span class="v r">${tnb.length}</span></div>`:''}
+    ${dy&&tnb.length?`<div class="ir"><span class="l">K₅ nbrs: </span></div>
+    <div class="ir" style="font-size:0.6rem;color:var(--dim)">${tnb.map(i=>{const dd=D.dyckData.find(d=>d.globalIdx===i);return dd?dd.paren:V[i].bstr;}).join(', ')}</div>`:''}`;
+}
+
+function mkList(){
+  const el=document.getElementById('dList');el.innerHTML='';
+  D.dyckData.forEach(d=>{
+    const div=document.createElement('div');div.className='vr';
+    div.innerHTML=`<span class="d"></span><span>${d.paren}</span><span style="margin-left:auto;opacity:0.35;font-size:0.55rem">${V[d.globalIdx].bstr}</span>`;
+    div.onclick=()=>selV(d.globalIdx);el.appendChild(div);
+  });
+}
+
+window.addEventListener('resize',()=>{rsz();draw();});
+rsz();mkList();draw();
+</script>
+</body>
+</html>
