@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K₅ — The 3D Associahedron (Loday Realization)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #eef4fb;
+    --surface: #dfe9f3;
+    --border: #b8cce0;
+    --text: #1c2d3f;
+    --text-dim: #5a7080;
+    --accent: #2563eb;
+    --gold: #b8860b;
+    --coral: #c0392b;
+    --green: #16824a;
+    --purple: #7c3aed;
+    --pent-fill: rgba(37,99,235,0.08);
+    --pent-stroke: rgba(37,99,235,0.4);
+    --quad-fill: rgba(184,134,11,0.08);
+    --quad-stroke: rgba(184,134,11,0.4);
+    --edge-front: rgba(28,45,63,0.6);
+    --edge-back: rgba(90,112,128,0.2);
+    --node-front: #1c2d3f;
+    --node-back: #90a4b8;
+  }
+
+  body {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  .app {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    grid-template-rows: auto 1fr;
+    height: 100vh;
+  }
+
+  @media (max-width: 900px) {
+    .app { grid-template-columns: 1fr; }
+    .side { display: none; }
+  }
+
+  .header {
+    grid-column: 1 / -1;
+    padding: 1rem 1.6rem 0.7rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    background: linear-gradient(180deg, rgba(37,99,235,0.05) 0%, transparent 100%);
+  }
+
+  .header h1 {
+    font-weight: 400;
+    font-size: 1.5rem;
+    letter-spacing: -0.01em;
+  }
+  .header h1 em { color: var(--accent); font-style: italic; }
+
+  .header .sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+  }
+
+  .badges {
+    display: flex;
+    gap: 0.5rem;
+    margin-left: auto;
+  }
+
+  .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .badge .v { font-weight: 600; }
+  .badge .v.blue { color: var(--accent); }
+  .badge .v.gold { color: var(--gold); }
+  .badge .v.green { color: var(--green); }
+
+  /* ===== 3D CANVAS ===== */
+  .canvas-wrap {
+    position: relative;
+    overflow: hidden;
+  }
+
+  #mainCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+  }
+  #mainCanvas:active { cursor: grabbing; }
+
+  .canvas-hint {
+    position: absolute;
+    bottom: 12px;
+    left: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    opacity: 0.7;
+    pointer-events: none;
+  }
+
+  .view-controls {
+    position: absolute;
+    top: 12px;
+    left: 16px;
+    display: flex;
+    gap: 4px;
+  }
+
+  .view-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    padding: 0.3rem 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .view-btn:hover { border-color: var(--accent); color: var(--text); }
+  .view-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .legend {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .legend-item {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-dim);
+  }
+
+  .legend-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid;
+  }
+
+  /* ===== SIDE PANEL ===== */
+  .side {
+    border-left: 1px solid var(--border);
+    background: var(--surface);
+    overflow-y: auto;
+  }
+
+  .side-section {
+    padding: 1rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .side-section h3 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    margin-bottom: 0.6rem;
+  }
+
+  .info-row {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.8;
+  }
+  .info-row .label { color: var(--text-dim); }
+  .info-row .val { color: var(--text); font-weight: 500; }
+  .info-row .val.accent { color: var(--accent); }
+  .info-row .val.gold { color: var(--gold); }
+  .info-row .val.coral { color: var(--coral); }
+  .info-row .val.purple { color: var(--purple); }
+
+  .vertex-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    max-height: 420px;
+    overflow-y: auto;
+  }
+
+  .vertex-list::-webkit-scrollbar { width: 4px; }
+  .vertex-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .vx-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.1s;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+  }
+  .vx-row:hover { background: rgba(37,99,235,0.06); color: var(--text); }
+  .vx-row.active { background: rgba(37,99,235,0.12); color: var(--accent); font-weight: 600; }
+
+  .vx-row .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .vx-row .idx {
+    width: 20px;
+    text-align: right;
+    opacity: 0.4;
+    font-size: 0.6rem;
+  }
+
+  .placeholder {
+    font-style: italic;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    padding: 0.5rem 0;
+    text-align: center;
+    font-family: 'Cormorant Garamond', serif;
+  }
+
+  .dyck-mini {
+    display: block;
+    width: 100%;
+    margin-top: 0.5rem;
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <h1><em>K₅</em> — The 3D Associahedron</h1>
+    <span class="sub">Loday realization · hexagon triangulations · 14 vertices · 21 edges · 9 faces</span>
+    <div class="badges">
+      <div class="badge"><span class="v blue">6</span> pentagons</div>
+      <div class="badge"><span class="v gold">3</span> squares</div>
+      <div class="badge">dim = <span class="v green">3</span></div>
+    </div>
+  </div>
+
+  <div class="canvas-wrap">
+    <canvas id="mainCanvas"></canvas>
+    <div class="canvas-hint">drag to rotate · scroll to zoom</div>
+    <div class="view-controls" id="viewControls"></div>
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:var(--pent-fill);border-color:var(--pent-stroke);"></div>
+        pentagon face
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:var(--quad-fill);border-color:var(--quad-stroke);"></div>
+        square face
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:transparent;border-color:var(--edge-front);border-style:solid;"></div>
+        front edge
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:transparent;border-color:var(--edge-back);border-style:dashed;"></div>
+        back edge
+      </div>
+    </div>
+  </div>
+
+  <div class="side">
+    <div class="side-section" id="detailSection">
+      <h3>Selected Vertex</h3>
+      <div id="detailContent"><div class="placeholder">Click a vertex to inspect</div></div>
+    </div>
+    <div class="side-section">
+      <h3>All 14 Vertices</h3>
+      <div class="vertex-list" id="vxList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ================================================================
+// COMBINATORIAL ENGINE
+// ================================================================
+
+// Generate all triangulations of an (n+2)-gon as sets of diagonals
+function generateTriangulations(nSides) {
+  // A triangulation of an nSides-gon has (nSides-3) diagonals and (nSides-2) triangles
+  const results = [];
+  const vertices = Array.from({length: nSides}, (_, i) => i);
+
+  function triangulate(polygon, diags, tris) {
+    if (polygon.length === 3) {
+      tris.push([...polygon]);
+      results.push({ diagonals: diags.map(d => [...d]), triangles: tris.map(t => [...t]) });
+      tris.pop();
+      return;
+    }
+    // Fix edge (polygon[0], polygon[polygon.length-1]) and try all possible third vertices
+    const first = polygon[0], last = polygon[polygon.length - 1];
+    for (let i = 1; i < polygon.length - 1; i++) {
+      const mid = polygon[i];
+      const newDiags = [...diags];
+      // Diagonals from first-mid and mid-last (if not edges of the original polygon)
+      if (i > 1) newDiags.push([first, mid].sort((a,b) => a-b));
+      if (i < polygon.length - 2) newDiags.push([mid, last].sort((a,b) => a-b));
+
+      const newTris = [...tris, [first, mid, last]];
+
+      // Recurse on the two sub-polygons
+      const leftPoly = polygon.slice(0, i + 1);
+      const rightPoly = polygon.slice(i);
+
+      if (leftPoly.length === 2 && rightPoly.length === 2) {
+        // Both sides are just edges, done
+        results.push({ diagonals: newDiags.map(d => [...d]), triangles: newTris.map(t => [...t]) });
+      } else if (leftPoly.length <= 2) {
+        triangulate(rightPoly, newDiags, newTris);
+      } else if (rightPoly.length <= 2) {
+        triangulate(leftPoly, newDiags, newTris);
+      } else {
+        // Need to triangulate both sides independently
+        const leftResults = [];
+        const rightResults = [];
+
+        function triLeft(poly, d, t) {
+          if (poly.length === 3) { t.push([...poly]); leftResults.push({d: d.map(x=>[...x]), t: t.map(x=>[...x])}); t.pop(); return; }
+          const f = poly[0], l = poly[poly.length-1];
+          for (let j = 1; j < poly.length-1; j++) {
+            const m = poly[j];
+            const nd = [...d];
+            if (j > 1) nd.push([f,m].sort((a,b)=>a-b));
+            if (j < poly.length-2) nd.push([m,l].sort((a,b)=>a-b));
+            const nt = [...t, [f,m,l]];
+            const lp = poly.slice(0,j+1), rp = poly.slice(j);
+            if (lp.length <= 2) triLeft(rp, nd, nt);
+            else if (rp.length <= 2) triLeft(lp, nd, nt);
+            else { /* shouldn't happen for hexagon */ }
+          }
+        }
+        function triRight(poly, d, t) {
+          if (poly.length === 3) { t.push([...poly]); rightResults.push({d: d.map(x=>[...x]), t: t.map(x=>[...x])}); t.pop(); return; }
+          const f = poly[0], l = poly[poly.length-1];
+          for (let j = 1; j < poly.length-1; j++) {
+            const m = poly[j];
+            const nd = [...d];
+            if (j > 1) nd.push([f,m].sort((a,b)=>a-b));
+            if (j < poly.length-2) nd.push([m,l].sort((a,b)=>a-b));
+            const nt = [...t, [f,m,l]];
+            const lp = poly.slice(0,j+1), rp = poly.slice(j);
+            if (lp.length <= 2) triRight(rp, nd, nt);
+            else if (rp.length <= 2) triRight(lp, nd, nt);
+            else { /* shouldn't happen */ }
+          }
+        }
+
+        triLeft(leftPoly, [], []);
+        triRight(rightPoly, [], []);
+
+        for (const lr of leftResults) {
+          for (const rr of rightResults) {
+            results.push({
+              diagonals: [...newDiags, ...lr.d, ...rr.d],
+              triangles: [...newTris, ...lr.t, ...rr.t]
+            });
+          }
+        }
+      }
+    }
+  }
+
+  triangulate(vertices, [], []);
+
+  // Deduplicate
+  const seen = new Set();
+  const unique = [];
+  for (const r of results) {
+    const key = r.diagonals.map(d => d.join('-')).sort().join(',');
+    if (!seen.has(key)) { seen.add(key); unique.push(r); }
+  }
+  return unique;
+}
+
+// Simpler approach: generate Dyck paths, then convert
+function genDyckPaths(n) {
+  const paths = [];
+  function bt(pos, h, bits) {
+    if (pos === 2*n) { if (h === 0) paths.push([...bits]); return; }
+    if (h + 1 <= n && (2*n - pos - 1) >= h + 1) { bits.push(1); bt(pos+1, h+1, bits); bits.pop(); }
+    if (h > 0) { bits.push(0); bt(pos+1, h-1, bits); bits.pop(); }
+  }
+  bt(0, 0, []);
+  return paths;
+}
+
+// Dyck path → binary tree (recursive first-return decomposition)
+// Returns tree as {left, right} or null (leaf)
+function dyckToTree(bits) {
+  if (bits.length === 0) return null;
+  let h = 0, fr = -1;
+  for (let i = 0; i < bits.length; i++) {
+    h += bits[i] ? 1 : -1;
+    if (h === 0) { fr = i; break; }
+  }
+  const inner = bits.slice(1, fr);
+  const tail = bits.slice(fr + 1);
+  return { left: dyckToTree(inner), right: dyckToTree(tail) };
+}
+
+// Binary tree → parenthesization string
+function treeToParens(tree, symbols) {
+  if (tree === null) return symbols[0];
+  // Count leaves in left subtree
+  function countLeaves(t) { return t === null ? 1 : countLeaves(t.left) + countLeaves(t.right); }
+  const leftLeaves = countLeaves(tree.left);
+  const leftSyms = symbols.slice(0, leftLeaves);
+  const rightSyms = symbols.slice(leftLeaves);
+  const leftStr = treeToParens(tree.left, leftSyms);
+  const rightStr = treeToParens(tree.right, rightSyms);
+  return '(' + leftStr + rightStr + ')';
+}
+
+// Binary tree → Loday coordinates
+// Number internal nodes in in-order, compute a_i * b_i
+function lodayCoords(tree) {
+  const coords = [];
+  function countLeaves(t) { return t === null ? 1 : countLeaves(t.left) + countLeaves(t.right); }
+  function inorder(t) {
+    if (t === null) return;
+    inorder(t.left);
+    coords.push(countLeaves(t.left) * countLeaves(t.right));
+    inorder(t.right);
+  }
+  inorder(tree);
+  return coords;
+}
+
+// Dyck path → triangulation of (n+2)-gon via stack algorithm
+function dyckToTriangulation(bits) {
+  const n = bits.length / 2;
+  const stack = [0];
+  let vertex = 1;
+  const triangles = [];
+  const diagonals = [];
+
+  for (let i = 0; i < bits.length; i++) {
+    if (bits[i] === 1) {
+      stack.push(vertex);
+      vertex++;
+    } else {
+      const top = stack.pop();
+      const peek = stack[stack.length - 1];
+      triangles.push([peek, top, vertex]);
+      if (Math.abs(peek - vertex) > 1 && !(peek === 0 && vertex === n + 1)) {
+        diagonals.push([Math.min(peek, vertex), Math.max(peek, vertex)]);
+      }
+    }
+  }
+  return { triangles, diagonals, nSides: n + 2 };
+}
+
+// Correct Tamari adjacency via right rotations on binary trees
+function getAllRightRotations(t) {
+  if (t === null) return [];
+  const left = t.left, right = t.right;
+  const results = [];
+  // Right rotation at this node: {left:{left:A,right:B}, right:C} → {left:A, right:{left:B,right:C}}
+  if (left !== null) {
+    results.push({ left: left.left, right: { left: left.right, right: right } });
+  }
+  for (const nl of getAllRightRotations(left)) results.push({ left: nl, right: right });
+  for (const nr of getAllRightRotations(right)) results.push({ left: left, right: nr });
+  return results;
+}
+
+function treeToKey(t) {
+  if (t === null) return '.';
+  return '(' + treeToKey(t.left) + treeToKey(t.right) + ')';
+}
+
+// ================================================================
+// BUILD DATA FOR n=4 (K5)
+// ================================================================
+const N = 4;
+const dyckPaths = genDyckPaths(N);
+const symbols = ['a','b','c','d','e'];
+
+const vertices = dyckPaths.map((bits, idx) => {
+  const tree = dyckToTree(bits);
+  const loday = lodayCoords(tree);
+  const paren = treeToParens(tree, symbols);
+  const tri = dyckToTriangulation(bits);
+  const word = bits.map(b => b ? 'U' : 'D').join('');
+  const bstr = bits.join('');
+  return { idx, bits, tree, loday, paren, tri, word, bstr };
+});
+
+// Edges
+// Build tree key → index map
+const treeKeyToIdx = {};
+vertices.forEach((v, i) => { treeKeyToIdx[treeToKey(v.tree)] = i; });
+
+// Compute correct Tamari edges via right rotations
+const edges = [];
+const edgeSet = new Set();
+for (let i = 0; i < vertices.length; i++) {
+  const rotations = getAllRightRotations(vertices[i].tree);
+  for (const rot of rotations) {
+    const key = treeToKey(rot);
+    if (key in treeKeyToIdx) {
+      const j = treeKeyToIdx[key];
+      const eKey = Math.min(i,j) + ',' + Math.max(i,j);
+      if (!edgeSet.has(eKey)) {
+        edgeSet.add(eKey);
+        edges.push([Math.min(i,j), Math.max(i,j)]);
+      }
+    }
+  }
+}
+
+// ================================================================
+// LODAY → 3D COORDINATES
+// ================================================================
+// Loday coords are in R^4 on hyperplane sum=10
+// Project to R^3 using orthonormal basis of hyperplane
+
+const e1 = [1,-1,0,0];
+const e2 = [1,1,-2,0];
+const e3 = [1,1,1,-3];
+// Normalize
+const norm = v => Math.sqrt(v.reduce((s,x) => s+x*x, 0));
+const n1 = norm(e1), n2 = norm(e2), n3 = norm(e3);
+const b1 = e1.map(x => x/n1), b2 = e2.map(x => x/n2), b3 = e3.map(x => x/n3);
+
+// Centroid of Loday coords
+const centroid = [0,0,0,0];
+for (const v of vertices) for (let k = 0; k < 4; k++) centroid[k] += v.loday[k];
+for (let k = 0; k < 4; k++) centroid[k] /= vertices.length;
+
+// Project each vertex
+for (const v of vertices) {
+  const d = v.loday.map((x, k) => x - centroid[k]);
+  v.pos3d = [
+    d.reduce((s, x, k) => s + x * b1[k], 0),
+    d.reduce((s, x, k) => s + x * b2[k], 0),
+    d.reduce((s, x, k) => s + x * b3[k], 0)
+  ];
+}
+
+// ================================================================
+// FACES: diagonals of the hexagon → facets of K5
+// ================================================================
+// Hexagon vertices 0..5. Diagonals = pairs (i,j) with |i-j| > 1 and not (0,5)
+const hexDiags = [];
+for (let i = 0; i < 6; i++)
+  for (let j = i+2; j < 6; j++)
+    if (!(i === 0 && j === 5))
+      hexDiags.push([i, j]);
+// Should be 9 diagonals
+
+const faces = hexDiags.map(([di, dj]) => {
+  // A vertex belongs to this face if its triangulation contains diagonal (di, dj)
+  const members = [];
+  for (let vi = 0; vi < vertices.length; vi++) {
+    const has = vertices[vi].tri.diagonals.some(([a,b]) =>
+      (a === di && b === dj) || (a === dj && b === di));
+    if (has) members.push(vi);
+  }
+
+  // Determine type: pentagon (5 members) or square (4 members)
+  const type = members.length === 5 ? 'pentagon' : members.length === 4 ? 'square' : 'other';
+
+  return { diagonal: [di, dj], members, type };
+});
+
+// Order face vertices by adjacency (for proper polygon rendering)
+function orderFaceVertices(memberIndices) {
+  if (memberIndices.length <= 2) return memberIndices;
+  const adj = new Map();
+  for (const vi of memberIndices) adj.set(vi, []);
+
+  for (const [a, b] of edges) {
+    if (adj.has(a) && adj.has(b)) {
+      adj.get(a).push(b);
+      adj.get(b).push(a);
+    }
+  }
+
+  // Walk the cycle
+  const ordered = [memberIndices[0]];
+  const visited = new Set([memberIndices[0]]);
+  let current = memberIndices[0];
+
+  while (ordered.length < memberIndices.length) {
+    const neighbors = adj.get(current).filter(n => !visited.has(n));
+    if (neighbors.length === 0) break;
+    current = neighbors[0];
+    ordered.push(current);
+    visited.add(current);
+  }
+  return ordered;
+}
+
+for (const face of faces) {
+  face.orderedMembers = orderFaceVertices(face.members);
+}
+
+// ================================================================
+// 3D ROTATION & PROJECTION
+// ================================================================
+let rotX = 0.45, rotY = 0.7, rotZ = 0.1;
+let zoom = 1.0;
+let selectedIdx = -1;
+
+function rotatePoint(p) {
+  let [x, y, z] = p;
+  // Rotate around Y
+  let cx = Math.cos(rotY), sx = Math.sin(rotY);
+  let nx = cx*x + sx*z, nz = -sx*x + cx*z;
+  x = nx; z = nz;
+  // Rotate around X
+  let cy = Math.cos(rotX), sy = Math.sin(rotX);
+  let ny = cy*y - sy*z; nz = sy*y + cy*z;
+  y = ny; z = nz;
+  // Rotate around Z
+  let cz = Math.cos(rotZ), sz = Math.sin(rotZ);
+  nx = cz*x - sz*y; ny = sz*x + cz*y;
+  x = nx; y = ny;
+  return [x, y, z];
+}
+
+function project2D(p3, W, H) {
+  const [x, y, z] = rotatePoint(p3);
+  const s = zoom * Math.min(W, H) * 0.3;
+  return { x: W/2 + x * s, y: H/2 - y * s, z };
+}
+
+// ================================================================
+// RENDERING
+// ================================================================
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+let dpr = 1;
+
+function resize() {
+  dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+}
+
+function draw() {
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const W = canvas.width / dpr, H = canvas.height / dpr;
+  ctx.clearRect(0, 0, W, H);
+
+  // Project all vertices
+  const proj = vertices.map(v => project2D(v.pos3d, W, H));
+
+  // Compute face normals for depth sorting
+  const faceDepths = faces.map((face, fi) => {
+    const pts = face.orderedMembers.map(vi => rotatePoint(vertices[vi].pos3d));
+    const avgZ = pts.reduce((s, p) => s + p[2], 0) / pts.length;
+    return { fi, avgZ };
+  });
+  faceDepths.sort((a, b) => a.avgZ - b.avgZ); // back to front
+
+  // Draw faces (back to front)
+  for (const { fi } of faceDepths) {
+    const face = faces[fi];
+    if (face.orderedMembers.length < 3) continue;
+    const pts = face.orderedMembers.map(vi => proj[vi]);
+
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+    ctx.closePath();
+
+    if (face.type === 'pentagon') {
+      ctx.fillStyle = 'rgba(37,99,235,0.08)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(37,99,235,0.2)';
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = 'rgba(184,134,11,0.08)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(184,134,11,0.2)';
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+    }
+  }
+
+  // Compute edge midpoint depths
+  const edgeData = edges.map(([i, j]) => {
+    const pi = rotatePoint(vertices[i].pos3d);
+    const pj = rotatePoint(vertices[j].pos3d);
+    const midZ = (pi[2] + pj[2]) / 2;
+    return { i, j, midZ };
+  });
+
+  // Median Z for front/back threshold
+  const allZ = proj.map(p => p.z);
+  const medianZ = allZ.sort((a,b) => a-b)[Math.floor(allZ.length/2)];
+
+  // Draw back edges first
+  for (const e of edgeData) {
+    const pi = proj[e.i], pj = proj[e.j];
+    const isBack = e.midZ < medianZ - 0.05;
+    if (!isBack) continue;
+
+    ctx.beginPath();
+    ctx.moveTo(pi.x, pi.y);
+    ctx.lineTo(pj.x, pj.y);
+    ctx.strokeStyle = 'rgba(90,112,128,0.18)';
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([5, 4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Draw front edges
+  for (const e of edgeData) {
+    const pi = proj[e.i], pj = proj[e.j];
+    const isBack = e.midZ < medianZ - 0.05;
+    if (isBack) continue;
+
+    const isSel = e.i === selectedIdx || e.j === selectedIdx;
+    ctx.beginPath();
+    ctx.moveTo(pi.x, pi.y);
+    ctx.lineTo(pj.x, pj.y);
+    ctx.strokeStyle = isSel ? 'rgba(37,99,235,0.8)' : 'rgba(28,45,63,0.45)';
+    ctx.lineWidth = isSel ? 2.5 : 1.8;
+    ctx.stroke();
+  }
+
+  // Draw vertices (sorted by Z: back first)
+  const sortedVerts = vertices.map((v, i) => ({ i, z: proj[i].z }))
+    .sort((a, b) => a.z - b.z);
+
+  for (const sv of sortedVerts) {
+    const vi = sv.i;
+    const p = proj[vi];
+    const isBack = p.z < medianZ - 0.05;
+    const isSel = vi === selectedIdx;
+
+    // Size based on depth
+    const depthFactor = 0.7 + 0.3 * ((p.z - (medianZ - 1)) / 2);
+    const r = (isSel ? 8 : 5.5) * Math.max(0.6, depthFactor);
+
+    // Glow for selected
+    if (isSel) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r + 10, 0, Math.PI * 2);
+      const grad = ctx.createRadialGradient(p.x, p.y, r, p.x, p.y, r + 10);
+      grad.addColorStop(0, 'rgba(37,99,235,0.2)');
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.fill();
+    }
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = isSel ? '#2563eb' : (isBack ? '#90a4b8' : '#1c2d3f');
+    ctx.fill();
+    ctx.strokeStyle = isSel ? '#1d4ed8' : (isBack ? '#b8cce0' : '#5a7080');
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Label
+    if (!isBack || isSel) {
+      const label = vertices[vi].paren;
+      ctx.font = `${isSel ? '600' : '400'} ${isSel ? 10 : 9}px "JetBrains Mono", monospace`;
+      ctx.fillStyle = isSel ? '#2563eb' : 'rgba(28,45,63,0.45)';
+      ctx.textAlign = 'center';
+      ctx.fillText(label, p.x, p.y - r - 7);
+    }
+  }
+}
+
+// ================================================================
+// INTERACTION
+// ================================================================
+let dragging = false, lastMX = 0, lastMY = 0;
+
+canvas.addEventListener('mousedown', e => {
+  dragging = true;
+  lastMX = e.clientX;
+  lastMY = e.clientY;
+});
+
+window.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  const dx = e.clientX - lastMX, dy = e.clientY - lastMY;
+  rotY += dx * 0.006;
+  rotX += dy * 0.006;
+  lastMX = e.clientX;
+  lastMY = e.clientY;
+  draw();
+});
+
+window.addEventListener('mouseup', () => { dragging = false; });
+
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  zoom *= e.deltaY > 0 ? 0.93 : 1.07;
+  zoom = Math.max(0.3, Math.min(3, zoom));
+  draw();
+}, { passive: false });
+
+canvas.addEventListener('click', e => {
+  if (Math.abs(e.clientX - lastMX) > 5 || Math.abs(e.clientY - lastMY) > 5) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  const W = canvas.width / dpr, H = canvas.height / dpr;
+
+  let bestIdx = -1, bestD = 20;
+  for (let i = 0; i < vertices.length; i++) {
+    const p = project2D(vertices[i].pos3d, W, H);
+    const d = Math.sqrt((mx - p.x)**2 + (my - p.y)**2);
+    if (d < bestD) { bestD = d; bestIdx = i; }
+  }
+  selectVertex(bestIdx);
+});
+
+// Detect click vs drag
+canvas.addEventListener('mousedown', e => { lastMX = e.clientX; lastMY = e.clientY; });
+
+// ================================================================
+// SIDE PANEL
+// ================================================================
+function selectVertex(idx) {
+  selectedIdx = idx;
+  draw();
+  renderVertexList();
+
+  const el = document.getElementById('detailContent');
+  if (idx < 0) {
+    el.innerHTML = '<div class="placeholder">Click a vertex to inspect</div>';
+    return;
+  }
+
+  const v = vertices[idx];
+  const neighbors = edges.filter(([a,b]) => a === idx || b === idx)
+    .map(([a,b]) => a === idx ? b : a);
+  const nbStr = neighbors.map(ni => vertices[ni].paren).join(', ');
+  const diagStr = v.tri.diagonals.map(d => `(${d[0]},${d[1]})`).join(', ') || 'none';
+
+  // Which faces contain this vertex?
+  const myFaces = faces.filter(f => f.members.includes(idx));
+  const pentCount = myFaces.filter(f => f.type === 'pentagon').length;
+  const quadCount = myFaces.filter(f => f.type === 'square').length;
+
+  el.innerHTML = `
+    <div class="info-row"><span class="label">Parens: </span><span class="val accent">${v.paren}</span></div>
+    <div class="info-row"><span class="label">Binary: </span><span class="val">${v.bstr}</span></div>
+    <div class="info-row"><span class="label">Dyck: </span><span class="val coral">${v.word}</span></div>
+    <div class="info-row"><span class="label">Loday: </span><span class="val gold">(${v.loday.join(', ')})</span></div>
+    <div class="info-row"><span class="label">Hex diags: </span><span class="val purple">{${diagStr}}</span></div>
+    <div class="info-row"><span class="label">Degree: </span><span class="val">${neighbors.length}</span></div>
+    <div class="info-row"><span class="label">Faces: </span><span class="val">${pentCount} pent + ${quadCount} sq</span></div>
+    <div class="info-row"><span class="label">Neighbors: </span></div>
+    <div class="info-row" style="font-size:0.7rem;color:var(--text-dim)">${nbStr}</div>
+    <canvas class="dyck-mini" id="dyckMini" height="90"></canvas>
+  `;
+
+  // Draw mini Dyck path
+  requestAnimationFrame(() => drawMiniDyck(v.bits));
+}
+
+function drawMiniDyck(bits) {
+  const c = document.getElementById('dyckMini');
+  if (!c) return;
+  const dp = window.devicePixelRatio || 1;
+  const cW = c.parentElement.clientWidth;
+  const cH = 90;
+  c.width = cW * dp; c.height = cH * dp;
+  c.style.width = cW + 'px'; c.style.height = cH + 'px';
+  const cx = c.getContext('2d');
+  cx.setTransform(dp, 0, 0, dp, 0, 0);
+  cx.clearRect(0, 0, cW, cH);
+
+  const n = bits.length / 2;
+  const pad = {l:20, r:10, t:8, b:12};
+  const pW = cW - pad.l - pad.r, pH = cH - pad.t - pad.b;
+  const dx = pW / (2*n), dy = pH / n;
+
+  const y0 = pad.t + n * dy;
+  cx.strokeStyle = 'rgba(90,112,128,0.25)'; cx.lineWidth = 0.5;
+  cx.beginPath(); cx.moveTo(pad.l, y0); cx.lineTo(pad.l + pW, y0); cx.stroke();
+
+  const pts = [{x:0,y:0}]; let h = 0;
+  for (const b of bits) { h += b ? 1 : -1; pts.push({x:pts.length, y:h}); }
+  const toC = p => ({x: pad.l + p.x*dx, y: pad.t + (n - p.y)*dy});
+
+  cx.beginPath();
+  let cp = toC(pts[0]); cx.moveTo(cp.x, cp.y);
+  for (let i = 1; i < pts.length; i++) { cp = toC(pts[i]); cx.lineTo(cp.x, cp.y); }
+  cx.lineTo(toC(pts[pts.length-1]).x, y0);
+  cx.lineTo(toC(pts[0]).x, y0); cx.closePath();
+  cx.fillStyle = 'rgba(37,99,235,0.08)'; cx.fill();
+
+  cx.lineWidth = 2; cx.lineCap = 'round';
+  for (let i = 0; i < bits.length; i++) {
+    const from = toC(pts[i]), to = toC(pts[i+1]);
+    cx.strokeStyle = bits[i] ? '#2563eb' : '#b8860b';
+    cx.beginPath(); cx.moveTo(from.x, from.y); cx.lineTo(to.x, to.y); cx.stroke();
+  }
+
+  for (let i = 0; i < pts.length; i++) {
+    cp = toC(pts[i]);
+    cx.beginPath(); cx.arc(cp.x, cp.y, 2, 0, Math.PI*2);
+    cx.fillStyle = '#1c2d3f'; cx.fill();
+  }
+}
+
+function renderVertexList() {
+  const el = document.getElementById('vxList');
+  el.innerHTML = '';
+  vertices.forEach((v, i) => {
+    const div = document.createElement('div');
+    div.className = 'vx-row' + (i === selectedIdx ? ' active' : '');
+    div.innerHTML = `<span class="dot"></span><span class="idx">${i+1}</span><span>${v.paren}</span>`;
+    div.onclick = () => selectVertex(i);
+    el.appendChild(div);
+  });
+}
+
+// ================================================================
+// PRESET VIEWS
+// ================================================================
+const presets = [
+  { label: 'Front', rx: 0.4, ry: 0.7, rz: 0.1 },
+  { label: 'Top', rx: -1.2, ry: 0.5, rz: 0 },
+  { label: 'Side', rx: 0.3, ry: 1.57, rz: 0 },
+  { label: 'Wiki', rx: 0.35, ry: 0.55, rz: 0.05 },
+];
+
+const vcEl = document.getElementById('viewControls');
+presets.forEach((p, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'view-btn' + (i === 0 ? ' active' : '');
+  btn.textContent = p.label;
+  btn.onclick = () => {
+    rotX = p.rx; rotY = p.ry; rotZ = p.rz;
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    draw();
+  };
+  vcEl.appendChild(btn);
+});
+
+// ================================================================
+// TOUCH SUPPORT
+// ================================================================
+let touchStart = null;
+canvas.addEventListener('touchstart', e => {
+  if (e.touches.length === 1) {
+    touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }
+}, { passive: true });
+
+canvas.addEventListener('touchmove', e => {
+  if (e.touches.length === 1 && touchStart) {
+    const dx = e.touches[0].clientX - touchStart.x;
+    const dy = e.touches[0].clientY - touchStart.y;
+    rotY += dx * 0.008;
+    rotX += dy * 0.008;
+    touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    draw();
+  }
+}, { passive: true });
+
+canvas.addEventListener('touchend', () => { touchStart = null; });
+
+// ================================================================
+// INIT
+// ================================================================
+window.addEventListener('resize', () => { resize(); draw(); });
+resize();
+renderVertexList();
+draw();
+</script>
+</body>
+</html>
