@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>From Path Continuations to the Inviscid Burgers Equation</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@300;400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#e4f5f7;--bg2:#f0fafb;--bg3:#d0edf1;--bg4:#b8e2e8;
+  --text:#1a333a;--text-dim:#4a7580;--text-bright:#0c2228;
+  --zero-color:#1565c0;--zero-bg:rgba(21,101,192,0.08);
+  --one-color:#c62828;--one-bg:rgba(198,40,40,0.08);
+  --accent:#b8860b;--accent-dim:rgba(184,134,11,0.1);--accent2:#d4a017;
+  --arctic:#00796b;--arctic-dim:rgba(0,121,107,0.1);
+  --surface-border:rgba(20,80,100,0.12);
+  --green:#2e7d32;--green-light:#e8f5e9;
+  --purple:#6a1b9a;--purple-light:#f3e5f5;
+  --rose:#b71c1c;--rose-light:#ffebee;
+  --blue:#0d47a1;--blue-light:#e3f2fd;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:15px}
+body{background:var(--bg);color:var(--text);font-family:'Source Serif 4',Georgia,serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 90% 60% at 15% 15%,rgba(0,121,107,0.04) 0%,transparent 70%),radial-gradient(ellipse 70% 50% at 85% 75%,rgba(21,101,192,0.03) 0%,transparent 70%);pointer-events:none;z-index:0}
+
+h1{font-family:'Cormorant Garamond',Georgia,serif;font-weight:700;font-size:2.1rem;color:var(--text-bright);letter-spacing:-0.02em;line-height:1.2}
+h2{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:1.3rem;color:var(--text-bright);letter-spacing:0.03em;text-transform:uppercase;margin-bottom:0.5rem}
+.mono{font-family:'JetBrains Mono',monospace}
+
+.app{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:1.8rem 2rem 4rem}
+.header{text-align:center;margin-bottom:1.8rem;padding-bottom:1.6rem;border-bottom:1px solid var(--surface-border)}
+.header .sub{font-family:'Source Serif 4',Georgia,serif;font-style:italic;color:var(--text-dim);font-size:0.95rem;margin-top:0.4rem}
+.header .ctx{font-size:0.8rem;color:var(--text-dim);margin-top:0.8rem;max-width:780px;margin-left:auto;margin-right:auto;line-height:1.6}
+
+.panel{background:var(--bg2);border:1px solid var(--surface-border);border-radius:12px;padding:1rem 1.3rem;margin-bottom:1.1rem}
+.panel.full{width:100%}
+
+.row{display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap}
+.cg{display:flex;align-items:center;gap:0.3rem}
+.cg label{font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em}
+button,select{font-family:'JetBrains Mono',monospace;font-size:0.68rem;padding:0.35rem 0.7rem;border-radius:6px;border:1px solid var(--surface-border);background:var(--bg3);color:var(--text);cursor:pointer;transition:all 0.2s}
+button:hover{background:var(--bg4)}button:disabled{opacity:0.35;cursor:default}
+button.pri{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:rgba(184,134,11,0.4);font-weight:600}
+button.pri:hover{filter:brightness(1.08)}
+button.sec{background:var(--arctic-dim);color:var(--arctic);border-color:rgba(0,121,107,0.2)}
+button.sec:hover{background:rgba(0,121,107,0.15)}
+button.sec.active{background:linear-gradient(135deg,rgba(0,121,107,0.3),rgba(0,121,107,0.18));border:2px solid var(--arctic);color:var(--arctic);font-weight:700;box-shadow:0 0 6px rgba(0,121,107,0.2),inset 0 1px 0 rgba(255,255,255,0.25)}
+input[type=number]{font-family:'JetBrains Mono',monospace;font-size:0.76rem;width:52px;padding:0.33rem 0.5rem;border-radius:6px;border:1px solid var(--surface-border);background:var(--bg2);color:var(--text);text-align:center}
+input[type=number]:focus{outline:none;border-color:var(--accent)}
+input[type=range]{width:100%;accent-color:var(--arctic)}
+
+.word-editor{display:flex;gap:2px;flex-wrap:wrap;padding:0.4rem 0;justify-content:center}
+.we-bit{width:26px;height:30px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:600;font-size:0.9rem;border-radius:5px;cursor:pointer;transition:all 0.2s;user-select:none}
+.we-bit.z{background:var(--zero-bg);color:var(--zero-color);border:1px solid rgba(21,101,192,0.2)}
+.we-bit.o{background:var(--one-bg);color:var(--one-color);border:1px solid rgba(198,40,40,0.2)}
+.we-bit:hover{transform:scale(1.1);box-shadow:0 0 6px rgba(184,134,11,0.3)}
+
+.cv-box{background:var(--bg2);border:1px solid var(--surface-border);border-radius:8px;padding:8px;text-align:center}
+.cv-box canvas{display:block;margin:0 auto;border-radius:4px}
+.cv-lbl{font-family:'JetBrains Mono',monospace;font-size:0.64rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px}
+
+.tabs{display:flex;gap:3px;margin-bottom:0.8rem;flex-wrap:wrap}
+.tab{font-family:'JetBrains Mono',monospace;font-size:0.6rem;padding:0.32rem 0.6rem;background:var(--bg3);border:1px solid var(--surface-border);border-radius:20px;color:var(--text-dim);cursor:pointer;transition:all 0.2s;text-transform:uppercase;letter-spacing:0.06em}
+.tab:hover{border-color:rgba(20,80,100,0.25);color:var(--text)}
+.tab.on{background:linear-gradient(135deg,rgba(0,121,107,0.25),rgba(0,121,107,0.15));border:2px solid var(--arctic);color:var(--arctic);font-weight:700;box-shadow:0 0 8px rgba(0,121,107,0.2),inset 0 1px 0 rgba(255,255,255,0.3)}
+.tc{display:none;animation:fadeIn 0.3s}.tc.on{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+.sb{padding:10px 12px;background:rgba(228,245,247,0.7);border-radius:6px;border-left:3px solid var(--accent);font-size:0.82rem;line-height:1.6;margin:7px 0}.sb strong{color:#8b6914}
+.rb{padding:10px 12px;border-radius:0 6px 6px 0;border-left:3px solid var(--blue);background:var(--blue-light);font-size:0.82rem;line-height:1.6;margin:7px 0}.rb strong{color:var(--blue)}
+.db{padding:10px 12px;border-radius:0 6px 6px 0;border-left:3px solid var(--purple);background:var(--purple-light);font-size:0.82rem;line-height:1.6;margin:7px 0}.db strong{color:var(--purple)}
+.okb{padding:10px 12px;border-radius:0 6px 6px 0;border-left:3px solid var(--green);background:var(--green-light);font-size:0.82rem;line-height:1.6;margin:7px 0}.okb strong{color:var(--green)}
+.wb{padding:10px 12px;border-radius:0 6px 6px 0;border-left:3px solid var(--rose);background:var(--rose-light);font-size:0.82rem;line-height:1.6;margin:7px 0}.wb strong{color:var(--rose)}
+
+.eq{text-align:center;padding:12px;margin:0.7rem 0;background:var(--bg3);border-radius:8px;font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:var(--text-bright);border:1px solid rgba(20,80,100,0.08);border-left:3px solid var(--arctic)}
+.eq .sub{font-size:0.76rem;color:var(--text-dim);display:block;margin-top:0.25rem;font-family:'Source Serif 4',serif}
+.eq-chain{display:flex;flex-direction:column;gap:0;margin:0.6rem 0}
+.eq-step{padding:10px 14px;background:var(--bg3);border:1px solid var(--surface-border);font-size:0.82rem;line-height:1.6}
+.eq-step:first-child{border-radius:8px 8px 0 0}
+.eq-step:last-child{border-radius:0 0 8px 8px}
+.eq-step .eq-num{font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--arctic);font-weight:700;display:block;margin-bottom:2px}
+.eq-step .eq-formula{font-family:'Cormorant Garamond',serif;font-size:1.1rem;text-align:center;margin:4px 0;color:var(--text-bright)}
+
+.chain{display:flex;gap:0;flex-wrap:wrap;margin:0.8rem 0;align-items:stretch}
+.chain-s{flex:1;min-width:120px;padding:8px 10px;background:var(--bg3);border:1px solid var(--surface-border);font-size:0.74rem;line-height:1.4;text-align:center;position:relative}
+.chain-s:first-child{border-radius:8px 0 0 8px}.chain-s:last-child{border-radius:0 8px 8px 0}
+.chain-s .cn{font-family:'JetBrains Mono',monospace;font-size:0.56rem;color:var(--arctic);display:block;margin-bottom:2px}
+.chain-s .ca{position:absolute;right:-8px;top:50%;transform:translateY(-50%);font-size:1rem;color:var(--arctic);z-index:2}
+
+.stats{display:flex;gap:5px;flex-wrap:wrap;margin:5px 0}
+.st{background:var(--bg3);border:1px solid var(--surface-border);border-radius:6px;padding:3px 8px;text-align:center;min-width:50px}
+.st-v{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:0.85rem;color:var(--arctic)}
+.st-l{font-size:0.54rem;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:900px){.g2{grid-template-columns:1fr}}
+.info{font-size:0.84rem;line-height:1.65;color:var(--text)}
+.info .hl{color:var(--arctic);font-weight:600}
+
+.sync-viewer{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0.6rem 0}
+@media(max-width:800px){.sync-viewer{grid-template-columns:1fr}}
+.time-slider-wrap{margin:0.4rem 0;padding:8px 12px;background:var(--bg3);border-radius:8px;display:flex;align-items:center;gap:10px}
+.time-slider-wrap label{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-dim);white-space:nowrap}
+.time-slider-wrap input[type=range]{flex:1}
+.time-val{font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--arctic);font-weight:700;min-width:50px}
+.breaking-badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:0.68rem;padding:2px 8px;border-radius:10px;background:var(--rose-light);color:var(--rose);border:1px solid rgba(183,28,28,0.2);margin-left:8px}
+
+.help-btn{display:inline-flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:0.76rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#fff;background:linear-gradient(180deg,#4a9adf 0%,#2070c0 40%,#1a5ea8 100%);border:none;border-radius:8px;padding:7px 16px;cursor:pointer;box-shadow:0 4px 0 #14477a,0 6px 8px rgba(20,71,122,0.35),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -1px 0 rgba(0,0,0,0.15);text-shadow:0 1px 2px rgba(0,0,0,0.3);transition:all 0.1s;transform:translateY(0);vertical-align:middle;margin-left:10px}
+.help-btn:hover{background:linear-gradient(180deg,#5aadee 0%,#2a80d0 40%,#1e68b5 100%)}
+.help-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #14477a,0 2px 4px rgba(20,71,122,0.3),inset 0 1px 0 rgba(255,255,255,0.2)}
+.help-btn .help-icon{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,0.25);font-size:0.82rem;font-weight:800;text-shadow:none}
+
+.reset-btn{display:inline-flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:0.76rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#fff;background:linear-gradient(180deg,#e05050 0%,#c02020 40%,#a01818 100%);border:none;border-radius:8px;padding:7px 16px;cursor:pointer;box-shadow:0 4px 0 #7a1414,0 6px 8px rgba(122,20,20,0.35),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -1px 0 rgba(0,0,0,0.15);text-shadow:0 1px 2px rgba(0,0,0,0.3);transition:all 0.1s;transform:translateY(0);vertical-align:middle;margin-left:6px}
+.reset-btn:hover{background:linear-gradient(180deg,#ee5a5a 0%,#d02a2a 40%,#b52020 100%)}
+.reset-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #7a1414,0 2px 4px rgba(122,20,20,0.3),inset 0 1px 0 rgba(255,255,255,0.2)}
+
+.grk{font-family:'Source Serif 4','Cormorant Garamond',Georgia,serif;font-style:italic}
+
+.help-overlay{display:none;position:fixed;inset:0;background:rgba(12,34,40,0.55);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center}
+.help-overlay.open{display:flex}
+.help-modal{background:var(--bg2);border:1px solid var(--surface-border);border-radius:16px;box-shadow:0 24px 64px rgba(12,34,40,0.35);max-width:720px;width:90vw;max-height:85vh;overflow-y:auto;padding:1.8rem 2rem;position:relative;animation:modalSlide 0.3s ease}
+@keyframes modalSlide{from{opacity:0;transform:translateY(20px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.help-close{position:absolute;top:12px;right:14px;width:28px;height:28px;border-radius:50%;background:var(--bg3);border:1px solid var(--surface-border);color:var(--text-dim);font-size:1rem;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s}
+.help-close:hover{background:var(--bg4);color:var(--text)}
+.help-modal h2{margin-top:1rem;font-size:1.1rem}.help-modal h2:first-child{margin-top:0}
+.help-modal p,.help-modal li{font-size:0.84rem;line-height:1.65;margin:0.25rem 0}
+.help-modal ul{padding-left:1.2rem;margin:0.3rem 0}
+.help-modal .hk{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:0.7rem;background:var(--bg3);border:1px solid var(--surface-border);border-radius:4px;padding:1px 5px;color:var(--arctic)}
+.help-section{padding:0.5rem 0;border-bottom:1px solid var(--surface-border)}.help-section:last-child{border-bottom:none}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="header">
+  <h1>From Path Continuations to the Inviscid Burgers Equation</h1>
+  <div class="sub">How averaging random continuations of a binary word reveals a PDE from fluid dynamics &nbsp;·&nbsp; <span style="font-size:0.7rem;color:var(--text-dim);font-style:normal;font-family:'JetBrains Mono',monospace">v7d</span> <button class="help-btn" id="btnHelp"><span class="help-icon">?</span> Help</button><button class="reset-btn" id="btnReset">↺ Reset</button> <span style="margin-left:8px;font-size:0.7rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace">Plot font:</span><select id="selPlotFont" style="font-size:0.7rem;padding:2px 4px;border-radius:4px;border:1px solid var(--surface-border);background:var(--bg2);color:var(--text);font-family:'JetBrains Mono',monospace;vertical-align:middle"><option value="9">9px</option><option value="11">11px</option><option value="13" selected>13px</option><option value="15">15px</option><option value="18">18px</option></select></div>
+  <div class="ctx">Take a sequence of binary words {A<sub>p</sub>} with k<sub>p</sub>/p → α ∈ (0,1). Average over all monotone continuations to 1<sup>p−k</sup>0<sup>k</sup>. As p → ∞, the density profile converges to the entropy solution of u<sub>s</sub> + ∂<sub>x</sub>[u(1−u)] = 0, provided the empirical density converges to u₀(x) with ∫u₀ = 1 − α.</div>
+</div>
+
+<!-- PATH EDITOR -->
+<div class="panel full">
+  <h2>① Choose a Path A</h2>
+  <div class="row" style="margin-bottom:0.4rem;">
+    <div class="cg"><label>p =</label><input type="number" id="inpP" value="200" min="4" max="200"><span style="font-size:0.52rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace;margin-left:2px">(4–200)</span></div>
+    <div class="cg"><label>k =</label><input type="number" id="inpK" value="80" min="1" max="199"><span style="font-size:0.52rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace;margin-left:2px" id="kRange">(1–199)</span></div>
+    <button class="pri" id="btnSetPK">Set</button>
+    <span style="color:var(--text-dim);font-size:0.55rem">|</span>
+    <button class="sec preset-btn" id="btnInitial">0ᵏ1ᵖ⁻ᵏ</button>
+    <button class="sec preset-btn" id="btnHalf">½-evolved</button>
+    <button class="sec preset-btn" id="btnRiemann1">Shock (uL>uR)</button>
+    <button class="sec preset-btn" id="btnRiemann2">Rarefaction (uL&lt;uR)</button>
+    <button class="sec preset-btn" id="btnRampUp" title="u₀(x)≈x — density increases left to right; shock forms at t_b=0.5">Ramp ↑ u₀=x</button>
+    <button class="sec preset-btn" id="btnRampDown" title="u₀(x)≈1−x — density decreases left to right; no shock">Ramp ↓ u₀=1−x</button>
+    <button class="sec preset-btn" id="btnScatter">Scattered</button>
+    <button class="sec preset-btn" id="btnRandA">Random</button>
+  </div>
+  <div class="word-editor" id="wordEditor"></div>
+  <div class="g2" style="margin-top:0.3rem;">
+    <div><div class="stats" id="pathStats"></div></div>
+    <div class="cv-box"><div class="cv-lbl">Density u₀(x) · <span class="grk">α</span> = k/p · t_b</div><canvas id="cvDensity" width="480" height="180"></canvas></div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="panel full">
+  <div class="tabs">
+    <div class="tab on" data-t="formulation">📐 Formulation</div>
+    <div class="tab" data-t="exact">Exact Solution</div>
+    <div class="tab" data-t="explorer">⭐ Explorer</div>
+    <div class="tab" data-t="emergence">🎬 Emergence</div>
+    <div class="tab" data-t="mc">Monte Carlo</div>
+    <div class="tab" data-t="convergence">Convergence</div>
+    <div class="tab" data-t="steps">Why Burgers?</div>
+    <div class="tab" data-t="use">How to Use</div>
+  </div>
+
+  <!-- TAB: Formulation -->
+  <div class="tc on" id="t-formulation">
+    <h2>Precise Problem Formulation</h2>
+
+    <div class="info" style="margin-bottom:0.5rem"><p>Before solving, we must state the problem carefully. The key subtlety is <em>how</em> to take the limit p → ∞.</p></div>
+
+    <div class="eq-chain">
+      <div class="eq-step"><span class="eq-num">THE SETUP — Binary word as lattice path</span>
+        <p style="font-size:0.82rem;line-height:1.6">A binary word A of length p with k zeros and (p−k) ones is a <strong>lattice path</strong> in the rectangle k × (p−k): each zero is a ↑ step, each one is a → step. The evolution (random 01 → 10 swaps) moves this path toward the sorted word 1<sup>p−k</sup>0<sup>k</sup>.</p>
+      </div>
+      <div class="eq-step" style="border-left:3px solid var(--arctic)"><span class="eq-num">THE SCALING — Both species must grow</span>
+        <div class="eq-formula">k<sub>p</sub> / p  →  α ∈ (0, 1) &nbsp;&nbsp; as p → ∞</div>
+        <p style="font-size:0.8rem;color:var(--text-dim)">If k stayed fixed while p → ∞, the density of zeros k/p → 0 gives a trivial limit (all ones, no dynamics). Both the number of zeros (k<sub>p</sub>) and ones (p − k<sub>p</sub>) must grow proportionally with p. Geometrically, the rectangle k × (p−k) inflates in both dimensions; in macroscopic coordinates (rescaled by p), it converges to an α × (1−α) rectangle.</p>
+      </div>
+      <div class="eq-step"><span class="eq-num">PROFILE CONVERGENCE — Empirical → macroscopic</span>
+        <div class="eq-formula">u₀<sup>(p)</sup>(x) → u₀(x) &nbsp;&nbsp; as p → ∞</div>
+        <p style="font-size:0.8rem;color:var(--text-dim)">The empirical density of ones near position x = i/p in A<sub>p</sub> must converge to a fixed macroscopic initial profile u₀ : [0,1] → [0,1].</p>
+      </div>
+      <div class="eq-step" style="border-left:3px solid var(--accent)"><span class="eq-num">GLOBAL CONSTRAINT — Total fraction of ones</span>
+        <div class="eq-formula">∫₀¹ u₀(x) dx = 1 − α</div>
+        <p style="font-size:0.8rem;color:var(--text-dim)">The total fraction of ones is (p − k<sub>p</sub>)/p → 1 − α. This is checked in the stats panel: compare <strong>∫u₀</strong> with <strong>1 − α</strong>.</p>
+      </div>
+      <div class="eq-step" style="border-left:3px solid var(--rose)"><span class="eq-num">THE THEOREM (Rost 1981, Rezakhanlou 1991, Seppäläinen 1999)</span>
+        <p style="font-size:0.82rem;line-height:1.6">Under the above scaling, the averaged density of ones at macroscopic position x and time s converges to the <strong>entropy solution</strong> of the inviscid Burgers equation:</p>
+        <div class="eq-formula" style="font-size:1.2rem;font-weight:700">u<sub>s</sub> + ∂<sub>x</sub>[u(1 − u)] = 0, &nbsp;&nbsp; u(x, 0) = u₀(x)</div>
+        <p style="font-size:0.8rem;color:var(--text-dim)">The macroscopic time is s = steps / k(p−k) ∈ [0, 1]. The stochastic averaging IS the entropy condition: it selects compression shocks, forbids expansion shocks.</p>
+      </div>
+    </div>
+
+    <div class="sb"><strong>What is u(x, s)?</strong> The fraction of ones near rescaled position x ∈ [0,1] at macroscopic time s ∈ [0,1]. It ranges from 0 (all zeros) to 1 (all ones).</div>
+    <div class="rb"><strong>What is J(u) = u(1−u)?</strong> The flux — the rate of 01 → 10 swaps. You need both ones <em>and</em> zeros for a swap, so flow peaks at u = ½ (the 50/50 mix) and is zero at both extremes.</div>
+    <div class="db"><strong>What is c(u) = 1−2u?</strong> The characteristic speed. Regions with many ones (u > ½) drift left; few ones (u < ½) drift right; the balance point u = ½ is stationary.</div>
+    <div class="okb"><strong>What is v = u − ½?</strong> The excess density above equilibrium. Substituting u = v + ½ reveals the Hopf equation v<sub>τ</sub> + v·v<sub>x</sub> = 0 — the canonical nonlinear wave in every PDE textbook.</div>
+
+    <div class="wb"><strong>What is f(ξ)?</strong> Just a shorthand for the initial data: <strong>f(ξ) ≡ u₀(ξ)</strong>. Whenever you see f in the formulas (e.g. "u = f(ξ)" or "t<sub>b</sub> = 1/(2·max f′)"), read it as "the initial density profile evaluated at ξ." The PDE textbook convention uses f for the initial condition; our u₀ is the same function.</div>
+
+    <div class="info" style="margin-top:0.8rem;padding:8px 12px;background:var(--bg3);border-radius:8px;border-left:3px solid rgba(106,27,154,0.4)">
+      <p><strong>🔬 What does "density of ones near position x" actually mean?</strong> In the app, <code>getSmoothedU0</code> uses a symmetric moving-average window of radius w = ⌊p/15⌋ sites centered at each position. This is a <em>mesoscopic</em> scale: 1/p ≪ w/p ≪ 1 (each window contains many bits, but is still small relative to [0,1]). Any window satisfying this constraint gives the same macroscopic profile as p→∞. Rigorously, no window is needed: the requirement is <em>weak convergence</em> of the empirical measure (1/p)∑ w<sub>i</sub> δ<sub>i/p</sub> to u₀(x)dx, meaning ∑ w<sub>i</sub> φ(i/p) / p → ∫u₀ φ dx for all continuous test functions φ.</p>
+    </div>
+
+    <div class="info" style="margin-top:0.8rem;padding:8px 12px;background:var(--bg3);border-radius:8px;border-left:3px solid rgba(184,134,11,0.4)">
+      <p><strong>💡 Traffic analogy:</strong> Think of ones as <em>cars</em> on a highway and zeros as <em>empty spaces</em>. Density u = fraction of road occupied. When traffic is heavy (u near 1), cars jam; when light (u near 0), few cars = little flow. Maximum throughput at u = ½. The conservation law says no cars are created or destroyed — the total ∫u₀ = 1 − α is conserved for all time.</p>
+    </div>
+
+    <div class="info" style="margin-top:0.4rem">
+      <p><strong>Summary table of key quantities:</strong></p>
+    </div>
+    <div style="overflow-x:auto;margin-top:0.3rem">
+      <table style="width:100%;font-size:0.78rem;border-collapse:collapse;font-family:'JetBrains Mono',monospace">
+        <thead><tr style="background:var(--bg3);border-bottom:2px solid var(--surface-border)">
+          <th style="padding:5px 8px;text-align:left;color:var(--arctic)">Symbol</th>
+          <th style="padding:5px 8px;text-align:left">Meaning</th>
+          <th style="padding:5px 8px;text-align:left;color:var(--text-dim)">Example</th>
+        </tr></thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--surface-border)"><td style="padding:4px 8px;color:var(--arctic);font-weight:700">x</td><td style="padding:4px 8px">Position in word (rescaled to [0,1])</td><td style="padding:4px 8px;color:var(--text-dim)">x = i/p</td></tr>
+          <tr style="border-bottom:1px solid var(--surface-border)"><td style="padding:4px 8px;color:var(--arctic);font-weight:700">s</td><td style="padding:4px 8px">Macroscopic time (fraction completed)</td><td style="padding:4px 8px;color:var(--text-dim)">s = steps/k(p−k)</td></tr>
+          <tr style="border-bottom:1px solid var(--surface-border)"><td style="padding:4px 8px;color:var(--arctic);font-weight:700"><span class="grk">α</span></td><td style="padding:4px 8px">Limiting zero fraction k/p → <span class="grk">α</span></td><td style="padding:4px 8px;color:var(--text-dim)"><span class="grk">α</span> = 0.4 → 40% zeros</td></tr>
+          <tr style="border-bottom:1px solid var(--surface-border)"><td style="padding:4px 8px;color:var(--arctic);font-weight:700">u(x,s)</td><td style="padding:4px 8px">Density of ones at (x, s)</td><td style="padding:4px 8px;color:var(--text-dim)">u = 0.8 → 80% ones</td></tr>
+          <tr style="border-bottom:1px solid var(--surface-border)"><td style="padding:4px 8px;color:var(--arctic);font-weight:700">f(<span class="grk">ξ</span>)</td><td style="padding:4px 8px">Shorthand for initial data: f(<span class="grk">ξ</span>) ≡ u₀(<span class="grk">ξ</span>)</td><td style="padding:4px 8px;color:var(--text-dim)">f(0.3) = u₀(0.3)</td></tr>
+          <tr style="border-bottom:1px solid var(--surface-border)"><td style="padding:4px 8px;color:var(--arctic);font-weight:700">J(u)</td><td style="padding:4px 8px">Flux = u(1−u) (swap rate)</td><td style="padding:4px 8px;color:var(--text-dim)">J(0.5) = 0.25 (max)</td></tr>
+          <tr style="border-bottom:1px solid var(--surface-border)"><td style="padding:4px 8px;color:var(--arctic);font-weight:700">c(u)</td><td style="padding:4px 8px">Characteristic speed = 1−2u</td><td style="padding:4px 8px;color:var(--text-dim)">c(0.8) = −0.6 (left)</td></tr>
+          <tr style="border-bottom:1px solid var(--surface-border)"><td style="padding:4px 8px;color:var(--arctic);font-weight:700">v</td><td style="padding:4px 8px">Excess density = u − ½</td><td style="padding:4px 8px;color:var(--text-dim)">v = 0.3 when u = 0.8</td></tr>
+          <tr style="border-bottom:1px solid var(--surface-border)"><td style="padding:4px 8px;color:var(--arctic);font-weight:700">ξ</td><td style="padding:4px 8px">Origin of characteristic reaching (x,s)</td><td style="padding:4px 8px;color:var(--text-dim)">Solve implicit eq.</td></tr>
+          <tr style="border-bottom:1px solid var(--surface-border)"><td style="padding:4px 8px;color:var(--arctic);font-weight:700">t<sub>b</sub></td><td style="padding:4px 8px">Breaking time = 1/(2·max f′)</td><td style="padding:4px 8px;color:var(--text-dim)">t<sub>b</sub> = 0.5 for f = x</td></tr>
+          <tr><td style="padding:4px 8px;color:var(--arctic);font-weight:700">ẋ<sub>shock</sub></td><td style="padding:4px 8px">Shock speed = 1 − u<sub>L</sub> − u<sub>R</sub></td><td style="padding:4px 8px;color:var(--text-dim)">1−0.9−0.3 = −0.2</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB: Exact Solution -->
+  <div class="tc" id="t-exact">
+    <h2>The Exact Solution via Method of Characteristics</h2>
+    <div class="info"><p>Our conservation law can be solved <strong>exactly</strong>. Here is the complete analytical chain — from the equation to the implicit solution to the breaking time.</p></div>
+    <div class="eq-chain">
+      <div class="eq-step"><span class="eq-num">STEP 1 — Our equation</span><div class="eq-formula">u<sub>s</sub> + ∂<sub>x</sub>[u(1 − u)] = 0 &nbsp;⟹&nbsp; u<sub>s</sub> + (1 − 2u) u<sub>x</sub> = 0</div><p style="font-size:0.8rem;color:var(--text-dim)">Conservation law with flux J(u) = u(1−u). Characteristic speed c(u) = 1 − 2u.</p></div>
+      <div class="eq-step"><span class="eq-num">STEP 2 — Substitution u = v + ½</span><div class="eq-formula">v<sub>s</sub> − 2v · v<sub>x</sub> = 0 &nbsp;&nbsp;→&nbsp; with τ = −2s: &nbsp; v<sub>τ</sub> + v · v<sub>x</sub> = 0 &nbsp; (Hopf equation)</div><p style="font-size:0.8rem;color:var(--text-dim)">Centering around v = 0 (the 50/50 mix). v > 0 = excess ones (moves left), v < 0 = deficit (moves right).</p></div>
+      <div class="eq-step"><span class="eq-num">STEP 3 — Characteristics (straight lines)</span><div class="eq-formula">dx/ds = 1 − 2u, &nbsp; du/ds = 0 &nbsp;⟹&nbsp; u = const along x(s) = ξ + (1 − 2f(ξ))·s</div><p style="font-size:0.8rem;color:var(--text-dim)">Each point ξ on the x-axis sends a straight-line characteristic carrying u = f(ξ) = u₀(ξ).</p></div>
+      <div class="eq-step"><span class="eq-num">STEP 4 — Implicit solution</span><div class="eq-formula" style="font-size:1.2rem;font-weight:700">u(x, s) = f(ξ), &nbsp;&nbsp; where &nbsp; x = ξ + (1 − 2f(ξ)) · s</div><p style="font-size:0.8rem;color:var(--text-dim)">For each (x,s), invert to find ξ, then u = f(ξ). This is exact — valid until characteristics cross.</p></div>
+      <div class="eq-step" style="border-left:3px solid var(--rose);"><span class="eq-num">STEP 5 — Breaking time (shock formation)</span><div class="eq-formula">t<sub>b</sub> = −1 / inf<sub>ξ</sub> [(1 − 2f(ξ))′] = 1 / (2 · sup<sub>ξ</sub> f′(ξ))</div><p style="font-size:0.8rem;color:var(--text-dim)">Fastest characteristics catch slower ones at time t<sub>b</sub>. After t<sub>b</sub>: entropy condition (Rankine–Hugoniot) selects the shock solution. Shock speed: ẋ = 1 − u<sub>L</sub> − u<sub>R</sub>.</p></div>
+    </div>
+    <div class="okb"><strong>Why u = v + ½ matters:</strong> The variable v = u − ½ is the <em>excess density above equilibrium</em>. The Hopf equation v<sub>τ</sub> + v·v<sub>x</sub> = 0 is the canonical form in every PDE textbook. It reveals the symmetry: positive excess compresses (shock), negative excess rarefies (fan). The equilibrium v = 0 is a standing wave — neither advancing nor retreating.</div>
+    <div class="sb"><strong>After the shock:</strong> When characteristics cross, the implicit formula gives multiple values. The <em>entropy solution</em> picks the one consistent with stochastic averaging: compression shocks (u<sub>L</sub> > u<sub>R</sub>) propagate, expansion shocks are forbidden (replaced by rarefaction fans).</div>
+
+    <h2 style="margin-top:1rem">Worked Examples</h2>
+
+    <div class="eq-chain">
+      <div class="eq-step" style="border-left:3px solid var(--green)"><span class="eq-num">EXAMPLE 1 — Decreasing ramp u₀(x) = 1 − x (no shock)</span>
+        <p style="font-size:0.82rem;line-height:1.65">f(ξ) = 1−ξ, so f′ = −1 < 0 everywhere → <strong>t<sub>b</sub> = ∞</strong>, no shock ever forms. Characteristics diverge.</p>
+        <div class="eq-formula">u(x, s) = (1 + s − x) / (1 + 2s)</div>
+        <p style="font-size:0.78rem;color:var(--text-dim)">At s = 0: u = 1−x ✓. Slope flattens from −1 to −1/(1+2s). As s → ∞: u → ½ everywhere (complete mixing).</p>
+      </div>
+      <div class="eq-step" style="border-left:3px solid var(--rose)"><span class="eq-num">EXAMPLE 2 — Increasing ramp u₀(x) = x (shock at t<sub>b</sub> = 0.5)</span>
+        <p style="font-size:0.82rem;line-height:1.65">f(ξ) = ξ, so f′ = +1 → <strong>t<sub>b</sub> = 1/(2·1) = 0.5</strong>. Profile steepens, then breaks.</p>
+        <div class="eq-formula">u(x, s) = (x − s) / (1 − 2s), &nbsp;&nbsp; valid for s < 0.5</div>
+        <p style="font-size:0.78rem;color:var(--text-dim)">At s = 0.25: u = 2x − 0.5 (twice as steep). At s = 0.5: denominator → 0 (vertical cliff → shock forms).</p>
+      </div>
+      <div class="eq-step" style="border-left:3px solid var(--blue)"><span class="eq-num">EXAMPLE 3 — Step function u<sub>L</sub> = 0.8, u<sub>R</sub> = 0.2 at x₀ = 0.5</span>
+        <p style="font-size:0.82rem;line-height:1.65">Since u<sub>L</sub> > u<sub>R</sub> (step down), shock exists from s = 0 (t<sub>b</sub> = 0). Shock speed: 1 − 0.8 − 0.2 = <strong>0</strong> (stationary!).</p>
+        <div class="eq-formula">u(x, s) = 0.8 for x < 0.5, &nbsp; u(x, s) = 0.2 for x > 0.5 &nbsp; (all s)</div>
+        <p style="font-size:0.78rem;color:var(--text-dim)">Symmetric case u<sub>L</sub> + u<sub>R</sub> = 1: flux is equal on both sides, shock doesn't move.</p>
+      </div>
+      <div class="eq-step" style="border-left:3px solid var(--purple)"><span class="eq-num">EXAMPLE 4 — Asymmetric shock u<sub>L</sub> = 0.9, u<sub>R</sub> = 0.3 at x₀ = 0.4</span>
+        <p style="font-size:0.82rem;line-height:1.65">Shock speed: 1 − 0.9 − 0.3 = <strong>−0.2</strong> (moves left). Position: x<sub>shock</sub>(s) = 0.4 − 0.2s.</p>
+        <div class="eq-formula">u = 0.9 for x < 0.4 − 0.2s, &nbsp;&nbsp; u = 0.3 for x > 0.4 − 0.2s</div>
+        <p style="font-size:0.78rem;color:var(--text-dim)">At s = 1: shock at x = 0.2. The denser side "wins" and pushes the shock toward the sparser side.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Explorer -->
+  <div class="tc" id="t-explorer">
+    <h2>Interactive Characteristics & Profile Explorer</h2>
+    <div class="info"><p>Drag the time slider. <strong>Left:</strong> characteristics in the (x,s) plane. <strong>Right:</strong> exact density profile u(x,s) via the implicit formula. Optional MC overlay.</p></div>
+    <div class="time-slider-wrap">
+      <label>Time s =</label>
+      <input type="range" id="sSlider" min="0" max="100" value="0">
+      <span class="time-val" id="sVal">0.00</span>
+      <span class="breaking-badge" id="tbBadge">t<sub>b</sub> = —</span>
+    </div>
+    <div class="sync-viewer">
+      <div class="cv-box"><div class="cv-lbl">Characteristics in (x, s) plane</div><canvas id="cvChars" width="480" height="380"></canvas></div>
+      <div class="cv-box"><div class="cv-lbl">Density Profile u(x, s)</div><canvas id="cvProfile" width="480" height="380"></canvas></div>
+    </div>
+    <div class="row" style="margin-top:0.4rem;">
+      <button class="pri" id="btnAnimate">▶ Animate s: 0 → 1</button>
+      <button class="sec" id="btnOverlayMC">Overlay MC (2000 samples)</button>
+      <span id="explorerStatus" class="mono" style="font-size:0.66rem;color:var(--text-dim);margin-left:0.4rem;"></span>
+    </div>
+    <div class="rb" style="margin-top:0.5rem"><strong>Color code:</strong> Blue = low u (speed > 0, moves right). Red = high u (speed < 0, moves left). Where lines converge → shock. The <strong>green line</strong> = current time s. The <strong>dashed red curve</strong> = shock trajectory after t<sub>b</sub>. The gray curve on the right panel = initial profile u₀.</div>
+
+    <div class="db" style="margin-top:0.3rem"><strong>What are characteristics?</strong> Each straight line on the left panel is a <em>characteristic</em>: a trajectory x(s) = ξ + (1−2f(ξ))·s starting from position ξ at time s = 0 and carrying the constant value u = f(ξ) = u₀(ξ). The slope (speed) of each line depends on the density it carries: high density (red) → moves left; low density (blue) → moves right. When characteristics from different origins would occupy the same point in space-time, the smooth solution "breaks" and a <strong>shock</strong> forms — a sharp jump in density. The breaking time t<sub>b</sub> is when the first crossing occurs. After t<sub>b</sub>, the dashed red curve shows the shock path determined by the Rankine–Hugoniot condition: ẋ = 1 − u<sub>L</sub> − u<sub>R</sub>.</div>
+
+    <div class="sb" style="margin-top:0.3rem"><strong>Smoothing window:</strong> The density profile u₀(x) is computed from the binary word using a symmetric moving-average of radius w = ⌊p/15⌋ sites (currently <strong id="winInfo">w = 2</strong>). This is a <em>mesoscopic</em> window: large enough to average out bit-level noise (w ≫ 1), small enough to resolve macroscopic features (w ≪ p). The exact Burgers solver then uses this smoothed u₀ as input. The same window is used in the density panel, Explorer, MC comparison, and Convergence tabs.</div>
+  </div>
+
+  <!-- TAB: Emergence -->
+  <div class="tc" id="t-emergence">
+    <h2>🎬 Watching the PDE Emerge from Randomness</h2>
+    <div class="info"><p>Each colored trace is a <strong>single random realization</strong> — one possible sequence of 01→10 swaps. They jitter wildly. Yet their average (white) locks onto the exact Burgers solution (gold). This <em>is</em> the hydrodynamic limit — a deterministic PDE materializing from microscopic noise.</p></div>
+    <div class="row" style="margin:0.5rem 0;">
+      <button class="pri" id="btnEmergenceRun">▶ Compute &amp; Animate</button>
+      <button class="sec" id="btnEmergencePause">⏸ Pause</button>
+      <button class="sec" id="btnEmergenceReset">↺ Reset</button>
+      <div class="cg"><label>Speed</label>
+        <select id="selEmSpeed"><option value="1">1× (slow)</option><option value="2" selected>2×</option><option value="4">4× (fast)</option><option value="8">8× (fastest)</option></select>
+      </div>
+      <div class="cg"><label>Avg samples</label>
+        <select id="selEmSamples"><option value="100">100</option><option value="500" selected>500</option><option value="2000">2000</option></select>
+      </div>
+      <span id="emStatus" class="mono" style="font-size:0.66rem;color:var(--text-dim);margin-left:0.4rem;"></span>
+    </div>
+    <div class="cv-box" style="margin-top:0.3rem"><div class="cv-lbl" id="emCanvasLbl">Density profiles: 5 individual traces + MC average + exact Burgers</div><canvas id="cvEmergence" width="940" height="420"></canvas></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:0.3rem;padding:6px 12px;background:var(--bg3);border-radius:8px;">
+      <input type="range" id="emScrub" min="0" max="100" value="0" style="flex:1">
+      <span class="time-val" id="emTimeVal">s = 0.00</span>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:0.5rem;">
+      <div class="sb" style="flex:1;min-width:200px;margin:0"><strong>Individual paths</strong> (5 faint colored traces): each is one random sequence of swaps from A. They fluctuate because each chooses different random swaps.</div>
+      <div class="rb" style="flex:1;min-width:200px;margin:0"><strong>MC average</strong> (white bold line): the mean over many realizations. As sample count grows, this converges to the true expectation.</div>
+      <div class="wb" style="flex:1;min-width:200px;margin:0"><strong>Exact Burgers</strong> (gold dashed): the PDE solution. As p → ∞, the average <em>must</em> converge to this. Watch it happen.</div>
+    </div>
+  </div>
+
+  <!-- TAB: MC -->
+  <div class="tc" id="t-mc">
+    <h2>Monte Carlo Averaged Continuations</h2>
+    <div class="info"><p>Sample random continuations from A. Compare with the exact Burgers solution at 4 time slices.</p></div>
+    <div class="row" style="margin:0.5rem 0;">
+      <button class="pri" id="btnRunMC">▶ Run MC (2000)</button>
+      <button class="sec" id="btnRunMC5k">5000 samples</button>
+      <span id="mcStatus" class="mono" style="font-size:0.66rem;color:var(--text-dim);margin-left:0.4rem;"></span>
+    </div>
+    <div class="g2">
+      <div class="cv-box"><div class="cv-lbl">Heatmap p(position, time)</div><canvas id="cvHeatmap" width="480" height="420"></canvas></div>
+      <div class="cv-box"><div class="cv-lbl">Exact Burgers (lines) vs MC (dots) at 4 slices</div><canvas id="cvMultiSlice" width="480" height="420"></canvas></div>
+    </div>
+  </div>
+
+  <!-- TAB: Convergence -->
+  <div class="tc" id="t-convergence">
+    <h2>Convergence as p → ∞ (Hydrodynamic Scaling)</h2>
+    <div class="info"><p>Fix macroscopic shape u₀, embed in words of increasing p with k<sub>p</sub>/p → α. Watch MC → Burgers. L² error ∝ 1/√p.</p></div>
+    <div class="row" style="margin:0.5rem 0;">
+      <button class="pri" id="btnConvergence">▶ Run Convergence</button>
+      <span id="convStatus" class="mono" style="font-size:0.66rem;color:var(--text-dim);margin-left:0.4rem;"></span>
+    </div>
+    <div class="g2">
+      <div class="cv-box"><div class="cv-lbl">Profiles at s = 0.4</div><canvas id="cvConvProf" width="480" height="380"></canvas></div>
+      <div class="cv-box"><div class="cv-lbl">L² Error vs p (log-log)</div><canvas id="cvConvErr" width="480" height="380"></canvas></div>
+    </div>
+  </div>
+
+  <!-- TAB: Why Burgers -->
+  <div class="tc" id="t-steps">
+    <h2>Why Burgers?</h2>
+    <div class="chain">
+      <div class="chain-s"><span class="cn">①</span><strong>Binary words</strong><br>{A<sub>p</sub>} with k<sub>p</sub>/p → α<span class="ca">→</span></div>
+      <div class="chain-s"><span class="cn">②</span><strong>TASEP</strong><br>ones=particles, zeros=holes<span class="ca">→</span></div>
+      <div class="chain-s"><span class="cn">③</span><strong>Hydro scaling</strong><br>p→∞, k/p→α, u₀<sup>(p)</sup>→u₀<span class="ca">→</span></div>
+      <div class="chain-s"><span class="cn">④</span><strong>Burgers</strong><br>u<sub>s</sub>+∂<sub>x</sub>[u(1−u)]=0<span class="ca">→</span></div>
+      <div class="chain-s"><span class="cn">⑤</span><strong>Entropy sol.</strong><br>Lax–Oleinik</div>
+    </div>
+    <div class="sb"><strong>TASEP:</strong> Ones are particles jumping left past zeros (holes). At each step one random available 01→10 swap fires. The current J(ρ) = ρ(1−ρ). Flux peaks at ρ = ½.</div>
+    <div class="rb"><strong>Hydrodynamic scaling:</strong> As p → ∞ with k<sub>p</sub>/p → α ∈ (0,1) and empirical density u₀<sup>(p)</sup> → u₀ with ∫u₀ = 1−α, the averaged density → entropy solution of ∂<sub>s</sub>u + ∂<sub>x</sub>J(u) = 0 (Rost 1981, Rezakhanlou 1991, Seppäläinen 1999).</div>
+    <div class="wb" style="border-left-color:var(--accent)"><strong>⚠ Why α matters:</strong> Fixed k, growing p → zero density k/p → 0 → trivial (all ones). Both species must grow: k ~ αp. The rectangle k×(p−k) → α(1−α)p² in area. The global constraint ∫₀¹u₀(x)dx = 1−α ties the density profile to α.</div>
+    <div class="db"><strong>Speed c(u) = 1−2u.</strong> u > ½ → moves left (compression). u < ½ → moves right (expansion). Characteristics converge → shock. Diverge → rarefaction fan.</div>
+    <div class="wb"><strong>Entropy = averaging:</strong> The stochastic averaging IS the entropy condition. It selects compression shocks, forbids expansion shocks. The microscopic noise vanishes but its memory persists in the shock selection rule.</div>
+    <div class="okb"><strong>The substitution u = v + ½</strong> yields the Hopf equation v<sub>τ</sub> + v·v<sub>x</sub> = 0 — the canonical nonlinear wave. Same equation for traffic flow, gas dynamics, shallow water waves. v = excess density above the 50/50 equilibrium.</div>
+  </div>
+
+  <!-- TAB: How to Use -->
+  <div class="tc" id="t-use">
+    <h2>Practical Predictions from the PDE</h2>
+    <div class="sb"><strong>1. Where zeros cluster:</strong> At shocks. Solve Rankine–Hugoniot for the shock trajectory: ẋ<sub>shock</sub> = 1 − u<sub>L</sub> − u<sub>R</sub>.</div>
+    <div class="rb"><strong>2. Zero trajectories:</strong> Follow characteristics x(s) = ξ + (1−2f(ξ))·s until hitting a shock.</div>
+    <div class="okb"><strong>3. Counting evolutions:</strong> S = −∫∫[u log u + (1−u)log(1−u)] dx ds. The Burgers solution maximizes S — it's the most probable macroscopic evolution.</div>
+    <div class="db"><strong>4. Breaking time:</strong> t<sub>b</sub> = 1/(2·max f′(ξ)) gives the exact moment the smooth solution first develops a shock — computable from u₀ alone.</div>
+    <div class="wb"><strong>5. Global constraint:</strong> Check ∫u₀ = 1−α in the stats panel. This is conserved: ∫u(x,s)dx = 1−α for all s. If ∫u₀ ≠ 1−α, the word doesn't represent the claimed profile at this α.</div>
+    <div class="info" style="margin-top:0.6rem;padding:8px 12px;background:var(--bg3);border-radius:8px;border-left:3px solid var(--arctic)"><p><strong>Getting started:</strong> Read <strong>📐 Formulation</strong> for the precise setup. Then <strong>Exact Solution</strong> for the analytical chain and worked examples. Then <strong>⭐ Explorer</strong> to see it in action — drag the time slider and watch shocks form and propagate.</p></div>
+  </div>
+</div>
+
+<!-- HELP MODAL -->
+<div class="help-overlay" id="helpOverlay">
+  <div class="help-modal">
+    <div class="help-close" id="helpClose">✕</div>
+    <h2 style="margin-top:0">📘 Quick Guide</h2>
+    <div class="help-section"><h2>Path A</h2><p>Set <span class="hk">p</span> (4–200) and <span class="hk">k</span> (1 to p−1). The ratio <span class="grk">α</span> = k/p is the limiting zero fraction. New presets: <strong>Ramp ↑</strong> builds u₀(x) ≈ x (shock at t<sub>b</sub>=0.5); <strong>Ramp ↓</strong> builds u₀(x) ≈ 1−x (no shock). <strong>Shock</strong> (u<sub>L</sub>>u<sub>R</sub>), <strong>Rarefaction</strong> (u<sub>L</sub>&lt;u<sub>R</sub>). Click bits to swap. Check that ∫u₀ ≈ 1−<span class="grk">α</span> in the stats panel.</p></div>
+    <div class="help-section"><h2>📐 Formulation</h2><p>The precise mathematical statement: a sequence {A<sub>p</sub>} with k<sub>p</sub>/p → <span class="grk">α</span>, empirical density converging to u₀(x) with ∫u₀ = 1−<span class="grk">α</span>. Includes definitions of all symbols including <strong>f(<span class="grk">ξ</span>) ≡ u₀(<span class="grk">ξ</span>)</strong> (shorthand for initial data) and the smoothing window explanation.</p></div>
+    <div class="help-section"><h2>Exact Solution</h2><p>Full derivation chain: conservation law → u=v+½ → Hopf equation → characteristics → implicit formula → breaking time. Now includes four worked examples: decreasing ramp (no shock), increasing ramp (shock at t<sub>b</sub>=0.5), symmetric step (stationary shock), asymmetric step (moving shock).</p></div>
+    <div class="help-section"><h2>⭐ Explorer</h2><p><strong>Drag the time slider</strong> for synchronized characteristics + profile. Click Animate for auto-play. Overlay MC to verify.</p></div>
+    <div class="help-section"><h2>🎬 Emergence</h2><p>The signature visualization: 5 individual random realizations (colored traces) jitter wildly, but their <strong>average</strong> (white) locks onto the <strong>exact Burgers solution</strong> (gold dashed). This is the law of large numbers meeting the hydrodynamic limit — a deterministic PDE materializing from microscopic noise. Use the scrubber to freeze any frame. Try different sample counts (100 vs 2000) to see the average tighten.</p></div>
+    <div class="help-section"><h2>Monte Carlo</h2><p>Heatmap + 4-slice comparison with L² error for each slice.</p></div>
+    <div class="help-section"><h2>Key Definitions</h2>
+      <ul>
+        <li><strong>u(x,s)</strong> — fraction of ones near position x at time s</li>
+        <li><strong>x = i/p</strong> — rescaled position in [0,1]</li>
+        <li><strong>s = steps/k(p−k)</strong> — macroscopic time in [0,1]</li>
+        <li><strong><span class="grk">α</span> = k/p</strong> — zero fraction, must converge as p → ∞</li>
+        <li><strong>f(<span class="grk">ξ</span>) ≡ u₀(<span class="grk">ξ</span>)</strong> — initial data evaluated at <span class="grk">ξ</span> (textbook shorthand)</li>
+        <li><strong>J(u) = u(1−u)</strong> — flux (swap rate), peaks at u = ½</li>
+        <li><strong>c(u) = 1−2u</strong> — characteristic speed</li>
+        <li><strong>v = u − ½</strong> — excess density above equilibrium</li>
+        <li><strong>t<sub>b</sub> = 1/(2·max f′)</strong> — breaking time</li>
+        <li><strong>∫u₀ = 1−<span class="grk">α</span></strong> — global constraint (conservation of ones)</li>
+        <li><strong>Window</strong> — smoothing radius w = ⌊p/15⌋ (mesoscopic: 1 ≪ w ≪ p)</li>
+      </ul>
+    </div>
+    <div class="help-section"><h2>Tips</h2><p>Try Shock preset → Explorer → drag past t<sub>b</sub>. Use p=30–50 for speed. 5000 MC samples for accuracy. Check that ∫u₀ ≈ 1−α in the stats panel.</p></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+let P=200,K=80,word=[],mcData=null,mcOverlay=null,animId=null;
+
+// ══════════════ EXACT BURGERS SOLVER ══════════════
+function getSmoothedU0(w,nGrid){
+  const win=Math.max(2,Math.floor(w.length/15));
+  const u0=new Float64Array(nGrid+1);
+  for(let j=0;j<=nGrid;j++){
+    const ci=(j/nGrid)*(w.length-1);
+    let s=0,c=0;
+    for(let i=Math.max(0,Math.floor(ci)-win);i<=Math.min(w.length-1,Math.ceil(ci)+win);i++){s+=w[i];c++;}
+    u0[j]=s/c;
+  }
+  return u0;
+}
+function interpU0(u0,xi){
+  const n=u0.length-1,idx=Math.max(0,Math.min(1,xi))*n;
+  const lo=Math.floor(idx),f=idx-lo;
+  return u0[lo]*(1-f)+u0[Math.min(lo+1,n)]*f;
+}
+function computeBreakingTime(u0){
+  const n=u0.length-1;let mx=0;
+  for(let i=0;i<n;i++){const d=(u0[i+1]-u0[i])*n;if(d>mx)mx=d;}
+  return mx<=0.001?Infinity:1/(2*mx);
+}
+function computeIntU0(u0){
+  const n=u0.length-1;let s=0;
+  for(let i=0;i<n;i++) s+=(u0[i]+u0[i+1])/2;
+  return s/n;
+}
+function solveImplicit(u0,x,s){
+  if(s<=0.0005)return interpU0(u0,x);
+  const N=500;const cands=[];
+  for(let i=0;i<=N;i++){
+    const xi=i/N,f=interpU0(u0,xi),xm=xi+(1-2*f)*s;
+    cands.push({xi,f,xm});
+  }
+  const cross=[];
+  for(let i=0;i<N;i++){
+    if((cands[i].xm-x)*(cands[i+1].xm-x)<=0){
+      const t=(x-cands[i].xm)/(cands[i+1].xm-cands[i].xm);
+      cross.push({xi:cands[i].xi*(1-t)+cands[i+1].xi*t, f:cands[i].f*(1-t)+cands[i+1].f*t});
+    }
+  }
+  if(cross.length<=1){
+    if(cross.length===1)return cross[0].f;
+    let bd=Infinity,bf=0.5;
+    for(const c of cands){const d=Math.abs(c.xm-x);if(d<bd){bd=d;bf=c.f;}}
+    return bf;
+  }
+  const uL=cross[0].f,uR=cross[cross.length-1].f;
+  if(uL>uR+0.001){
+    const xiL=cross[0].xi,xiR=cross[cross.length-1].xi;
+    const ss=1-uL-uR,xiS=(xiL+xiR)/2,xS=xiS+ss*s;
+    return x<xS?uL:uR;
+  }
+  const uf=(1-(x-cross[0].xi)/s)/2;
+  return Math.max(Math.min(uL,uR),Math.min(Math.max(uL,uR),uf));
+}
+function solveBurgersExact(u0,nG,s){
+  const r=new Float64Array(nG+1);
+  for(let j=0;j<=nG;j++) r[j]=Math.max(0,Math.min(1,solveImplicit(u0,j/nG,s)));
+  return r;
+}
+
+// ══════════════ INIT & PRESETS ══════════════
+function initWord(){
+  P=Math.max(4,Math.min(200,parseInt(document.getElementById('inpP').value)||30));
+  K=Math.max(1,Math.min(P-1,parseInt(document.getElementById('inpK').value)||12));
+  document.getElementById('inpP').value=P;document.getElementById('inpK').value=K;
+  word=Array(K).fill(0).concat(Array(P-K).fill(1));
+  mcData=null;mcOverlay=null;
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+  renderEditor();renderDensity();updateStats();clearMC();updateExplorer();
+  document.getElementById('kRange').textContent=`(1–${P-1})`;
+  setActivePreset('btnInitial');
+}
+function globalReset(){
+  P=200;K=80;
+  document.getElementById('inpP').value=P;document.getElementById('inpK').value=K;
+  if(animId){cancelAnimationFrame(animId);animId=null;document.getElementById('btnAnimate').textContent='▶ Animate s: 0 → 1';}
+  if(emAnimId){cancelAnimationFrame(emAnimId);emAnimId=null;}emPaused=false;emData=null;emFrame=0;
+  document.getElementById('sSlider').value=0;
+  document.getElementById('btnEmergencePause').textContent='⏸ Pause';
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+  initWord();
+}
+function setW(w){word=w.slice();mcData=null;mcOverlay=null;renderEditor();renderDensity();updateStats();updateExplorer();}
+function setActivePreset(btnId){
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+  const el=document.getElementById(btnId);if(el)el.classList.add('active');
+}
+function presetInitial(){setW(Array(K).fill(0).concat(Array(P-K).fill(1)));}
+function presetHalf(){
+  let w=Array(K).fill(0).concat(Array(P-K).fill(1));
+  for(let t=0,tgt=Math.floor(K*(P-K)/2);t<tgt;t++){
+    const a=[];for(let i=0;i<P-1;i++)if(w[i]===0&&w[i+1]===1)a.push(i);
+    if(!a.length)break;const p=a[Math.random()*a.length|0];[w[p],w[p+1]]=[1,0];
+  }setW(w);
+}
+function presetRiemann1(){
+  const w=[],half=Math.floor(P/2),oT=P-K;
+  const oL=Math.round(oT*0.8),oR=oT-oL,zL=Math.max(0,half-oL),zR=K-zL;
+  for(let i=0;i<oL;i++)w.push(1);for(let i=0;i<zL;i++)w.push(0);
+  for(let i=0;i<oR;i++)w.push(1);for(let i=0;i<zR;i++)w.push(0);
+  while(w.length<P)w.push(0);w.length=P;
+  if(w.filter(b=>b===0).length!==K){presetInitial();return;}setW(w);
+}
+function presetRiemann2(){
+  const w=[],half=Math.floor(P/2),oT=P-K;
+  const oL=Math.round(oT*0.2),oR=oT-oL,zL=Math.max(0,half-oL),zR=K-zL;
+  for(let i=0;i<oL;i++)w.push(1);for(let i=0;i<zL;i++)w.push(0);
+  for(let i=0;i<oR;i++)w.push(1);for(let i=0;i<zR;i++)w.push(0);
+  while(w.length<P)w.push(1);w.length=P;
+  if(w.filter(b=>b===0).length!==K){presetInitial();return;}setW(w);
+}
+function presetScatter(){
+  let w=Array(K).fill(0).concat(Array(P-K).fill(1));
+  for(let i=P-1;i>0;i--){const j=Math.random()*(i+1)|0;[w[i],w[j]]=[w[j],w[i]];}setW(w);
+}
+function presetRandom(){
+  let w=Array(K).fill(0).concat(Array(P-K).fill(1));
+  const steps=Math.random()*K*(P-K)|0;
+  for(let t=0;t<steps;t++){
+    const a=[];for(let i=0;i<P-1;i++)if(w[i]===0&&w[i+1]===1)a.push(i);
+    if(!a.length)break;const p=a[Math.random()*a.length|0];[w[p],w[p+1]]=[1,0];
+  }setW(w);
+}
+function presetRampUp(){
+  // Build word so density u₀(x) ≈ x (increasing: few ones on left, many on right)
+  // At position i, probability of a 1 is approximately i/(P-1)
+  const w=[];let onesNeeded=P-K;
+  // Use deterministic dithering: place ones where cumulative target exceeds integer threshold
+  let cumTarget=0;
+  for(let i=0;i<P;i++){
+    cumTarget += i/(P-1); // target density = x = i/(P-1)
+    if(cumTarget>=1 && onesNeeded>0){w.push(1);onesNeeded--;cumTarget-=1;}
+    else{w.push(0);}
+  }
+  // Fix count: add/remove ones to match exactly P-K ones
+  let ones=w.filter(b=>b===1).length;
+  while(ones<P-K){const z=[];for(let i=P-1;i>=0;i--)if(w[i]===0)z.push(i);if(!z.length)break;w[z[0]]=1;ones++;}
+  while(ones>P-K){const o=[];for(let i=0;i<P;i++)if(w[i]===1)o.push(i);if(!o.length)break;w[o[0]]=0;ones--;}
+  setW(w);
+}
+function presetRampDown(){
+  // Build word so density u₀(x) ≈ 1−x (decreasing: many ones on left, few on right)
+  const w=[];let onesNeeded=P-K;
+  let cumTarget=0;
+  for(let i=0;i<P;i++){
+    cumTarget += 1 - i/(P-1); // target density = 1-x
+    if(cumTarget>=1 && onesNeeded>0){w.push(1);onesNeeded--;cumTarget-=1;}
+    else{w.push(0);}
+  }
+  let ones=w.filter(b=>b===1).length;
+  while(ones<P-K){const z=[];for(let i=0;i<P;i++)if(w[i]===0)z.push(i);if(!z.length)break;w[z[0]]=1;ones++;}
+  while(ones>P-K){const o=[];for(let i=P-1;i>=0;i--)if(w[i]===1)o.push(i);if(!o.length)break;w[o[0]]=0;ones--;}
+  setW(w);
+}
+
+// ══════════════ EDITOR & STATS ══════════════
+function renderEditor(){
+  const el=document.getElementById('wordEditor');el.innerHTML='';
+  for(let i=0;i<P;i++){
+    const d=document.createElement('div');
+    d.className=`we-bit ${word[i]===0?'z':'o'}`;d.textContent=word[i];
+    d.addEventListener('click',()=>clickBit(i));
+    if(P>35){d.style.width='18px';d.style.height='22px';d.style.fontSize='0.65rem';}
+    else if(P>20){d.style.width='22px';d.style.height='26px';d.style.fontSize='0.78rem';}
+    el.appendChild(d);
+  }
+}
+function clickBit(i){
+  if(i<P-1&&word[i]===0&&word[i+1]===1)[word[i],word[i+1]]=[1,0];
+  else if(i>0&&word[i-1]===0&&word[i]===1)[word[i-1],word[i]]=[word[i],word[i-1]];
+  else if(i<P-1&&word[i]===1&&word[i+1]===0)[word[i],word[i+1]]=[0,1];
+  else if(i>0&&word[i]===0&&word[i-1]===1)[word[i-1],word[i]]=[word[i],word[i-1]];
+  mcData=null;mcOverlay=null;renderEditor();renderDensity();updateStats();updateExplorer();
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+}
+function countInv(w){let inv=0;for(let i=0;i<w.length;i++)if(w[i]===1)for(let j=i+1;j<w.length;j++)if(w[j]===0)inv++;return inv;}
+function updateStats(){
+  const inv=countInv(word),mx=K*(P-K),u0=getSmoothedU0(word,200),tb=computeBreakingTime(u0);
+  document.getElementById('pathStats').innerHTML=`
+    <div class="st"><div class="st-v">${P}</div><div class="st-l">p</div></div>
+    <div class="st"><div class="st-v">${K}</div><div class="st-l">k</div></div>
+    <div class="st"><div class="st-v">${P-K}</div><div class="st-l">p−k</div></div>
+    <div class="st"><div class="st-v">${(K/P).toFixed(2)}</div><div class="st-l"><span class="grk">α</span>=k/p</div></div>
+    <div class="st"><div class="st-v">${inv}</div><div class="st-l">L(A)</div></div>
+    <div class="st"><div class="st-v">${mx>0?(inv/mx).toFixed(2):'0'}</div><div class="st-l">s</div></div>
+    <div class="st"><div class="st-v">${tb<100?tb.toFixed(2):'∞'}</div><div class="st-l">t_b</div></div>
+    <div class="st"><div class="st-v">${computeIntU0(u0).toFixed(2)}</div><div class="st-l">∫u₀</div></div>
+    <div class="st"><div class="st-v">${(1-K/P).toFixed(2)}</div><div class="st-l">1−<span class="grk">α</span></div></div>`;
+  document.getElementById('tbBadge').innerHTML=`t<sub>b</sub> = ${tb<100?tb.toFixed(3):'∞'}`;
+  const winEl=document.getElementById('winInfo');
+  if(winEl) winEl.textContent=`w = ${Math.max(2,Math.floor(P/15))} (of p = ${P})`;
+}
+
+// ══════════════ DENSITY ══════════════
+function renderDensity(){
+  const fs=getPlotFont();
+  const cv=document.getElementById('cvDensity'),ctx=cv.getContext('2d'),W=480,H=180;
+  cv.width=W;cv.height=H;ctx.fillStyle='rgba(240,250,251,0.9)';ctx.fillRect(0,0,W,H);
+  const pd={l:44,r:14,t:10,b:34},pw=W-pd.l-pd.r,ph=H-pd.t-pd.b;
+
+  // Grid
+  ctx.strokeStyle='rgba(20,80,100,0.06)';ctx.lineWidth=0.5;
+  for(let y=0;y<=1;y+=0.25){ctx.beginPath();ctx.moveTo(pd.l,pd.t+ph*(1-y));ctx.lineTo(pd.l+pw,pd.t+ph*(1-y));ctx.stroke();}
+  for(let x=0;x<=1;x+=0.25){ctx.beginPath();ctx.moveTo(pd.l+x*pw,pd.t);ctx.lineTo(pd.l+x*pw,pd.t+ph);ctx.stroke();}
+  // u=0.5 reference (gold dashed)
+  ctx.strokeStyle='rgba(184,134,11,0.25)';ctx.lineWidth=1;ctx.setLineDash([4,3]);
+  ctx.beginPath();ctx.moveTo(pd.l,pd.t+ph*0.5);ctx.lineTo(pd.l+pw,pd.t+ph*0.5);ctx.stroke();ctx.setLineDash([]);
+  // Frame
+  ctx.strokeStyle='rgba(26,51,58,0.25)';ctx.lineWidth=1;ctx.strokeRect(pd.l,pd.t,pw,ph);
+
+  // Density curve (bright teal)
+  const u0=getSmoothedU0(word,200);
+  ctx.strokeStyle='rgba(0,175,140,0.95)';ctx.lineWidth=2.5;ctx.beginPath();
+  for(let j=0;j<=200;j++){const x=pd.l+(j/200)*pw,y=pd.t+ph*(1-u0[j]);if(j===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}
+  ctx.stroke();
+
+  // Info badges
+  const tb=computeBreakingTime(u0);
+  const intU0=computeIntU0(u0);
+  // t_b badge (bright red if shock)
+  ctx.fillStyle=tb<100?'rgba(220,30,30,0.8)':'rgba(26,51,58,0.35)';
+  ctx.font=`bold ${fs}px JetBrains Mono`;ctx.textAlign='left';
+  ctx.fillText(tb<100?`t_b=${tb.toFixed(3)}`:'no shock',pd.l+4,pd.t+fs+2);
+  // α / ∫u₀ / 1−α badge
+  ctx.fillStyle='rgba(0,140,110,0.7)';
+  ctx.font=`${fs}px Source Serif 4, Georgia, serif`;
+  ctx.fillText(`\u03B1=${(K/P).toFixed(2)}  \u222Bu\u2080=${intU0.toFixed(2)}  1\u2212\u03B1=${(1-K/P).toFixed(2)}`,pd.l+4,pd.t+2*fs+6);
+
+  // X-axis ticks & labels
+  ctx.fillStyle='rgba(26,51,58,0.6)';ctx.font=`${fs}px JetBrains Mono`;ctx.textAlign='center';
+  for(let v=0;v<=1;v+=0.25){
+    const x=pd.l+v*pw;
+    ctx.beginPath();ctx.strokeStyle='rgba(26,51,58,0.3)';ctx.moveTo(x,pd.t+ph);ctx.lineTo(x,pd.t+ph+4);ctx.stroke();
+    ctx.fillText(v.toFixed(2),x,pd.t+ph+fs+4);
+  }
+  ctx.font=`bold ${fs}px JetBrains Mono`;
+  ctx.fillText('position x',pd.l+pw/2,H-2);
+
+  // Y-axis ticks & labels
+  ctx.textAlign='right';ctx.font=`${fs}px JetBrains Mono`;
+  ctx.fillStyle='rgba(26,51,58,0.6)';
+  for(let v=0;v<=1;v+=0.5){
+    const y=pd.t+ph*(1-v);
+    ctx.beginPath();ctx.strokeStyle='rgba(26,51,58,0.3)';ctx.moveTo(pd.l-4,y);ctx.lineTo(pd.l,y);ctx.stroke();
+    ctx.fillText(v.toFixed(1),pd.l-6,y+fs*0.35);
+  }
+  // Also show 0.25 and 0.75 as minor ticks
+  ctx.fillStyle='rgba(26,51,58,0.35)';ctx.font=`${fs-2}px JetBrains Mono`;
+  for(let v of [0.25,0.75]){
+    const y=pd.t+ph*(1-v);
+    ctx.beginPath();ctx.strokeStyle='rgba(26,51,58,0.15)';ctx.moveTo(pd.l-2,y);ctx.lineTo(pd.l,y);ctx.stroke();
+    ctx.fillText(v.toFixed(2),pd.l-6,y+fs*0.3);
+  }
+  // Y-axis title
+  ctx.fillStyle='rgba(26,51,58,0.6)';
+  ctx.save();ctx.translate(fs,pd.t+ph/2);ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center';ctx.font=`bold ${fs}px JetBrains Mono`;
+  ctx.fillText('u\u2080',0,0);ctx.restore();
+}
+
+// ══════════════ EXPLORER ══════════════
+function updateExplorer(){
+  const s=parseFloat(document.getElementById('sSlider').value)/100;
+  document.getElementById('sVal').textContent=s.toFixed(2);
+  drawChars(s);drawProfile(s);
+}
+function uColor(u){return `rgba(${40+215*u|0},${60+100*(1-Math.abs(u-.5)*2)|0},${220*(1-u)+30|0}`;}
+
+function drawChars(sC){
+  const fs=getPlotFont();
+  const cv=document.getElementById('cvChars'),ctx=cv.getContext('2d'),W=480,H=380;
+  cv.width=W;cv.height=H;ctx.fillStyle='rgba(240,250,251,0.95)';ctx.fillRect(0,0,W,H);
+  const pd={l:44,r:14,t:12,b:36},pw=W-pd.l-pd.r,ph=H-pd.t-pd.b;
+
+  // Grid
+  ctx.strokeStyle='rgba(20,80,100,0.06)';ctx.lineWidth=0.5;
+  for(let i=0;i<=4;i++){const y=pd.t+(i/4)*ph;ctx.beginPath();ctx.moveTo(pd.l,y);ctx.lineTo(pd.l+pw,y);ctx.stroke();const x=pd.l+(i/4)*pw;ctx.beginPath();ctx.moveTo(x,pd.t);ctx.lineTo(x,pd.t+ph);ctx.stroke();}
+
+  // Frame
+  ctx.strokeStyle='rgba(26,51,58,0.25)';ctx.lineWidth=1;ctx.strokeRect(pd.l,pd.t,pw,ph);
+
+  const u0=getSmoothedU0(word,200),tb=computeBreakingTime(u0);
+  const nC=Math.min(60,Math.max(25,P));
+  // Characteristics
+  for(let ci=0;ci<nC;ci++){
+    const xi=ci/(nC-1),u=interpU0(u0,xi),sp=1-2*u;
+    ctx.strokeStyle=uColor(u)+',0.55)';ctx.lineWidth=1.2;
+    const xEnd=xi+sp*1.0;
+    const sClamp=sp>0?(xEnd>1?(1-xi)/sp:1.0):(xEnd<0?-xi/sp:1.0);
+    const sD=Math.max(0.001,Math.min(1,sClamp));
+    ctx.beginPath();
+    ctx.moveTo(pd.l+xi*pw,pd.t+ph);
+    ctx.lineTo(pd.l+Math.max(0,Math.min(1,xi+sp*sD))*pw,pd.t+ph*(1-sD));
+    ctx.stroke();
+    ctx.fillStyle=uColor(u)+',0.7)';ctx.beginPath();ctx.arc(pd.l+xi*pw,pd.t+ph,2,0,6.28);ctx.fill();
+  }
+  // Breaking time line
+  if(tb<1&&tb>0){
+    ctx.strokeStyle='rgba(220,30,30,0.4)';ctx.lineWidth=1.5;ctx.setLineDash([5,3]);
+    const yb=pd.t+ph*(1-tb);ctx.beginPath();ctx.moveTo(pd.l,yb);ctx.lineTo(pd.l+pw,yb);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='rgba(220,30,30,0.7)';ctx.font=`${fs}px JetBrains Mono`;ctx.textAlign='left';
+    ctx.fillText(`t_b=${tb.toFixed(3)}`,pd.l+4,yb-4);
+  }
+  // Shock curve after tb
+  if(tb<1&&tb>0&&sC>tb){
+    let mxJ=0,sXi=0.5;const ns=200;
+    for(let i=1;i<ns;i++){const a=(i-1)/ns,b=i/ns;const d=interpU0(u0,a)-interpU0(u0,b);if(d>mxJ){mxJ=d;sXi=(a+b)/2;}}
+    if(mxJ>0.01){
+      const uL=interpU0(u0,sXi-0.02),uR=interpU0(u0,sXi+0.02),ss=1-uL-uR;
+      ctx.strokeStyle='rgba(220,30,30,0.8)';ctx.lineWidth=2.5;ctx.setLineDash([6,4]);
+      ctx.beginPath();
+      for(let si=0;si<=20;si++){
+        const sAt=tb+(si/20)*(Math.min(sC,1)-tb);
+        const xSh=sXi+ss*sAt;
+        const px=pd.l+Math.max(0,Math.min(1,xSh))*pw,py=pd.t+ph*(1-sAt);
+        si===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+      }ctx.stroke();ctx.setLineDash([]);
+    }
+  }
+  // Current time (bright green)
+  ctx.strokeStyle='rgba(0,180,60,0.8)';ctx.lineWidth=2.5;
+  const yC=pd.t+ph*(1-sC);ctx.beginPath();ctx.moveTo(pd.l,yC);ctx.lineTo(pd.l+pw,yC);ctx.stroke();
+  ctx.fillStyle='rgba(0,180,60,0.9)';ctx.font=`bold ${fs}px JetBrains Mono`;ctx.textAlign='right';
+  ctx.fillText(`s=${sC.toFixed(2)}`,pd.l+pw-4,yC-5);
+
+  // X-axis ticks & labels
+  ctx.fillStyle='rgba(26,51,58,0.6)';ctx.font=`${fs}px JetBrains Mono`;ctx.textAlign='center';
+  for(let v=0;v<=1;v+=0.25){
+    const x=pd.l+v*pw;
+    ctx.beginPath();ctx.strokeStyle='rgba(26,51,58,0.3)';ctx.moveTo(x,pd.t+ph);ctx.lineTo(x,pd.t+ph+4);ctx.stroke();
+    ctx.fillText(v.toFixed(2),x,pd.t+ph+fs+5);
+  }
+  ctx.font=`bold ${fs}px JetBrains Mono`;
+  ctx.fillText('position x',pd.l+pw/2,H-2);
+
+  // Y-axis ticks & labels (time s: 0 at bottom, 1 at top)
+  ctx.textAlign='right';ctx.font=`${fs}px JetBrains Mono`;
+  ctx.fillStyle='rgba(26,51,58,0.6)';
+  for(let v=0;v<=1;v+=0.25){
+    const y=pd.t+ph*(1-v);
+    ctx.beginPath();ctx.strokeStyle='rgba(26,51,58,0.3)';ctx.moveTo(pd.l-4,y);ctx.lineTo(pd.l,y);ctx.stroke();
+    ctx.fillText(v.toFixed(2),pd.l-6,y+fs*0.35);
+  }
+  ctx.save();ctx.translate(fs,pd.t+ph/2);ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center';ctx.font=`bold ${fs}px JetBrains Mono`;
+  ctx.fillText('time s',0,0);ctx.restore();
+}
+
+function drawProfile(sC){
+  const fs=getPlotFont();
+  const cv=document.getElementById('cvProfile'),ctx=cv.getContext('2d'),W=480,H=380;
+  cv.width=W;cv.height=H;ctx.fillStyle='rgba(240,250,251,0.95)';ctx.fillRect(0,0,W,H);
+  const pd={l:44,r:14,t:12,b:36},pw=W-pd.l-pd.r,ph=H-pd.t-pd.b;
+
+  // Grid
+  ctx.strokeStyle='rgba(20,80,100,0.06)';ctx.lineWidth=0.5;
+  for(let y=0;y<=1;y+=0.25){ctx.beginPath();ctx.moveTo(pd.l,pd.t+ph*(1-y));ctx.lineTo(pd.l+pw,pd.t+ph*(1-y));ctx.stroke();}
+  for(let x=0;x<=1;x+=0.25){ctx.beginPath();ctx.moveTo(pd.l+x*pw,pd.t);ctx.lineTo(pd.l+x*pw,pd.t+ph);ctx.stroke();}
+  // u=0.5 reference
+  ctx.strokeStyle='rgba(184,134,11,0.2)';ctx.setLineDash([3,3]);
+  ctx.beginPath();ctx.moveTo(pd.l,pd.t+ph*0.5);ctx.lineTo(pd.l+pw,pd.t+ph*0.5);ctx.stroke();ctx.setLineDash([]);
+  // Frame
+  ctx.strokeStyle='rgba(26,51,58,0.25)';ctx.lineWidth=1;ctx.strokeRect(pd.l,pd.t,pw,ph);
+
+  const u0=getSmoothedU0(word,200),nG=300;
+  // Initial profile (faint gray)
+  ctx.strokeStyle='rgba(26,51,58,0.2)';ctx.lineWidth=1.2;ctx.beginPath();
+  for(let j=0;j<=200;j++){const x=pd.l+(j/200)*pw,y=pd.t+ph*(1-u0[j]);j===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.stroke();
+  // Exact Burgers (bright teal)
+  const uS=solveBurgersExact(u0,nG,sC);
+  ctx.strokeStyle='rgba(0,160,130,0.95)';ctx.lineWidth=3;ctx.beginPath();
+  for(let j=0;j<=nG;j++){const x=pd.l+(j/nG)*pw,y=pd.t+ph*(1-uS[j]);j===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.stroke();
+  // v indicators
+  ctx.fillStyle='rgba(184,134,11,0.35)';ctx.font=`${fs-1}px JetBrains Mono`;ctx.textAlign='left';
+  ctx.fillText('v>0 \u2190',pd.l+4,pd.t+ph*0.5-fs);ctx.fillText('v<0 \u2192',pd.l+4,pd.t+ph*0.5+fs+4);
+  // MC overlay
+  if(mcOverlay){
+    const {probs,nTimeSteps}=mcOverlay;
+    const tI=Math.min(Math.round(sC*nTimeSteps),probs.length-1);
+    if(tI>=0){
+      ctx.fillStyle='rgba(220,40,40,0.5)';
+      const dotR=Math.max(2,Math.min(3.5,100/P));
+      for(let i=0;i<P;i++){const x=pd.l+(i/(P-1))*pw,y=pd.t+ph*(1-probs[tI][i]);ctx.beginPath();ctx.arc(x,y,dotR,0,6.28);ctx.fill();}
+    }
+  }
+  // Legend
+  ctx.font=`${fs}px JetBrains Mono`;ctx.textAlign='left';
+  let ly=pd.t+fs+2;
+  ctx.fillStyle='rgba(0,160,130,0.9)';ctx.fillRect(pd.l+6,ly-fs*0.35,16,3);ctx.fillText('exact u(x,s)',pd.l+26,ly);ly+=fs+4;
+  ctx.fillStyle='rgba(26,51,58,0.3)';ctx.fillRect(pd.l+6,ly-fs*0.35,16,1.5);ctx.fillText('u\u2080 initial',pd.l+26,ly);ly+=fs+4;
+  if(mcOverlay){ctx.fillStyle='rgba(220,40,40,0.6)';ctx.beginPath();ctx.arc(pd.l+14,ly-fs*0.25,3,0,6.28);ctx.fill();ctx.fillText('MC dots',pd.l+26,ly);}
+  // Time badge
+  ctx.fillStyle='rgba(0,160,130,0.9)';ctx.font=`bold ${fs+1}px JetBrains Mono`;ctx.textAlign='right';
+  ctx.fillText(`s=${sC.toFixed(2)}`,pd.l+pw-4,pd.t+fs+4);
+
+  // X-axis ticks & labels
+  ctx.fillStyle='rgba(26,51,58,0.6)';ctx.font=`${fs}px JetBrains Mono`;ctx.textAlign='center';
+  for(let v=0;v<=1;v+=0.25){
+    const x=pd.l+v*pw;
+    ctx.beginPath();ctx.strokeStyle='rgba(26,51,58,0.3)';ctx.moveTo(x,pd.t+ph);ctx.lineTo(x,pd.t+ph+4);ctx.stroke();
+    ctx.fillText(v.toFixed(2),x,pd.t+ph+fs+5);
+  }
+  ctx.font=`bold ${fs}px JetBrains Mono`;
+  ctx.fillText('position x',pd.l+pw/2,H-2);
+
+  // Y-axis ticks & labels
+  ctx.textAlign='right';ctx.font=`${fs}px JetBrains Mono`;
+  ctx.fillStyle='rgba(26,51,58,0.6)';
+  for(let v=0;v<=1;v+=0.25){
+    const y=pd.t+ph*(1-v);
+    ctx.beginPath();ctx.strokeStyle='rgba(26,51,58,0.3)';ctx.moveTo(pd.l-4,y);ctx.lineTo(pd.l,y);ctx.stroke();
+    ctx.fillText(v.toFixed(2),pd.l-6,y+fs*0.35);
+  }
+  ctx.save();ctx.translate(fs,pd.t+ph/2);ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center';ctx.font=`bold ${fs}px JetBrains Mono`;
+  ctx.fillText('density u',0,0);ctx.restore();
+}
+
+function animateExplorer(){
+  if(animId){cancelAnimationFrame(animId);animId=null;document.getElementById('btnAnimate').textContent='▶ Animate s: 0 → 1';return;}
+  document.getElementById('btnAnimate').textContent='⏸ Pause';
+  let v=0;
+  function step(){v+=0.35;if(v>100){v=100;cancelAnimationFrame(animId);animId=null;document.getElementById('btnAnimate').textContent='▶ Animate s: 0 → 1';return;}
+    document.getElementById('sSlider').value=v;updateExplorer();animId=requestAnimationFrame(step);}
+  animId=requestAnimationFrame(step);
+}
+function overlayMC(){
+  document.getElementById('explorerStatus').textContent='Computing...';
+  setTimeout(()=>{mcOverlay=runMC(2000);document.getElementById('explorerStatus').textContent='MC overlay added.';updateExplorer();},50);
+}
+
+// ══════════════ MONTE CARLO ══════════════
+function runMC(n){
+  const si=countInv(word),mx=K*(P-K),rem=mx-si;if(rem<=0)return null;
+  const probs=Array.from({length:rem+1},()=>new Float64Array(P));
+  for(let i=0;i<P;i++)probs[0][i]=word[i];
+  for(let s=0;s<n;s++){let w=word.slice();for(let t=0;t<rem;t++){const a=[];for(let i=0;i<P-1;i++)if(w[i]===0&&w[i+1]===1)a.push(i);if(!a.length)break;const p=a[Math.random()*a.length|0];[w[p],w[p+1]]=[1,0];for(let i=0;i<P;i++)probs[t+1][i]+=w[i];}}
+  for(let t=1;t<=rem;t++)for(let i=0;i<P;i++)probs[t][i]/=n;
+  return{probs,nTimeSteps:rem,nSamples:n};
+}
+function getPlotFont(){return parseInt(document.getElementById('selPlotFont').value)||11;}
+
+function drawHeatmap(d){
+  const fs=getPlotFont();
+  const cv=document.getElementById('cvHeatmap'),ctx=cv.getContext('2d'),W=480,H=420;cv.width=W;cv.height=H;
+  const{probs,nTimeSteps}=d,T=nTimeSteps+1;
+  const pd={l:44,r:14,t:10,b:34},pw=W-pd.l-pd.r,ph=H-pd.t-pd.b;
+  const cW=pw/P,cH=ph/T;
+
+  // Heatmap cells
+  for(let t=0;t<T;t++)for(let i=0;i<P;i++){
+    const v=probs[t][i];
+    ctx.fillStyle=`rgb(${20+210*v|0},${80+60*(1-Math.abs(v-.5)*2)|0},${180*(1-v)+40|0})`;
+    ctx.fillRect(pd.l+i*cW,pd.t+t*cH,cW+.5,cH+.5);
+  }
+
+  // Axes frame
+  ctx.strokeStyle='rgba(26,51,58,0.3)';ctx.lineWidth=1;
+  ctx.strokeRect(pd.l,pd.t,pw,ph);
+
+  // X-axis ticks & labels
+  ctx.fillStyle='rgba(26,51,58,0.6)';ctx.font=`${fs}px JetBrains Mono`;ctx.textAlign='center';
+  for(let v=0;v<=1;v+=0.25){
+    const x=pd.l+v*pw;
+    ctx.beginPath();ctx.moveTo(x,pd.t+ph);ctx.lineTo(x,pd.t+ph+4);ctx.stroke();
+    ctx.fillText(v.toFixed(2),x,pd.t+ph+fs+4);
+  }
+  ctx.font=`bold ${fs}px JetBrains Mono`;
+  ctx.fillText('position x',pd.l+pw/2,H-2);
+
+  // Y-axis ticks & labels
+  ctx.textAlign='right';ctx.font=`${fs}px JetBrains Mono`;
+  for(let v=0;v<=1;v+=0.25){
+    const y=pd.t+v*ph;
+    ctx.beginPath();ctx.moveTo(pd.l-4,y);ctx.lineTo(pd.l,y);ctx.stroke();
+    ctx.fillText(v.toFixed(2),pd.l-6,y+fs*0.35);
+  }
+  ctx.save();ctx.translate(fs,pd.t+ph/2);ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center';ctx.font=`bold ${fs}px JetBrains Mono`;
+  ctx.fillText('time s',0,0);ctx.restore();
+}
+
+function drawMultiSlice(d){
+  const fs=getPlotFont();
+  const cv=document.getElementById('cvMultiSlice'),ctx=cv.getContext('2d'),W=480,H=420;cv.width=W;cv.height=H;
+  ctx.fillStyle='rgba(240,250,251,0.95)';ctx.fillRect(0,0,W,H);
+  const{probs,nTimeSteps}=d,T=nTimeSteps+1;
+  const pd={l:44,r:14,t:14,b:34},pw=W-pd.l-pd.r,ph=H-pd.t-pd.b;
+
+  // Grid lines
+  ctx.strokeStyle='rgba(20,80,100,0.08)';ctx.lineWidth=0.5;
+  for(let y=0;y<=1;y+=0.25){ctx.beginPath();ctx.moveTo(pd.l,pd.t+ph*(1-y));ctx.lineTo(pd.l+pw,pd.t+ph*(1-y));ctx.stroke();}
+  for(let x=0;x<=1;x+=0.25){ctx.beginPath();ctx.moveTo(pd.l+x*pw,pd.t);ctx.lineTo(pd.l+x*pw,pd.t+ph);ctx.stroke();}
+
+  // Axes frame
+  ctx.strokeStyle='rgba(26,51,58,0.3)';ctx.lineWidth=1;
+  ctx.strokeRect(pd.l,pd.t,pw,ph);
+
+  const u0=getSmoothedU0(word,200),nG=200;
+  // High-contrast slice colors
+  const slices=[0.2,0.4,0.6,0.8];
+  const cols=['rgba(0,90,220,0.85)','rgba(16,150,24,0.85)','rgba(210,120,0,0.85)','rgba(200,20,60,0.85)'];
+  const colNames=['s=0.2 (blue)','s=0.4 (green)','s=0.6 (orange)','s=0.8 (red)'];
+
+  slices.forEach((sf,idx)=>{
+    const tI=Math.round(sf*(T-1)),col=cols[idx];
+    // MC dots
+    ctx.fillStyle=col.replace('0.85','0.4');
+    const dotR=Math.max(2,Math.min(4,120/P));
+    for(let i=0;i<P;i++){const x=pd.l+(i/(P-1))*pw,y=pd.t+ph*(1-probs[tI][i]);ctx.beginPath();ctx.arc(x,y,dotR,0,6.28);ctx.fill();}
+    // Exact Burgers line
+    const uS=solveBurgersExact(u0,nG,sf);
+    ctx.strokeStyle=col;ctx.lineWidth=2.2;ctx.beginPath();
+    for(let j=0;j<=nG;j++){const x=pd.l+(j/nG)*pw,y=pd.t+ph*(1-uS[j]);j===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.stroke();
+    // L² error
+    let l2=0;for(let i=0;i<P;i++){const jB=Math.round((i/(P-1))*nG);const df=probs[tI][i]-uS[jB];l2+=df*df;}l2=Math.sqrt(l2/P);
+    // Legend entry
+    ctx.fillStyle=col;ctx.font=`${fs}px JetBrains Mono`;ctx.textAlign='left';
+    ctx.fillText(`s=${sf}  L\u00B2=${l2.toFixed(3)}`,pd.l+6,pd.t+fs+2+idx*(fs+4));
+  });
+
+  // Legend label
+  ctx.fillStyle='rgba(26,51,58,0.4)';ctx.font=`${fs-1}px JetBrains Mono`;ctx.textAlign='right';
+  ctx.fillText('lines=Burgers  dots=MC',pd.l+pw-2,pd.t+fs);
+
+  // X-axis ticks & labels
+  ctx.fillStyle='rgba(26,51,58,0.6)';ctx.font=`${fs}px JetBrains Mono`;ctx.textAlign='center';
+  for(let v=0;v<=1;v+=0.25){
+    const x=pd.l+v*pw;
+    ctx.beginPath();ctx.strokeStyle='rgba(26,51,58,0.3)';ctx.moveTo(x,pd.t+ph);ctx.lineTo(x,pd.t+ph+4);ctx.stroke();
+    ctx.fillText(v.toFixed(2),x,pd.t+ph+fs+4);
+  }
+  ctx.font=`bold ${fs}px JetBrains Mono`;
+  ctx.fillText('position x',pd.l+pw/2,H-2);
+
+  // Y-axis ticks & labels
+  ctx.textAlign='right';ctx.font=`${fs}px JetBrains Mono`;
+  ctx.fillStyle='rgba(26,51,58,0.6)';
+  for(let v=0;v<=1;v+=0.25){
+    const y=pd.t+ph*(1-v);
+    ctx.beginPath();ctx.strokeStyle='rgba(26,51,58,0.3)';ctx.moveTo(pd.l-4,y);ctx.lineTo(pd.l,y);ctx.stroke();
+    ctx.fillText(v.toFixed(2),pd.l-6,y+fs*0.35);
+  }
+  ctx.save();ctx.translate(fs,pd.t+ph/2);ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center';ctx.font=`bold ${fs}px JetBrains Mono`;
+  ctx.fillText('density u',0,0);ctx.restore();
+}
+
+// ══════════════ CONVERGENCE ══════════════
+function runConv(){
+  document.getElementById('convStatus').textContent='Running...';
+  setTimeout(()=>{
+    const pVs=[10,16,24,32,48,64],nS=2500,sT=0.4,res=[];
+    for(const pV of pVs){
+      const kV=Math.round(pV*K/P);if(kV<1||kV>=pV)continue;
+      const wT=[];for(let i=0;i<pV;i++){const x=i/pV,idx=x*(P-1),lo=Math.floor(idx),f=idx-lo;wT.push(Math.random()<(word[lo]*(1-f)+word[Math.min(lo+1,P-1)]*f)?1:0);}
+      let ones=wT.filter(b=>b===1).length;const tO=pV-kV;
+      while(ones<tO){const z=[];for(let i=0;i<pV;i++)if(wT[i]===0)z.push(i);wT[z[Math.random()*z.length|0]]=1;ones++;}
+      while(ones>tO){const o=[];for(let i=0;i<pV;i++)if(wT[i]===1)o.push(i);wT[o[Math.random()*o.length|0]]=0;ones--;}
+      const rem=kV*(pV-kV)-countInv(wT);if(rem<=0)continue;
+      const tTgt=Math.round(sT*rem),mc=new Float64Array(pV);
+      for(let s=0;s<nS;s++){let w=wT.slice();for(let t=0;t<tTgt;t++){const a=[];for(let i=0;i<pV-1;i++)if(w[i]===0&&w[i+1]===1)a.push(i);if(!a.length)break;const p=a[Math.random()*a.length|0];[w[p],w[p+1]]=[1,0];}for(let i=0;i<pV;i++)mc[i]+=w[i];}
+      for(let i=0;i<pV;i++)mc[i]/=nS;
+      const u0T=getSmoothedU0(wT,200),uB=solveBurgersExact(u0T,200,sT);
+      let l2=0;for(let i=0;i<pV;i++){const jB=Math.round((i/(pV-1))*200);l2+=(mc[i]-uB[jB])**2;}l2=Math.sqrt(l2/pV);
+      res.push({p:pV,mc,uB,l2,pV,kV});
+    }
+    drawConvP(res,sT);drawConvE(res);document.getElementById('convStatus').textContent='Done.';
+  },50);
+}
+function drawConvP(res,sT){
+  const fs=getPlotFont();
+  const cv=document.getElementById('cvConvProf'),ctx=cv.getContext('2d'),W=480,H=380;cv.width=W;cv.height=H;
+  ctx.fillStyle='rgba(240,250,251,0.95)';ctx.fillRect(0,0,W,H);
+  const pd={l:44,r:14,t:20,b:36},pw=W-pd.l-pd.r,ph=H-pd.t-pd.b;
+
+  // Grid
+  ctx.strokeStyle='rgba(20,80,100,0.06)';ctx.lineWidth=0.5;
+  for(let y=0;y<=1;y+=0.25){ctx.beginPath();ctx.moveTo(pd.l,pd.t+ph*(1-y));ctx.lineTo(pd.l+pw,pd.t+ph*(1-y));ctx.stroke();}
+  for(let x=0;x<=1;x+=0.25){ctx.beginPath();ctx.moveTo(pd.l+x*pw,pd.t);ctx.lineTo(pd.l+x*pw,pd.t+ph);ctx.stroke();}
+  // Frame
+  ctx.strokeStyle='rgba(26,51,58,0.25)';ctx.lineWidth=1;ctx.strokeRect(pd.l,pd.t,pw,ph);
+
+  // Title
+  ctx.fillStyle='rgba(26,51,58,0.6)';ctx.font=`bold ${fs}px Source Serif 4`;ctx.textAlign='center';
+  ctx.fillText(`Profiles at s=${sT} (solid=MC, dashed=Burgers)`,pd.l+pw/2,pd.t-5);
+
+  // Bright distinct colors for each p value
+  const cols=['rgba(0,90,220,0.85)','rgba(16,160,24,0.85)','rgba(210,120,0,0.85)','rgba(200,20,60,0.85)','rgba(140,40,200,0.85)','rgba(0,180,180,0.85)'];
+  res.forEach((r,idx)=>{
+    const c=cols[idx%6];
+    // MC solid line
+    ctx.strokeStyle=c;ctx.lineWidth=2;ctx.setLineDash([]);ctx.beginPath();
+    for(let i=0;i<r.pV;i++){const x=pd.l+(i/(r.pV-1))*pw,y=pd.t+ph*(1-r.mc[i]);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.stroke();
+    // Burgers dashed line
+    ctx.setLineDash([6,4]);ctx.lineWidth=1.5;ctx.beginPath();
+    for(let j=0;j<=200;j++){const x=pd.l+(j/200)*pw,y=pd.t+ph*(1-r.uB[j]);j===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.stroke();ctx.setLineDash([]);
+    // Legend entry
+    ctx.fillStyle=c;ctx.font=`${fs}px JetBrains Mono`;ctx.textAlign='left';
+    ctx.fillText(`p=${r.p}`,pd.l+pw-50,pd.t+fs+2+idx*(fs+4));
+  });
+
+  // X-axis
+  ctx.fillStyle='rgba(26,51,58,0.6)';ctx.font=`${fs}px JetBrains Mono`;ctx.textAlign='center';
+  for(let v=0;v<=1;v+=0.25){
+    const x=pd.l+v*pw;
+    ctx.beginPath();ctx.strokeStyle='rgba(26,51,58,0.3)';ctx.moveTo(x,pd.t+ph);ctx.lineTo(x,pd.t+ph+4);ctx.stroke();
+    ctx.fillText(v.toFixed(2),x,pd.t+ph+fs+5);
+  }
+  ctx.font=`bold ${fs}px JetBrains Mono`;ctx.fillText('position x',pd.l+pw/2,H-2);
+
+  // Y-axis
+  ctx.textAlign='right';ctx.font=`${fs}px JetBrains Mono`;ctx.fillStyle='rgba(26,51,58,0.6)';
+  for(let v=0;v<=1;v+=0.25){
+    const y=pd.t+ph*(1-v);
+    ctx.beginPath();ctx.strokeStyle='rgba(26,51,58,0.3)';ctx.moveTo(pd.l-4,y);ctx.lineTo(pd.l,y);ctx.stroke();
+    ctx.fillText(v.toFixed(2),pd.l-6,y+fs*0.35);
+  }
+  ctx.save();ctx.translate(fs,pd.t+ph/2);ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center';ctx.font=`bold ${fs}px JetBrains Mono`;ctx.fillText('density u',0,0);ctx.restore();
+}
+function drawConvE(res){
+  const fs=getPlotFont();
+  const cv=document.getElementById('cvConvErr'),ctx=cv.getContext('2d'),W=480,H=380;cv.width=W;cv.height=H;
+  ctx.fillStyle='rgba(240,250,251,0.95)';ctx.fillRect(0,0,W,H);if(res.length<2)return;
+  const pd={l:50,r:14,t:20,b:36},pw=W-pd.l-pd.r,ph=H-pd.t-pd.b;
+
+  const lP=res.map(r=>Math.log10(r.p)),lE=res.map(r=>Math.log10(Math.max(r.l2,1e-6)));
+  const m1=Math.min(...lP)-.1,m2=Math.max(...lP)+.1,m3=Math.min(...lE)-.3,m4=Math.max(...lE)+.3;
+
+  // Grid
+  ctx.strokeStyle='rgba(20,80,100,0.06)';ctx.lineWidth=0.5;
+  const nTicksX=4,nTicksY=4;
+  for(let i=0;i<=nTicksY;i++){const y=pd.t+(i/nTicksY)*ph;ctx.beginPath();ctx.moveTo(pd.l,y);ctx.lineTo(pd.l+pw,y);ctx.stroke();}
+  for(let i=0;i<=nTicksX;i++){const x=pd.l+(i/nTicksX)*pw;ctx.beginPath();ctx.moveTo(x,pd.t);ctx.lineTo(x,pd.t+ph);ctx.stroke();}
+  // Frame
+  ctx.strokeStyle='rgba(26,51,58,0.25)';ctx.lineWidth=1;ctx.strokeRect(pd.l,pd.t,pw,ph);
+
+  // Title
+  ctx.fillStyle='rgba(26,51,58,0.6)';ctx.font=`bold ${fs}px Source Serif 4`;ctx.textAlign='center';
+  ctx.fillText('L\u00B2 Error vs p (log-log)',pd.l+pw/2,pd.t-5);
+
+  // Reference slope -1/2 line (dashed gold)
+  ctx.strokeStyle='rgba(184,134,11,0.4)';ctx.lineWidth=1.5;ctx.setLineDash([6,4]);
+  ctx.beginPath();ctx.moveTo(pd.l,pd.t+((m4-lE[0])/(m4-m3))*ph);ctx.lineTo(pd.l+pw,pd.t+((m4-(lE[0]-.5*(m2-m1)))/(m4-m3))*ph);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='rgba(184,134,11,0.6)';ctx.font=`${fs}px JetBrains Mono`;ctx.textAlign='right';
+  ctx.fillText('slope \u2212\u00BD',pd.l+pw-6,pd.t+ph-8);
+
+  // Data line (bright teal)
+  ctx.strokeStyle='rgba(0,180,160,0.85)';ctx.lineWidth=2.5;
+  ctx.beginPath();res.forEach((r,i)=>{const x=pd.l+((lP[i]-m1)/(m2-m1))*pw,y=pd.t+((m4-lE[i])/(m4-m3))*ph;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});ctx.stroke();
+  // Data points
+  ctx.fillStyle='rgba(0,180,160,0.95)';
+  res.forEach((r,i)=>{
+    const x=pd.l+((lP[i]-m1)/(m2-m1))*pw,y=pd.t+((m4-lE[i])/(m4-m3))*ph;
+    ctx.beginPath();ctx.arc(x,y,5,0,6.28);ctx.fill();
+    ctx.fillStyle='rgba(26,51,58,0.6)';ctx.font=`${fs}px JetBrains Mono`;ctx.textAlign='center';
+    ctx.fillText(`p=${r.p}`,x,y-fs*0.7);
+    ctx.fillStyle='rgba(0,180,160,0.95)';
+  });
+
+  // X-axis
+  ctx.fillStyle='rgba(26,51,58,0.6)';ctx.font=`${fs}px JetBrains Mono`;ctx.textAlign='center';
+  for(let i=0;i<=nTicksX;i++){
+    const val=m1+(m2-m1)*i/nTicksX, x=pd.l+(i/nTicksX)*pw;
+    ctx.beginPath();ctx.strokeStyle='rgba(26,51,58,0.3)';ctx.moveTo(x,pd.t+ph);ctx.lineTo(x,pd.t+ph+4);ctx.stroke();
+    ctx.fillText(val.toFixed(2),x,pd.t+ph+fs+5);
+  }
+  ctx.font=`bold ${fs}px JetBrains Mono`;ctx.fillText('log\u2081\u2080(p)',pd.l+pw/2,H-2);
+
+  // Y-axis
+  ctx.textAlign='right';ctx.font=`${fs}px JetBrains Mono`;ctx.fillStyle='rgba(26,51,58,0.6)';
+  for(let i=0;i<=nTicksY;i++){
+    const val=m4-(m4-m3)*i/nTicksY, y=pd.t+(i/nTicksY)*ph;
+    ctx.beginPath();ctx.strokeStyle='rgba(26,51,58,0.3)';ctx.moveTo(pd.l-4,y);ctx.lineTo(pd.l,y);ctx.stroke();
+    ctx.fillText(val.toFixed(2),pd.l-6,y+fs*0.35);
+  }
+  ctx.save();ctx.translate(fs,pd.t+ph/2);ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center';ctx.font=`bold ${fs}px JetBrains Mono`;ctx.fillText('log\u2081\u2080(L\u00B2)',0,0);ctx.restore();
+}
+
+function clearMC(){['cvHeatmap','cvMultiSlice','cvConvProf','cvConvErr'].forEach(id=>{const c=document.getElementById(id);if(!c)return;const ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);ctx.fillStyle='rgba(240,250,251,0.7)';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='rgba(26,51,58,0.2)';ctx.font='11px Source Serif 4';ctx.textAlign='center';ctx.fillText('Click a button to compute',c.width/2,c.height/2);});
+  // also clear emergence canvas
+  const ec=document.getElementById('cvEmergence');if(ec){const ctx=ec.getContext('2d');ctx.clearRect(0,0,ec.width,ec.height);ctx.fillStyle='rgba(240,250,251,0.7)';ctx.fillRect(0,0,ec.width,ec.height);ctx.fillStyle='rgba(26,51,58,0.2)';ctx.font='11px Source Serif 4';ctx.textAlign='center';ctx.fillText('Click "Compute & Animate" to start',ec.width/2,ec.height/2);}
+  emData=null;
+}
+
+// ══════════════ EMERGENCE ANIMATION ══════════════
+let emData=null, emAnimId=null, emFrame=0, emPaused=false;
+const EM_TRACES=5;
+const emColors=['rgba(255,80,80,','rgba(80,180,255,','rgba(80,230,80,','rgba(255,180,40,','rgba(200,120,255,'];
+
+function precomputeEmergence(){
+  const nAvg=parseInt(document.getElementById('selEmSamples').value)||500;
+  const si=countInv(word),mx=K*(P-K),rem=mx-si;
+  if(rem<=1) return null;
+
+  // Storage: for each trace (and average), store density at each step
+  const nSteps=rem;
+  const traces=[];
+  for(let t=0;t<EM_TRACES;t++){
+    const prof=new Array(nSteps+1);
+    prof[0]=new Float64Array(P);
+    for(let i=0;i<P;i++) prof[0][i]=word[i];
+    // Run one realization, store density at each step
+    let w=word.slice();
+    for(let step=0;step<nSteps;step++){
+      const avail=[];
+      for(let i=0;i<P-1;i++) if(w[i]===0&&w[i+1]===1) avail.push(i);
+      if(!avail.length){
+        // fill remaining with last state
+        for(let s2=step;s2<nSteps;s2++) prof[s2+1]=prof[step].slice();
+        break;
+      }
+      const pick=avail[Math.random()*avail.length|0];
+      w[pick]=1; w[pick+1]=0;
+      prof[step+1]=new Float64Array(P);
+      for(let i=0;i<P;i++) prof[step+1][i]=w[i];
+    }
+    traces.push(prof);
+  }
+
+  // MC average over nAvg samples
+  const avg=new Array(nSteps+1);
+  for(let s=0;s<=nSteps;s++) avg[s]=new Float64Array(P);
+  for(let i=0;i<P;i++) avg[0][i]=word[i];
+  for(let n=0;n<nAvg;n++){
+    let w=word.slice();
+    for(let step=0;step<nSteps;step++){
+      const avail=[];
+      for(let i=0;i<P-1;i++) if(w[i]===0&&w[i+1]===1) avail.push(i);
+      if(!avail.length){for(let s2=step;s2<nSteps;s2++)for(let i=0;i<P;i++)avg[s2+1][i]+=w[i];break;}
+      const pick=avail[Math.random()*avail.length|0];
+      w[pick]=1;w[pick+1]=0;
+      for(let i=0;i<P;i++) avg[step+1][i]+=w[i];
+    }
+  }
+  for(let s=1;s<=nSteps;s++) for(let i=0;i<P;i++) avg[s][i]/=nAvg;
+
+  return {traces, avg, nSteps, nAvg};
+}
+
+function smoothTrace(raw, winR){
+  // Apply a small moving average for visual clarity
+  const n=raw.length, out=new Float64Array(n);
+  for(let i=0;i<n;i++){
+    let s=0,c=0;
+    for(let j=Math.max(0,i-winR);j<=Math.min(n-1,i+winR);j++){s+=raw[j];c++;}
+    out[i]=s/c;
+  }
+  return out;
+}
+
+function drawEmergenceFrame(stepIdx){
+  if(!emData) return;
+  const fs=getPlotFont();
+  const {traces, avg, nSteps, nAvg}=emData;
+  const step=Math.min(stepIdx, nSteps);
+  const sVal=nSteps>0? step/nSteps : 0;
+  const si=countInv(word), mx=K*(P-K);
+  const sMacro= mx>0 ? (si+step*1.0)/ mx : 0;
+
+  const cv=document.getElementById('cvEmergence'), ctx=cv.getContext('2d');
+  const W=cv.width, H=cv.height;
+  ctx.fillStyle='rgba(18,32,38,0.97)'; ctx.fillRect(0,0,W,H);
+
+  const pd={l:50, r:16, t:14, b:40}, pw=W-pd.l-pd.r, ph=H-pd.t-pd.b;
+
+  // Grid
+  ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=0.5;
+  for(let y=0;y<=1;y+=0.25){ctx.beginPath();ctx.moveTo(pd.l,pd.t+ph*(1-y));ctx.lineTo(pd.l+pw,pd.t+ph*(1-y));ctx.stroke();}
+  for(let x=0;x<=1;x+=0.25){ctx.beginPath();ctx.moveTo(pd.l+x*pw,pd.t);ctx.lineTo(pd.l+x*pw,pd.t+ph);ctx.stroke();}
+  // u = 0.5 reference
+  ctx.strokeStyle='rgba(184,134,11,0.15)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(pd.l,pd.t+ph*0.5);ctx.lineTo(pd.l+pw,pd.t+ph*0.5);ctx.stroke();ctx.setLineDash([]);
+  // Frame
+  ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=1;ctx.strokeRect(pd.l,pd.t,pw,ph);
+
+  // Initial profile (very faint)
+  const u0=getSmoothedU0(word,200);
+  ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.lineWidth=1;ctx.beginPath();
+  for(let j=0;j<=200;j++){const x=pd.l+(j/200)*pw,y=pd.t+ph*(1-u0[j]);j===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+  ctx.stroke();
+
+  // Smoothing window for individual traces
+  const winR=Math.max(1,Math.floor(P/12));
+
+  // 5 individual traces (faint, colored)
+  for(let t=0;t<EM_TRACES;t++){
+    const raw=traces[t][step];
+    if(!raw) continue;
+    const sm=smoothTrace(raw, winR);
+    ctx.strokeStyle=emColors[t]+'0.55)';ctx.lineWidth=1.8;
+    ctx.beginPath();
+    for(let i=0;i<P;i++){
+      const x=pd.l+(i/(P-1))*pw, y=pd.t+ph*(1-sm[i]);
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }
+
+  // MC average (bold white)
+  const avgRaw=avg[step];
+  if(avgRaw){
+    const sm=smoothTrace(avgRaw, Math.max(1,Math.floor(P/20)));
+    ctx.strokeStyle='rgba(255,255,255,0.95)';ctx.lineWidth=3;
+    ctx.shadowColor='rgba(255,255,255,0.3)';ctx.shadowBlur=6;
+    ctx.beginPath();
+    for(let i=0;i<P;i++){
+      const x=pd.l+(i/(P-1))*pw, y=pd.t+ph*(1-sm[i]);
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    ctx.shadowBlur=0;
+  }
+
+  // Exact Burgers (gold dashed)
+  const sExact= mx>0 ? (si + step) / mx : 0;
+  const nG=300, uB=solveBurgersExact(u0, nG, sExact);
+  ctx.strokeStyle='rgba(218,165,32,0.9)';ctx.lineWidth=2.5;ctx.setLineDash([8,5]);
+  ctx.beginPath();
+  for(let j=0;j<=nG;j++){
+    const x=pd.l+(j/nG)*pw, y=pd.t+ph*(1-uB[j]);
+    j===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke();ctx.setLineDash([]);
+
+  // L² error between avg and Burgers
+  if(avgRaw){
+    let l2=0;
+    for(let i=0;i<P;i++){const jB=Math.round((i/(P-1))*nG);l2+=(avgRaw[i]-uB[jB])**2;}
+    l2=Math.sqrt(l2/P);
+    ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font=`${fs}px JetBrains Mono`;ctx.textAlign='right';
+    ctx.fillText(`L\u00B2(avg, Burgers) = ${l2.toFixed(4)}`,pd.l+pw-4,pd.t+ph-8);
+  }
+
+  // Legend
+  ctx.font=`${fs}px JetBrains Mono`;ctx.textAlign='left';
+  let ly=pd.t+fs+4;
+  for(let t=0;t<EM_TRACES;t++){
+    ctx.fillStyle=emColors[t]+'0.7)';
+    ctx.fillRect(pd.l+6,ly-fs*0.3,16,2.5); ctx.fillText(`trace ${t+1}`,pd.l+26,ly); ly+=fs+4;
+  }
+  ctx.fillStyle='rgba(255,255,255,0.9)';ctx.fillRect(pd.l+6,ly-fs*0.3,16,3);ctx.fillText(`avg (${nAvg})`,pd.l+26,ly); ly+=fs+4;
+  ctx.fillStyle='rgba(218,165,32,0.9)';ctx.setLineDash([4,3]);ctx.strokeStyle='rgba(218,165,32,0.9)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(pd.l+6,ly-fs*0.2);ctx.lineTo(pd.l+22,ly-fs*0.2);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillText('Burgers',pd.l+26,ly);
+
+  // Time display
+  ctx.fillStyle='rgba(218,165,32,0.9)';ctx.font=`bold ${fs+3}px JetBrains Mono`;ctx.textAlign='right';
+  ctx.fillText(`s = ${sExact.toFixed(3)}`,pd.l+pw-4,pd.t+fs+6);
+  ctx.fillStyle='rgba(255,255,255,0.35)';ctx.font=`${fs}px JetBrains Mono`;
+  ctx.fillText(`step ${step}/${nSteps}`,pd.l+pw-4,pd.t+2*fs+10);
+
+  // X-axis ticks & labels
+  ctx.fillStyle='rgba(255,255,255,0.45)';ctx.font=`${fs}px JetBrains Mono`;ctx.textAlign='center';
+  for(let v=0;v<=1;v+=0.25){
+    const x=pd.l+v*pw;
+    ctx.beginPath();ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.moveTo(x,pd.t+ph);ctx.lineTo(x,pd.t+ph+4);ctx.stroke();
+    ctx.fillText(v.toFixed(2),x,pd.t+ph+fs+5);
+  }
+  ctx.font=`bold ${fs}px JetBrains Mono`;
+  ctx.fillText('position x',pd.l+pw/2,H-4);
+
+  // Y-axis ticks & labels
+  ctx.textAlign='right';ctx.font=`${fs}px JetBrains Mono`;
+  ctx.fillStyle='rgba(255,255,255,0.45)';
+  for(let v=0;v<=1;v+=0.25){
+    const y=pd.t+ph*(1-v);
+    ctx.beginPath();ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.moveTo(pd.l-4,y);ctx.lineTo(pd.l,y);ctx.stroke();
+    ctx.fillText(v.toFixed(2),pd.l-6,y+fs*0.35);
+  }
+  ctx.save();ctx.translate(fs+2,pd.t+ph/2);ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center';ctx.font=`bold ${fs}px JetBrains Mono`;
+  ctx.fillText('density u',0,0);ctx.restore();
+
+  // Update scrubber and label
+  document.getElementById('emScrub').value=Math.round((step/Math.max(1,nSteps))*100);
+  document.getElementById('emTimeVal').textContent=`s = ${sExact.toFixed(3)}`;
+}
+
+function startEmergence(){
+  if(emAnimId){cancelAnimationFrame(emAnimId);emAnimId=null;}
+  document.getElementById('emStatus').textContent='Precomputing traces...';
+  emPaused=false;
+  setTimeout(()=>{
+    emData=precomputeEmergence();
+    if(!emData){document.getElementById('emStatus').textContent='No steps remaining.';return;}
+    emFrame=0;
+    document.getElementById('emStatus').textContent=`${EM_TRACES} traces + ${emData.nAvg} avg samples. Animating...`;
+    document.getElementById('emCanvasLbl').textContent=`Density: ${EM_TRACES} individual traces · ${emData.nAvg}-sample average · exact Burgers — p=${P}, k=${K}, α=${(K/P).toFixed(2)}`;
+    animateEmergenceLoop();
+  },60);
+}
+
+function animateEmergenceLoop(){
+  if(emPaused||!emData){emAnimId=null;return;}
+  const speed=parseInt(document.getElementById('selEmSpeed').value)||2;
+  emFrame+=speed;
+  if(emFrame>emData.nSteps){emFrame=emData.nSteps;drawEmergenceFrame(emFrame);
+    document.getElementById('emStatus').textContent='Done. Drag scrubber to review.';emAnimId=null;return;}
+  drawEmergenceFrame(emFrame);
+  emAnimId=requestAnimationFrame(animateEmergenceLoop);
+}
+
+function pauseEmergence(){
+  emPaused=!emPaused;
+  document.getElementById('btnEmergencePause').textContent=emPaused?'▶ Resume':'⏸ Pause';
+  if(!emPaused&&emData&&emFrame<emData.nSteps) animateEmergenceLoop();
+}
+
+function resetEmergence(){
+  if(emAnimId){cancelAnimationFrame(emAnimId);emAnimId=null;}
+  emPaused=false;emFrame=0;
+  document.getElementById('btnEmergencePause').textContent='⏸ Pause';
+  if(emData) drawEmergenceFrame(0);
+  document.getElementById('emStatus').textContent='Reset. Click Compute & Animate.';
+}
+
+function scrubEmergence(){
+  if(!emData) return;
+  const pct=parseInt(document.getElementById('emScrub').value)/100;
+  emFrame=Math.round(pct*emData.nSteps);
+  drawEmergenceFrame(emFrame);
+}
+
+// ══════════════ TABS ══════════════
+document.querySelectorAll('.tab').forEach(t=>{t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.tc').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on');document.getElementById('t-'+t.dataset.t).classList.add('on');
+  if(t.dataset.t==='explorer')updateExplorer();
+});});
+
+// ══════════════ EVENTS ══════════════
+document.getElementById('btnSetPK').addEventListener('click',initWord);
+['inpP','inpK'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')initWord();}));
+document.getElementById('inpP').addEventListener('input',()=>{const pv=Math.max(4,Math.min(200,parseInt(document.getElementById('inpP').value)||4));document.getElementById('kRange').textContent=`(1–${pv-1})`;});
+document.getElementById('btnInitial').addEventListener('click',()=>{presetInitial();setActivePreset('btnInitial');});
+document.getElementById('btnHalf').addEventListener('click',()=>{presetHalf();setActivePreset('btnHalf');});
+document.getElementById('btnRiemann1').addEventListener('click',()=>{presetRiemann1();setActivePreset('btnRiemann1');});
+document.getElementById('btnRiemann2').addEventListener('click',()=>{presetRiemann2();setActivePreset('btnRiemann2');});
+document.getElementById('btnScatter').addEventListener('click',()=>{presetScatter();setActivePreset('btnScatter');});
+document.getElementById('btnRandA').addEventListener('click',()=>{presetRandom();setActivePreset('btnRandA');});
+document.getElementById('btnRampUp').addEventListener('click',()=>{presetRampUp();setActivePreset('btnRampUp');});
+document.getElementById('btnRampDown').addEventListener('click',()=>{presetRampDown();setActivePreset('btnRampDown');});
+document.getElementById('btnReset').addEventListener('click',globalReset);
+document.getElementById('sSlider').addEventListener('input',updateExplorer);
+document.getElementById('btnAnimate').addEventListener('click',animateExplorer);
+document.getElementById('btnOverlayMC').addEventListener('click',overlayMC);
+document.getElementById('btnRunMC').addEventListener('click',()=>{document.getElementById('mcStatus').textContent='Computing...';setTimeout(()=>{mcData=runMC(2000);if(mcData){drawHeatmap(mcData);drawMultiSlice(mcData);}document.getElementById('mcStatus').textContent='Done.';},50);});
+document.getElementById('btnRunMC5k').addEventListener('click',()=>{document.getElementById('mcStatus').textContent='Computing...';setTimeout(()=>{mcData=runMC(5000);if(mcData){drawHeatmap(mcData);drawMultiSlice(mcData);}document.getElementById('mcStatus').textContent='Done.';},50);});
+document.getElementById('btnConvergence').addEventListener('click',runConv);
+document.getElementById('selPlotFont').addEventListener('change',()=>{renderDensity();if(mcData){drawHeatmap(mcData);drawMultiSlice(mcData);}updateExplorer();if(emData)drawEmergenceFrame(emFrame);});
+document.getElementById('btnEmergenceRun').addEventListener('click',startEmergence);
+document.getElementById('btnEmergencePause').addEventListener('click',pauseEmergence);
+document.getElementById('btnEmergenceReset').addEventListener('click',resetEmergence);
+document.getElementById('emScrub').addEventListener('input',scrubEmergence);
+document.getElementById('btnHelp').addEventListener('click',()=>document.getElementById('helpOverlay').classList.add('open'));
+document.getElementById('helpClose').addEventListener('click',()=>document.getElementById('helpOverlay').classList.remove('open'));
+document.getElementById('helpOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('helpOverlay'))document.getElementById('helpOverlay').classList.remove('open');});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('helpOverlay').classList.remove('open');});
+
+initWord();
+</script>
+</body>
+</html>
