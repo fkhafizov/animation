@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graph by Consecutive 3-Cycles — One-Zero</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;1,400&family=Fira+Code:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #f7f5f0;
+    --surface: #ffffff;
+    --surface2: #faf9f6;
+    --border: #e2ddd4;
+    --text: #2e2a24;
+    --text-dim: #8a8278;
+    --text-bright: #1a1714;
+    --cft: #c85a35;
+    --ads: #2e7dba;
+    --holo: #5a9a2e;
+    --shade: #2e7dba40;
+    --font-scale: 1.4;
+  }
+
+  html { font-size: calc(16px * var(--font-scale)); }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Fira Code', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  header {
+    position: relative; z-index: 1;
+    text-align: center;
+    padding: 36px 20px 6px;
+  }
+
+  .tag-row { display: flex; justify-content: center; gap: 10px; margin-bottom: 14px; }
+  .tag { font-size: 0.55rem; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; padding: 3px 12px; border-radius: 2px; border: 1px solid; }
+  .tag.cft { color: var(--cft); border-color: var(--cft); }
+  .tag.holo { color: var(--holo); border-color: var(--holo); }
+  .tag.ads { color: var(--ads); border-color: var(--ads); }
+
+  header h1 {
+    font-family: 'Newsreader', serif;
+    font-weight: 600;
+    font-size: clamp(1.4rem, 3.5vw, 2.2rem);
+    color: var(--text-bright);
+  }
+
+  .subtitle {
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    text-align: center;
+    padding: 8px 20px 20px;
+  }
+
+  .main-layout {
+    display: flex;
+    max-width: 900px;
+    margin: 0 auto 20px;
+    padding: 0 10px;
+  }
+
+  .main-layout .panel { flex-shrink: 0; }
+  .main-layout #graphPanel { flex: 1 1 auto; min-width: 280px; }
+  .main-layout #cellPanel { flex: 0 1 auto; min-width: 180px; }
+
+  .panel-resizer {
+    flex: 0 0 6px;
+    background: var(--border);
+    cursor: col-resize;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    position: relative;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .panel.graph-panel { display: flex; flex-direction: column; min-height: 540px; }
+  .panel.graph-panel .panel-body { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .panel.cell-panel { min-height: 540px; }
+
+  .panel-header {
+    padding: 14px 16px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .panel-header h2 { font-family: 'Newsreader', serif; font-weight: 600; font-size: 1rem; color: var(--text-bright); }
+
+  .panel canvas { display: block; width: 100%; cursor: grab; }
+  .panel canvas:active { cursor: grabbing; }
+  #graphCanvas.dragging-node { cursor: grabbing; }
+
+  .btn-clear {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .btn-clear:hover { color: var(--text); background: var(--surface); }
+
+  .log-window {
+    background: var(--surface2);
+    border-top: 1px solid var(--border);
+    padding: 10px 16px;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    flex-shrink: 0;
+  }
+  .log-window pre { margin: 0; white-space: pre-wrap; word-break: break-word; }
+
+  .help-modal { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+  .help-modal.active { display: flex; }
+  .help-modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.4); cursor: pointer; }
+  .help-modal-content {
+    position: relative;
+    max-width: 520px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="tag-row">
+    <span class="tag cft">3-Cycles</span>
+    <span class="tag holo" id="tagGr">Gr(3,4)</span>
+    <span class="tag ads">One-zero</span>
+  </div>
+  <h1>Graph from (<span id="startVec">0111</span>) by Consecutive 3-Cycles</h1>
+</header>
+<div class="subtitle">
+  One "0" and k "1"s. Rectangle 1×Diameter. Click A (1st), then B (2nd) — shading = path length.
+</div>
+
+<div style="display:flex;justify-content:center;align-items:center;gap:12px;padding:0 10px 14px;flex-wrap:wrap;">
+  <label style="font-size:0.6rem;letter-spacing:0.08em;color:var(--text-dim);">n</label>
+  <input type="number" id="paramN" min="3" max="15" value="4" style="width:3em;padding:4px 6px;font:inherit;border:1px solid var(--border);border-radius:3px;">
+  <span style="font-size:0.6rem;color:var(--text-dim);">Gr(<span id="dispK">3</span>,<span id="dispN">4</span>) — <span id="showCount">4</span> nodes, Diameter=<span id="showDiameter">2</span></span>
+  <label style="font-size:0.6rem;letter-spacing:0.08em;color:var(--text-dim);">Font</label>
+  <input type="range" id="fontScale" min="0.5" max="2" step="0.1" value="1.4" style="width:80px;" title="Font size">
+  <span id="fontScaleVal" style="font-size:0.6rem;color:var(--text-dim);">140%</span>
+</div>
+
+<div class="main-layout" id="mainLayout">
+  <div class="panel graph-panel" id="graphPanel">
+    <div class="panel-header">
+      <div>
+        <h2>3-Cycle Graph</h2>
+        <p style="font-size:0.65rem;color:var(--text-dim);">Drag nodes • Click for A, then B</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;">
+        <label style="font-size:0.65rem;color:var(--text-dim);display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="checkbox" id="chkEdgeLabels"> Edge labels
+        </label>
+        <button type="button" id="btnResetLayout" class="btn-clear">Reset layout</button>
+        <button type="button" id="btnClear" class="btn-clear">Clear A/B</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <canvas id="graphCanvas" role="img" aria-label="Graph by consecutive 3-cycles"></canvas>
+      <div class="log-window" id="logWindow">
+        <pre id="logContent"></pre>
+      </div>
+    </div>
+  </div>
+  <div class="panel-resizer" id="panelResizer"></div>
+  <div class="panel cell-panel" id="cellPanel">
+    <div class="panel-header">
+      <h2>Shaded Cells (<span id="rectDims">2×1</span>)</h2>
+      <p style="font-size:0.65rem;color:var(--text-dim);">Path length A→B = shaded cells</p>
+    </div>
+    <canvas id="cellCanvas" role="img" aria-label="Cell shading"></canvas>
+  </div>
+</div>
+
+<div style="text-align:center;margin:20px 0 40px;">
+  <button type="button" id="btnHelp" class="btn-clear" style="padding:8px 16px;">HELP</button>
+</div>
+
+<div id="helpModal" class="help-modal" role="dialog" aria-hidden="true">
+  <div class="help-modal-backdrop"></div>
+  <div class="help-modal-content">
+    <h2>Dual Polygon — One-Zero Graphs</h2>
+    <p><strong>Graph:</strong> Gr(n−1,n) — one "0" and (n−1) "1"s. 1st click = A, 2nd click = B.</p>
+    <p style="margin-top:12px;"><strong>Rectangle:</strong> 1×Diameter = 1×floor(n/2) cells. Shading = path length from A to B.</p>
+    <ul style="margin:8px 0 0 20px;">
+      <li>Path length 0 (A=B): no cells shaded</li>
+      <li>Path length d: d cells shaded (up to Diameter)</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STATE — one-zero graphs: k = n-1
+// ============================================================
+function getN() { return Math.max(3, Math.min(15, parseInt(document.getElementById('paramN').value, 10) || 4)); }
+function getK() { return getN() - 1; }
+function getFontScale() {
+  const v = parseFloat(document.getElementById('fontScale').value) || 1;
+  return Math.max(0.5, Math.min(2, v || 1.4));
+}
+
+// Base 1, cells stacked bottom-up; numCells = Diameter = floor(n/2)
+function getDualRect() {
+  const n = getN();
+  const diameter = Math.floor(n / 2);
+  return { cols: 1, rows: diameter, numCells: diameter };
+}
+
+let nodes = [];
+let edges = [];
+let selfLoops = [];
+let positions = [];
+let selectedPair = [-1, -1];
+let pairClickCount = 0;
+let graphView = { panX: 0, panY: 0, zoom: 1 };
+let draggingNode = -1;
+let didDrag = false;
+const DRAG_THRESHOLD = 5;
+let showEdgeLabels = false;
+
+// ============================================================
+// COMBINATORICS
+// ============================================================
+
+function generateNodes(n, k) {
+  const result = [];
+  function gen(pos, onesLeft, zerosLeft, current) {
+    if (pos === n) { result.push(current); return; }
+    if (onesLeft > 0) gen(pos+1, onesLeft-1, zerosLeft, current + '1');
+    if (zerosLeft > 0) gen(pos+1, onesLeft, zerosLeft-1, current + '0');
+  }
+  gen(0, k, n-k, '');
+  return result;
+}
+
+function apply3Cycle(vec, i, inverse) {
+  const arr = vec.split('');
+  const a = arr[i], b = arr[i+1], c = arr[i+2];
+  if (inverse) { arr[i] = b; arr[i+1] = c; arr[i+2] = a; }
+  else { arr[i] = c; arr[i+1] = a; arr[i+2] = b; }
+  return arr.join('');
+}
+
+function cycleLabel(i, inverse) {
+  return `(${i},${i+1},${i+2})${inverse ? "'" : ""}`;
+}
+
+function generateEdges3Cycle(nodeList, n) {
+  const edgeMap = new Map();
+  const loops = [];
+  for (let idx = 0; idx < nodeList.length; idx++) {
+    const vec = nodeList[idx];
+    for (let i = 0; i <= n - 3; i++) {
+      for (const inv of [false, true]) {
+        const next = apply3Cycle(vec, i, inv);
+        const j = nodeList.indexOf(next);
+        if (j < 0) continue;
+        const label = cycleLabel(i, inv);
+        if (j === idx) loops.push({ a: idx, label });
+        else {
+          const key = [Math.min(idx, j), Math.max(idx, j)].join(',');
+          if (!edgeMap.has(key)) edgeMap.set(key, { a: idx, b: j, labelA: null, labelB: null });
+          const e = edgeMap.get(key);
+          if (e.a === idx) e.labelA = label; else e.labelB = label;
+        }
+      }
+    }
+  }
+  return { edges: [...edgeMap.values()], selfLoops: loops };
+}
+
+function bfsDistances(nodeList, edgeList, source) {
+  const adj = Array.from({length: nodeList.length}, () => []);
+  for (const e of edgeList) {
+    adj[e.a].push(e.b);
+    adj[e.b].push(e.a);
+  }
+  const dist = Array(nodeList.length).fill(-1);
+  dist[source] = 0;
+  const queue = [source];
+  for (let i = 0; i < queue.length; i++) {
+    const u = queue[i];
+    for (const v of adj[u]) {
+      if (dist[v] < 0) {
+        dist[v] = dist[u] + 1;
+        queue.push(v);
+      }
+    }
+  }
+  return dist;
+}
+
+function graphDistance(nodeList, edgeList, i, j) {
+  if (i === j) return 0;
+  const dist = bfsDistances(nodeList, edgeList, i);
+  return dist[j] >= 0 ? dist[j] : -1;
+}
+
+function allShortestPaths(nodeList, edgeList, a, b) {
+  const adj = Array.from({length: nodeList.length}, () => []);
+  for (const e of edgeList) {
+    adj[e.a].push(e.b);
+    adj[e.b].push(e.a);
+  }
+  const distA = bfsDistances(nodeList, edgeList, a);
+  const d = distA[b];
+  if (d < 0) return [];
+  const paths = [];
+  function dfs(v, path) {
+    path.push(v);
+    if (v === a) {
+      paths.push(path.slice().reverse());
+      path.pop();
+      return;
+    }
+    for (const u of adj[v]) {
+      if (distA[u] + 1 === distA[v]) dfs(u, path);
+    }
+    path.pop();
+  }
+  dfs(b, []);
+  return paths;
+}
+
+const PATH_COLORS = ['#e63946', '#2a9d8f', '#264673', '#7b2d8e', '#e9c46a', '#118ab2'];
+
+const LAYOUT_34 = {
+  '0111': { x:  0.0,  y:  1.0  },
+  '1011': { x: -1.0,  y:  0.0  },
+  '1101': { x:  1.0,  y:  0.0  },
+  '1110': { x:  0.0,  y: -1.0  }
+};
+
+const LAYOUT_35 = {
+  '01011': { x:  0.0,  y:  1.0  }, '01110': { x: -1.3,  y:  1.0  }, '00111': { x:  1.3,  y:  1.0  },
+  '11010': { x: -1.3,  y:  0.0  }, '01101': { x: -0.6,  y:  0.0  }, '10101': { x:  1.3,  y:  0.0  },
+  '10011': { x:  0.65, y:  0.32 }, '10110': { x: -0.65, y: -1.0  }, '11100': { x:  0.0,  y: -1.0  },
+  '11001': { x:  0.65, y: -1.0  }
+};
+
+function layoutGraph(nodeList, n, k) {
+  const use34 = (n === 4 && k === 3);
+  const use35 = (n === 5 && k === 3);
+  const layout = use34 ? LAYOUT_34 : (use35 ? LAYOUT_35 : null);
+  return nodeList.map((v, i) => {
+    if (layout && layout[v]) return { x: layout[v].x, y: -layout[v].y };
+    const angle = (2 * Math.PI * i) / nodeList.length - Math.PI / 2;
+    return { x: Math.cos(angle), y: -Math.sin(angle) };
+  });
+}
+
+// ============================================================
+// RENDERING
+// ============================================================
+
+const graphCanvas = document.getElementById('graphCanvas');
+const cellCanvas = document.getElementById('cellCanvas');
+const graphCtx = graphCanvas.getContext('2d');
+const cellCtx = cellCanvas.getContext('2d');
+
+const CANVAS_HEIGHT = 460;
+
+function setupCanvas(canvas) {
+  const parent = canvas.parentElement;
+  const dpr = Math.min(window.devicePixelRatio, 2);
+  const w = parent.clientWidth;
+  const h = CANVAS_HEIGHT;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  return { w, h, dpr };
+}
+
+function getGraphExtent(positions) {
+  if (!positions || positions.length === 0) return { x: 1.1, y: 1.1 };
+  const xs = positions.map(p => Math.abs(p.x));
+  const ys = positions.map(p => Math.abs(p.y));
+  return {
+    x: Math.max(xs.length ? Math.max(...xs) : 0.5, 0.5),
+    y: Math.max(ys.length ? Math.max(...ys) : 0.5, 0.5)
+  };
+}
+
+function getGraphTransform(w, h) {
+  const extent = getGraphExtent(positions);
+  const cx = w / 2, cy = h / 2;
+  const scale = Math.min((w - 50) / (2 * extent.x), (h - 80) / (2 * extent.y));
+  return { cx, cy, scale: Math.max(80, scale) };
+}
+
+function screenToGraph(screenX, screenY, w, h) {
+  const { cx, cy, scale } = getGraphTransform(w, h);
+  return {
+    x: (screenX - cx - graphView.panX) / scale,
+    y: (screenY - cy - graphView.panY) / scale
+  };
+}
+
+function drawGraph() {
+  const { w, h, dpr } = setupCanvas(graphCanvas);
+  graphView.panX = 0; graphView.panY = 0;
+  const ctx = graphCtx;
+  ctx.clearRect(0, 0, w * dpr, h * dpr);
+  ctx.save();
+  ctx.scale(dpr, dpr);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, w, h);
+
+  const { cx, cy, scale } = getGraphTransform(w, h);
+  const toPx = (gx, gy) => ({
+    x: cx + graphView.panX + gx * scale,
+    y: cy + graphView.panY + gy * scale
+  });
+
+  for (const { a, label } of selfLoops) {
+    const p = toPx(positions[a].x, positions[a].y);
+    ctx.beginPath();
+    ctx.ellipse(p.x + 8, p.y - 6, 6, 5, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = '#6b5b4f';
+    ctx.lineWidth = 1.5;
+    ctx.globalAlpha = 0.6;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.font = (9 * getFontScale()) + "px 'Fira Code', monospace";
+    ctx.fillStyle = '#8a8278';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, p.x + 14, p.y - 8);
+  }
+
+  let pathVertices = new Set();
+  const paths = (selectedPair[0] >= 0 && selectedPair[1] >= 0)
+    ? allShortestPaths(nodes, edges, selectedPair[0], selectedPair[1])
+    : [];
+  const edgeToPathIndices = new Map();
+  if (paths.length > 0) {
+    const distA = bfsDistances(nodes, edges, selectedPair[0]);
+    const distB = bfsDistances(nodes, edges, selectedPair[1]);
+    const d = distA[selectedPair[1]];
+    for (let i = 0; i < nodes.length; i++)
+      if (distA[i] >= 0 && distB[i] >= 0 && distA[i] + distB[i] === d)
+        pathVertices.add(i);
+    for (let pi = 0; pi < paths.length; pi++) {
+      const path = paths[pi];
+      for (let j = 0; j < path.length - 1; j++) {
+        const u = path[j], v = path[j + 1];
+        const key = u < v ? u + ',' + v : v + ',' + u;
+        if (!edgeToPathIndices.has(key)) edgeToPathIndices.set(key, []);
+        edgeToPathIndices.get(key).push(pi);
+      }
+    }
+  }
+
+  for (const e of edges) {
+    const key = Math.min(e.a, e.b) + ',' + Math.max(e.a, e.b);
+    if (edgeToPathIndices.has(key)) continue;
+    const p1 = toPx(positions[e.a].x, positions[e.a].y);
+    const p2 = toPx(positions[e.b].x, positions[e.b].y);
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.strokeStyle = '#6b5b4f';
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.6;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    if (showEdgeLabels) {
+      const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2 - 8;
+      ctx.font = (9 * getFontScale()) + "px 'Fira Code', monospace";
+      ctx.fillStyle = '#2e2a24';
+      ctx.textAlign = 'center';
+      const labels = [e.labelA, e.labelB].filter(Boolean);
+      const text = labels.length === 2 ? `${e.labelA} / ${e.labelB}` : (e.labelA || e.labelB || '');
+      if (text) ctx.fillText(text, mx, my);
+    }
+  }
+
+  const nPaths = paths.length;
+  for (let pi = 0; pi < nPaths; pi++) {
+    const path = paths[pi];
+    const color = PATH_COLORS[pi % PATH_COLORS.length];
+    const offset = nPaths > 1 ? (pi - (nPaths - 1) / 2) * 8 : 0;
+    for (let j = 0; j < path.length - 1; j++) {
+      const u = path[j], v = path[j + 1];
+      const p1 = toPx(positions[u].x, positions[u].y);
+      const p2 = toPx(positions[v].x, positions[v].y);
+      if (offset !== 0) {
+        const dx = p2.x - p1.x, dy = p2.y - p1.y;
+        const len = Math.sqrt(dx * dx + dy * dy) || 1;
+        const perpX = -dy / len * offset, perpY = dx / len * offset;
+        ctx.beginPath();
+        ctx.moveTo(p1.x + perpX, p1.y + perpY);
+        ctx.lineTo(p2.x + perpX, p2.y + perpY);
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+      }
+      ctx.strokeStyle = color;
+      ctx.lineWidth = nPaths > 1 ? 5 : 7;
+      ctx.globalAlpha = 0.95;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  for (const e of edges) {
+    const key = Math.min(e.a, e.b) + ',' + Math.max(e.a, e.b);
+    if (!edgeToPathIndices.has(key)) continue;
+    const p1 = toPx(positions[e.a].x, positions[e.a].y);
+    const p2 = toPx(positions[e.b].x, positions[e.b].y);
+    if (showEdgeLabels) {
+      const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2 - 8;
+      ctx.font = (9 * getFontScale()) + "px 'Fira Code', monospace";
+      ctx.fillStyle = '#2e2a24';
+      ctx.textAlign = 'center';
+      const labels = [e.labelA, e.labelB].filter(Boolean);
+      const text = labels.length === 2 ? `${e.labelA} / ${e.labelB}` : (e.labelA || e.labelB || '');
+      if (text) ctx.fillText(text, mx, my);
+    }
+  }
+
+  const nodeR = 10;
+  const nodeRSelected = 14;
+  for (let i = 0; i < nodes.length; i++) {
+    const p = toPx(positions[i].x, positions[i].y);
+    const r = selectedPair.includes(i) ? nodeRSelected : nodeR;
+    let selColor = null;
+    if (selectedPair[0] >= 0 && i === selectedPair[0]) selColor = '#d04040';
+    else if (selectedPair[1] >= 0 && i === selectedPair[1]) selColor = '#2a9a3a';
+    const onPath = pathVertices.has(i) && !selectedPair.includes(i);
+    if (onPath) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r + 4, 0, Math.PI * 2);
+      ctx.strokeStyle = '#c43a78';
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.8;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    if (selColor) {
+      const glowR = r * 2.5;
+      const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowR);
+      grad.addColorStop(0, selColor + '40');
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, glowR, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = selColor || '#3878c0';
+    ctx.fill();
+    if (selectedPair[0] >= 0 && i === selectedPair[0]) {
+      ctx.font = "bold " + (11 * getFontScale()) + "px 'Fira Code', monospace";
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.fillText('A', p.x, p.y);
+    } else if (selectedPair[1] >= 0 && i === selectedPair[1]) {
+      ctx.font = "bold " + (11 * getFontScale()) + "px 'Fira Code', monospace";
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.fillText('B', p.x, p.y);
+    }
+    ctx.font = "bold " + (11 * getFontScale()) + "px 'Fira Code', monospace";
+    ctx.fillStyle = selColor ? (i === selectedPair[0] ? '#c62828' : '#2e7d32') : '#1a1714';
+    ctx.textAlign = 'center';
+    ctx.fillText(nodes[i], p.x, p.y + r + 12);
+  }
+
+  ctx.restore();
+}
+
+function drawCells() {
+  const { w, h, dpr } = setupCanvas(cellCanvas);
+  const ctx = cellCtx;
+  ctx.clearRect(0, 0, w * dpr, h * dpr);
+  ctx.save();
+  ctx.scale(dpr, dpr);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, w, h);
+
+  const { cols, rows, numCells } = getDualRect();
+  let numShaded = 0;
+  if (selectedPair[0] >= 0 && selectedPair[1] >= 0) {
+    const dist = graphDistance(nodes, edges, selectedPair[0], selectedPair[1]);
+    numShaded = dist < 0 ? 0 : Math.min(dist, numCells);
+  }
+
+  const margin = 40;
+  const gridW = w - 2 * margin;
+  const gridH = h - 2 * margin;
+  const cellW = gridW / cols;
+  const cellH = gridH / rows;
+  const ox = margin;
+  const oy = margin;
+
+  ctx.strokeStyle = '#6b5b4f';
+  ctx.lineWidth = 2;
+  ctx.font = "bold " + (12 * getFontScale()) + "px 'Fira Code', monospace";
+  ctx.fillStyle = '#8a8278';
+  ctx.textAlign = 'center';
+
+  // Base at bottom, cells stacked bottom-up (cell 1 at bottom)
+  let cellIdx = 0;
+  for (let row = rows - 1; row >= 0; row--) {
+    for (let col = 0; col < cols; col++) {
+      const x = ox + col * cellW;
+      const y = oy + row * cellH;
+      ctx.strokeRect(x, y, cellW, cellH);
+      ctx.fillText(String(cellIdx + 1), x + cellW / 2, y + cellH / 2 - 6);
+      if (numShaded >= cellIdx + 1) {
+        ctx.fillStyle = 'rgba(46, 125, 186, 0.35)';
+        ctx.fillRect(x + 2, y + 2, cellW - 4, cellH - 4);
+        ctx.fillStyle = '#8a8278';
+      }
+      cellIdx++;
+    }
+  }
+
+  ctx.restore();
+}
+
+function updateInfo() {
+  const log = document.getElementById('logContent');
+  if (selectedPair[0] < 0) {
+    log.textContent = 'Click A (1st vertex), then B (2nd vertex).';
+    return;
+  }
+  let msg = 'A: ' + nodes[selectedPair[0]];
+  if (selectedPair[1] >= 0) {
+    const dist = graphDistance(nodes, edges, selectedPair[0], selectedPair[1]);
+    const { numCells } = getDualRect();
+    const shaded = dist <= 0 ? 0 : Math.min(dist, numCells);
+    const paths = allShortestPaths(nodes, edges, selectedPair[0], selectedPair[1]);
+    msg += '   B: ' + nodes[selectedPair[1]] + '   Path length: ' + dist + '   → ' + shaded + ' cell(s) shaded';
+    msg += '\n(' + paths.length + ' distinct path' + (paths.length === 1 ? '' : 's') + ' highlighted)';
+  } else {
+    msg += '   (click B)';
+  }
+  log.textContent = msg;
+}
+
+// ============================================================
+// INTERACTION
+// ============================================================
+
+function findClickedNode(canvasEl, e) {
+  const rect = canvasEl.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const g = screenToGraph(mx, my, rect.width, rect.height);
+  let best = -1, bestD = 0.3;
+  for (let i = 0; i < positions.length; i++) {
+    const d = Math.sqrt((g.x - positions[i].x)**2 + (g.y - positions[i].y)**2);
+    if (d < bestD) { bestD = d; best = i; }
+  }
+  return best;
+}
+
+let lastMouseX = 0, lastMouseY = 0;
+
+graphCanvas.addEventListener('mousedown', e => {
+  didDrag = false;
+  const idx = findClickedNode(graphCanvas, e);
+  if (idx >= 0) {
+    draggingNode = idx;
+    graphCanvas.classList.add('dragging-node');
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+  }
+});
+
+graphCanvas.addEventListener('mousemove', e => {
+  if (draggingNode >= 0) {
+    const dx = e.clientX - lastMouseX;
+    const dy = e.clientY - lastMouseY;
+    if (!didDrag && (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)) {
+      didDrag = true;
+    }
+    if (didDrag) {
+      const rect = graphCanvas.getBoundingClientRect();
+      const g = screenToGraph(e.clientX - rect.left, e.clientY - rect.top, rect.width, rect.height);
+      const prev = screenToGraph(lastMouseX - rect.left, lastMouseY - rect.top, rect.width, rect.height);
+      positions[draggingNode].x += g.x - prev.x;
+      positions[draggingNode].y += g.y - prev.y;
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+      render();
+    }
+  }
+});
+
+graphCanvas.addEventListener('mouseup', e => {
+  const wasDragging = draggingNode >= 0;
+  if (wasDragging) {
+    graphCanvas.classList.remove('dragging-node');
+    const idx = draggingNode;
+    draggingNode = -1;
+    if (didDrag) return;
+    if (pairClickCount === 0) {
+      selectedPair = [idx, -1];
+      pairClickCount = 1;
+    } else {
+      selectedPair[1] = idx;
+      pairClickCount = 0;
+    }
+    updateInfo();
+    render();
+    return;
+  }
+  const idx = findClickedNode(graphCanvas, e);
+  if (idx >= 0) {
+    if (pairClickCount === 0) {
+      selectedPair = [idx, -1];
+      pairClickCount = 1;
+    } else {
+      selectedPair[1] = idx;
+      pairClickCount = 0;
+    }
+    updateInfo();
+    render();
+  }
+});
+
+graphCanvas.addEventListener('mouseleave', () => {
+  if (draggingNode >= 0) {
+    graphCanvas.classList.remove('dragging-node');
+    draggingNode = -1;
+  }
+});
+
+document.getElementById('btnResetLayout').addEventListener('click', () => {
+  positions = layoutGraph(nodes, getN(), getK());
+  render();
+});
+
+document.getElementById('btnClear').addEventListener('click', () => {
+  selectedPair = [-1, -1];
+  pairClickCount = 0;
+  updateInfo();
+  render();
+});
+
+document.getElementById('chkEdgeLabels').addEventListener('change', e => {
+  showEdgeLabels = e.target.checked;
+  render();
+});
+
+const helpModal = document.getElementById('helpModal');
+document.getElementById('btnHelp').addEventListener('click', () => {
+  helpModal.classList.add('active');
+});
+helpModal.querySelector('.help-modal-backdrop').addEventListener('click', () => {
+  helpModal.classList.remove('active');
+});
+
+// ============================================================
+// INIT
+// ============================================================
+
+function rebuild() {
+  const n = getN(), k = getK();
+  nodes = generateNodes(n, k);
+  const { edges: e, selfLoops: sl } = generateEdges3Cycle(nodes, n);
+  edges = e;
+  selfLoops = sl;
+  positions = layoutGraph(nodes, n, k);
+  selectedPair = [-1, -1];
+  pairClickCount = 0;
+  graphView = { panX: 0, panY: 0, zoom: 1 };
+
+  document.getElementById('showCount').textContent = nodes.length;
+  document.getElementById('dispN').textContent = n;
+  document.getElementById('dispK').textContent = k;
+  document.getElementById('showDiameter').textContent = Math.floor(n / 2);
+  const startVec = '0' + '1'.repeat(k);
+  document.getElementById('startVec').textContent = startVec;
+  document.getElementById('tagGr').textContent = 'Gr(' + k + ',' + n + ')';
+  const rect = getDualRect();
+  document.getElementById('rectDims').textContent = '1×' + rect.numCells;
+  updateInfo();
+  render();
+}
+
+function render() {
+  drawGraph();
+  drawCells();
+}
+
+window.addEventListener('resize', render);
+
+function applyFontScale() {
+  const scale = getFontScale();
+  document.documentElement.style.setProperty('--font-scale', String(scale));
+  document.getElementById('fontScaleVal').textContent = Math.round(scale * 100) + '%';
+  try { localStorage.setItem('holog_fontScale', String(scale)); } catch (_) {}
+  render();
+}
+
+document.getElementById('fontScale').addEventListener('input', applyFontScale);
+document.getElementById('fontScale').addEventListener('change', applyFontScale);
+
+(function initFontScale() {
+  try {
+    const saved = localStorage.getItem('holog_fontScale');
+    if (saved) {
+      const v = parseFloat(saved);
+      if (v >= 0.5 && v <= 2) {
+        document.getElementById('fontScale').value = v;
+      }
+    }
+  } catch (_) {}
+  applyFontScale();
+})();
+
+document.getElementById('paramN').addEventListener('change', rebuild);
+document.getElementById('paramN').addEventListener('input', rebuild);
+
+rebuild();
+</script>
+</body>
+</html>
