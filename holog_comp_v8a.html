@@ -238,6 +238,8 @@
   }
   .log-window pre { margin: 0; white-space: pre-wrap; word-break: break-word; }
   .log-window pre.nowrap { white-space: pre; word-break: normal; overflow-x: auto; }
+  .log-d-bold { color: #c62828; font-weight: bold; }
+  .log-d-bold .katex { color: inherit; font-weight: inherit; }
 
   .help-modal { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
   .help-modal.active { display: flex; }
@@ -962,7 +964,7 @@ function updateInfo() {
     return;
   }
   const k = getK();
-  let msg = '$A: 0\\, 1^{' + k + '}$ (fixed)';
+  let msg = '$A=0\\,1^{' + k + '}$';
   if (selectedPair[1] >= 0) {
     const dist = graphDistance(nodes, edges, selectedPair[0], selectedPair[1]);
     const paths = allShortestPaths(nodes, edges, selectedPair[0], selectedPair[1]);
@@ -983,9 +985,13 @@ function updateInfo() {
       }
       shadedCount = shaded.length;
     }
-    msg += '   B: ' + nodes[selectedPair[1]] + ' (i=' + i + ')\n';
+    msg += '\n$B=' + bVec + ' \\quad (i=' + i + ')$\n';
+    const dVal = Math.ceil(i / 2);
+    msg += '$d(A,B)=\\lceil ' + i + '/2 \\rceil=' + dVal + '$   [$(i+1)/2$ if $i$ is odd, $i/2$ ow]\n';
     msg += '# shaded cells S= ' + shadedCount + '\n';
-    msg += 'Path length: ' + dist + '   = (S + 1)/2';
+    msg += '<span class="log-d-bold">$d(A,B) = ' + dist + '  = (S + 1)/2$</span>';
+    const npLeft = (i % 2 === 0) ? '1' : '(i+1)/2=' + ((i + 1) / 2);
+    msg += '\n<span class="log-d-bold">$N_P=' + npLeft + ' \\quad $ [1 if $i$ is even, $(i+1)/2$ if $i$ is odd]</span>';
     if (dist > 0 && paths.length > 0) {
       const nPaths = paths.length;
       msg += '\n' + nPaths + ' distinct path' + (nPaths === 1 ? '' : 's') + ' found:';
@@ -998,7 +1004,7 @@ function updateInfo() {
       });
     }
   } else {
-    msg += '   — click B';
+    msg += '\n— click B';
   }
   log.innerHTML = msg.replace(/\n/g, '<br>');
   if (typeof renderMathInElement === 'function') {
