@@ -801,14 +801,25 @@ function drawGraph() {
       ctx.globalAlpha = 0.95;
       ctx.stroke();
       ctx.globalAlpha = 1;
-      // Draw 3-cycle label along highlighted edge (direction A→B)
+      // Draw 3-cycle label along highlighted edge (direction A→B) with background for visibility
       const label = labels[j];
       if (label) {
         const mx = (p1.x + p2.x) / 2 + perpX, my = (p1.y + p2.y) / 2 + perpY - 8;
         ctx.font = (10 * getFontScale()) + "px 'Fira Code', monospace";
-        ctx.fillStyle = color;
         ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const tw = ctx.measureText(label).width;
+        const pad = 5;
+        const boxW = tw + 2 * pad, boxH = 16;
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        const bx = mx - boxW / 2, by = my - boxH / 2;
+        ctx.fillRect(bx, by, boxW, boxH);
+        ctx.strokeRect(bx, by, boxW, boxH);
+        ctx.fillStyle = color;
         ctx.fillText(label, mx, my);
+        ctx.textBaseline = 'alphabetic';
       }
     }
   }
