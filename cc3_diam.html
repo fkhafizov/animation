@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>3-Consecutive-Cycle Graph G₃(k,n) — Diameter</title>
+  <!--
+    UI choice: when multiple quantities are checked, we stack plots vertically
+    so each surface stays readable and Plotly rotation works per plot.
+  -->
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
+  <style>
+    :root {
+      --bg: #e8f4fc;
+      --panel: #f5fbff;
+      --border: #9ec9e8;
+      --accent: #1565c0;
+      --accent-dark: #0d47a1;
+      --text: #1a237e;
+      --shadow: rgba(21, 101, 192, 0.25);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: linear-gradient(180deg, var(--bg) 0%, #d4e8f7 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      padding: 1rem 1.25rem;
+      background: linear-gradient(135deg, #42a5f5 0%, var(--accent) 100%);
+      color: #fff;
+      box-shadow: 0 4px 14px var(--shadow);
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    header .sub {
+      margin-top: 0.35rem;
+      font-size: 0.88rem;
+      opacity: 0.92;
+    }
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1rem 1rem 2rem;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.25rem;
+      align-items: flex-end;
+    }
+    label.field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+    label.field input {
+      width: 5rem;
+      padding: 0.4rem 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
+    .checks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.25rem;
+      align-items: center;
+      margin-top: 0.5rem;
+    }
+    .checks label {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      font-size: 0.92rem;
+      font-weight: 600;
+    }
+    button.primary {
+      background: linear-gradient(180deg, #42a5f5, var(--accent));
+      color: #fff;
+      box-shadow: 0 2px 6px var(--shadow);
+    }
+    button.primary:hover { filter: brightness(1.05); }
+    button.reset {
+      background: #fff;
+      color: var(--accent-dark);
+      border: 2px solid var(--accent);
+    }
+    /* 3D-style HELP: raised blue pill */
+    button.help {
+      background: linear-gradient(180deg, #64b5f6 0%, #1976d2 45%, #0d47a1 100%);
+      color: #fff;
+      padding: 0.55rem 1.15rem;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.35),
+        0 4px 0 #0a3a82,
+        0 6px 12px rgba(13, 71, 161, 0.45);
+      transform: translateY(0);
+      transition: transform 0.08s, box-shadow 0.08s;
+    }
+    button.help:hover {
+      filter: brightness(1.06);
+    }
+    button.help:active {
+      transform: translateY(3px);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.25),
+        0 1px 0 #0a3a82,
+        0 2px 6px rgba(13, 71, 161, 0.4);
+    }
+    .err {
+      color: #b71c1c;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+    .plot-box {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .plot-box h3 {
+      margin: 0;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.95rem;
+      background: linear-gradient(90deg, #e3f2fd, #fff);
+      border-bottom: 1px solid var(--border);
+    }
+    .plot-inner { height: 420px; width: 100%; }
+    table.data {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+    }
+    table.data th, table.data td {
+      border: 1px solid var(--border);
+      padding: 0.28rem 0.45rem;
+      text-align: right;
+    }
+    table.data th { background: #e3f2fd; }
+    table.data td.kn { text-align: center; }
+    .scroll-table {
+      max-height: 280px;
+      overflow: auto;
+    }
+    /* Collapse when hidden so no blank space */
+    #plotSection.is-hidden,
+    #tablePanel.is-hidden {
+      display: none !important;
+    }
+    label.chk-table {
+      font-size: 0.88rem;
+      margin-bottom: 0.5rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    /* Modal */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(13, 71, 161, 0.35);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: #fff;
+      max-width: 520px;
+      width: 100%;
+      border-radius: 12px;
+      padding: 1.25rem 1.4rem;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+      border: 2px solid var(--border);
+      max-height: 85vh;
+      overflow: auto;
+    }
+    .modal h2 {
+      margin: 0 0 0.75rem;
+      font-size: 1.1rem;
+      color: var(--accent-dark);
+    }
+    .modal .close-row {
+      text-align: right;
+      margin-bottom: 0.5rem;
+    }
+    .modal button.close {
+      background: var(--accent);
+      color: #fff;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.85rem;
+    }
+    .modal code { background: #e3f2fd; padding: 0.1rem 0.35rem; border-radius: 4px; }
+    .modal pre {
+      background: #f5f9fc;
+      padding: 0.6rem 0.75rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 0.82rem;
+      border: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>3-Consecutive-Cycle Graph <span style="font-weight:400">G₃(k,n)</span> Diameter</h1>
+    <div class="sub">|V|, |E|, and D = diam(G₃(k,n)) over ranges of k (zeros) and n (word length).</div>
+  </header>
+  <div class="wrap">
+    <div class="panel">
+      <div class="row">
+        <label class="field">k<sub>min</sub>
+          <input type="number" id="kMin" min="0" step="1" value="2" />
+        </label>
+        <label class="field">k<sub>max</sub>
+          <input type="number" id="kMax" min="0" step="1" value="2" />
+        </label>
+        <label class="field">n<sub>min</sub>
+          <input type="number" id="nMin" min="0" step="1" value="4" />
+        </label>
+        <label class="field">n<sub>max</sub>
+          <input type="number" id="nMax" min="0" step="1" value="14" />
+        </label>
+        <button type="button" class="primary" id="btnUpdate">Update plot &amp; table</button>
+        <button type="button" class="reset" id="btnReset">RESET</button>
+        <button type="button" class="help" id="btnHelp">HELP</button>
+      </div>
+      <div class="checks">
+        <span style="font-weight:600;font-size:0.9rem;">Plot:</span>
+        <label><input type="checkbox" id="chkV" /> |V|</label>
+        <label><input type="checkbox" id="chkE" /> |E|</label>
+        <label><input type="checkbox" id="chkD" /> D (diameter)</label>
+      </div>
+      <div id="validationErr" class="err" aria-live="polite"></div>
+    </div>
+
+    <div id="plotSection" class="panel">
+      <div id="plotContainer"></div>
+    </div>
+
+    <div class="panel">
+      <label class="chk-table"><input type="checkbox" id="chkTable" /> Show table of all valid (k, n) pairs</label>
+      <div id="tablePanel">
+        <div id="tableWrap" class="scroll-table"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="modal">
+      <div class="close-row"><button type="button" class="close" id="btnHelpClose">Close</button></div>
+      <h2 id="helpTitle">Help</h2>
+      <p><strong>k</strong> = number of <code>0</code> bits in the binary word.<br />
+         <strong>n</strong> = length of the word (number of positions). Valid vertices satisfy <code>0 ≤ k ≤ n</code>.</p>
+      <p><strong>Formulas</strong> (for G₃(k,n) as in your spec):</p>
+      <pre>|V| = C(n, k)
+|E| = (2n − 3) · C(n − 2, k − 1)   for n ≥ 3
+D = diam(G) = ⌈ k(n − k) / 2 ⌉</pre>
+      <p><strong>Inputs:</strong> integers with <code>k<sub>min</sub> ≤ k<sub>max</sub></code>, <code>n<sub>min</sub> ≤ n<sub>max</sub></code>, and <code>k ≤ n</code> for each cell. Invalid pairs are omitted from the surface (shown as gaps).</p>
+      <p><strong>3D plot:</strong> when both <em>k</em> and <em>n</em> vary over ranges, x-axis = <em>n</em>, y-axis = <em>k</em>, z-axis = selected quantity. <strong>Drag</strong> to rotate; <strong>scroll</strong> to zoom.</p>
+      <p><strong>2D plot:</strong> if <code>k<sub>min</sub>=k<sub>max</sub></code> (fixed <em>k</em>), the plot is a curve vs <em>n</em>; if <code>n<sub>min</sub>=n<sub>max</sub></code> (fixed <em>n</em>), the plot is a curve vs <em>k</em>. If both are fixed, a single point is shown.</p>
+    </div>
+  </div>
+
+  <script>
+(function () {
+  'use strict';
+
+  /** @returns {bigint} binomial C(n,k), exact; 0 if k<0 or k>n */
+  function binom(n, k) {
+    if (k < 0 || k > n) return 0n;
+    var nn = BigInt(n);
+    var kk = BigInt(k);
+    if (kk > nn - kk) kk = nn - kk;
+    var r = 1n;
+    for (var i = 1n; i <= kk; i++) {
+      r = r * (nn - kk + i) / i;
+    }
+    return r;
+  }
+
+  function absV(n, k) {
+    return binom(n, k);
+  }
+
+  /** |E| = (2n-3) * C(n-2, k-1) for n >= 3 */
+  function absE(n, k) {
+    if (n < 3) return null;
+    var factor = BigInt(2 * n - 3);
+    return factor * binom(n - 2, k - 1);
+  }
+
+  /** D = ceil(k*(n-k)/2) */
+  function diameter(n, k) {
+    var num = BigInt(k) * BigInt(n - k);
+    return (num + 1n) / 2n; // ceil(num/2) for nonnegative num
+  }
+
+  function validateInputs(kMin, kMax, nMin, nMax) {
+    if (![kMin, kMax, nMin, nMax].every(function (x) {
+      return Number.isInteger(x) && !Number.isNaN(x);
+    })) {
+      return 'All bounds must be integers.';
+    }
+    if (kMin > kMax) return 'Need k_min ≤ k_max.';
+    if (nMin > nMax) return 'Need n_min ≤ n_max.';
+    if (kMin < 0 || nMin < 0) return 'k and n must be nonnegative.';
+    var pairs = (kMax - kMin + 1) * (nMax - nMin + 1);
+    if (pairs > 250000) return 'Range too large (' + pairs + ' pairs). Try smaller spans (≤ ~250k pairs).';
+    return '';
+  }
+
+  /** Build z[i][j] for k = kMin+i, n = nMin+j; null if k>n */
+  function buildMatrix(kMin, kMax, nMin, nMax, getter) {
+    var rows = kMax - kMin + 1;
+    var cols = nMax - nMin + 1;
+    var z = [];
+    for (var i = 0; i < rows; i++) {
+      var row = [];
+      var k = kMin + i;
+      for (var j = 0; j < cols; j++) {
+        var n = nMin + j;
+        if (k > n) row.push(null);
+        else row.push(getter(n, k));
+      }
+      z.push(row);
+    }
+    return z;
+  }
+
+  function bigIntToPlot(z) {
+    return z.map(function (row) {
+      return row.map(function (v) {
+        if (v === null) return null;
+        if (typeof v === 'bigint') {
+          var s = v.toString();
+          if (s.length > 15) return Number(s); // avoid Plotly issues; rare for UI ranges
+          return Number(v);
+        }
+        return v;
+      });
+    });
+  }
+
+  /** Scalar BigInt / null → number for 2D plots */
+  function scalarToNumber(v) {
+    if (v === null) return null;
+    if (typeof v === 'bigint') return Number(v);
+    return Number(v);
+  }
+
+  /**
+   * 'surface' — full (k,n) grid
+   * 'slice-k' — k fixed, vary n (2D)
+   * 'slice-n' — n fixed, vary k (2D)
+   * 'point' — single (k,n)
+   */
+  function plotDimensionMode(kMin, kMax, nMin, nMax) {
+    var kFixed = kMin === kMax;
+    var nFixed = nMin === nMax;
+    if (kFixed && nFixed) return 'point';
+    if (kFixed) return 'slice-k';
+    if (nFixed) return 'slice-n';
+    return 'surface';
+  }
+
+  var ks = [];
+  var ns = [];
+
+  function axisArrays(kMin, kMax, nMin, nMax) {
+    ks = [];
+    ns = [];
+    for (var k = kMin; k <= kMax; k++) ks.push(k);
+    for (var n = nMin; n <= nMax; n++) ns.push(n);
+  }
+
+  var layoutBase3d = {
+    scene: {
+      xaxis: { title: 'n (word length)' },
+      yaxis: { title: 'k (zeros)' },
+      zaxis: { title: '' },
+      aspectmode: 'auto'
+    },
+    margin: { l: 0, r: 0, t: 40, b: 0 },
+    paper_bgcolor: '#f8fcff',
+    plot_bgcolor: '#fff'
+  };
+
+  var layoutBase2d = {
+    margin: { l: 50, r: 20, t: 50, b: 50 },
+    paper_bgcolor: '#f8fcff',
+    plot_bgcolor: '#fff',
+    xaxis: { zeroline: true, gridcolor: '#ddeaf5' },
+    yaxis: { zeroline: true, gridcolor: '#ddeaf5' }
+  };
+
+  function renderPlots(kMin, kMax, nMin, nMax, showV, showE, showD) {
+    axisArrays(kMin, kMax, nMin, nMax);
+    var section = document.getElementById('plotSection');
+    var container = document.getElementById('plotContainer');
+    container.innerHTML = '';
+
+    var plots = [];
+    if (showV) plots.push({ key: 'V', title: '|V| = C(n, k)', zlabel: '|V|', getter: absV });
+    if (showE) plots.push({ key: 'E', title: '|E| = (2n−3)·C(n−2, k−1) for n ≥ 3', zlabel: '|E|', getter: absE });
+    if (showD) plots.push({ key: 'D', title: 'D = diam = ceil(k(n−k) / 2)', zlabel: 'D', getter: diameter });
+
+    if (plots.length === 0) {
+      section.classList.add('is-hidden');
+      return;
+    }
+    section.classList.remove('is-hidden');
+
+    var dim = plotDimensionMode(kMin, kMax, nMin, nMax);
+
+    plots.forEach(function (p, idx) {
+      var box = document.createElement('div');
+      box.className = 'plot-box';
+      var h = document.createElement('h3');
+      var shortTitle = p.key === 'V' ? '|V|' : p.key === 'E' ? '|E|' : 'D (diameter)';
+      if (dim === 'surface') {
+        h.textContent = shortTitle + ' (3D surface)';
+      } else if (dim === 'slice-k') {
+        h.textContent = shortTitle + ' vs n (k = ' + kMin + ')';
+      } else if (dim === 'slice-n') {
+        h.textContent = shortTitle + ' vs k (n = ' + nMin + ')';
+      } else {
+        h.textContent = shortTitle + ' (single point)';
+      }
+      box.appendChild(h);
+      var inner = document.createElement('div');
+      inner.className = 'plot-inner';
+      inner.id = 'plot-' + p.key + '-' + idx;
+      box.appendChild(inner);
+      container.appendChild(box);
+
+      if (dim === 'surface') {
+        var zRaw = buildMatrix(kMin, kMax, nMin, nMax, p.getter);
+        var zPlot = bigIntToPlot(zRaw);
+        var layout = JSON.parse(JSON.stringify(layoutBase3d));
+        layout.title = { text: p.title, font: { size: 14 } };
+        layout.scene.zaxis.title = p.zlabel;
+        var trace = {
+          type: 'surface',
+          x: ns,
+          y: ks,
+          z: zPlot,
+          connectgaps: false,
+          colorscale: 'Blues',
+          showscale: true,
+          hovertemplate: 'n=%{x}<br>k=%{y}<br>value=%{z}<extra></extra>'
+        };
+        Plotly.newPlot(inner.id, [trace], layout, {
+          responsive: true,
+          displayModeBar: true,
+          displaylogo: false
+        });
+        return;
+      }
+
+      /* 2D: line + markers */
+      var xs = [];
+      var ys = [];
+      if (dim === 'slice-k') {
+        var kk = kMin;
+        for (var nn = nMin; nn <= nMax; nn++) {
+          if (kk > nn) continue;
+          var val = p.getter(nn, kk);
+          if (val === null) continue;
+          xs.push(nn);
+          ys.push(scalarToNumber(val));
+        }
+      } else if (dim === 'slice-n') {
+        var nn = nMin;
+        for (var kk2 = kMin; kk2 <= kMax; kk2++) {
+          if (kk2 > nn) continue;
+          var val2 = p.getter(nn, kk2);
+          if (val2 === null) continue;
+          xs.push(kk2);
+          ys.push(scalarToNumber(val2));
+        }
+      } else {
+        /* point */
+        var kk3 = kMin;
+        var nn3 = nMin;
+        if (kk3 <= nn3) {
+          var val3 = p.getter(nn3, kk3);
+          if (val3 !== null) {
+            xs.push(nn3);
+            ys.push(scalarToNumber(val3));
+          }
+        }
+      }
+
+      var layout2 = JSON.parse(JSON.stringify(layoutBase2d));
+      layout2.title = { text: p.title, font: { size: 14 } };
+      layout2.yaxis.title = p.zlabel;
+      if (dim === 'slice-k') {
+        layout2.xaxis.title = 'n (word length)';
+      } else if (dim === 'slice-n') {
+        layout2.xaxis.title = 'k (zeros)';
+      } else {
+        layout2.xaxis.title = 'n';
+        layout2.showlegend = false;
+      }
+
+      if (xs.length === 0) {
+        layout2.annotations = [{
+          xref: 'paper',
+          yref: 'paper',
+          x: 0.5,
+          y: 0.5,
+          text: 'No valid (k, n) in range',
+          showarrow: false,
+          font: { size: 14, color: '#1565c0' }
+        }];
+        Plotly.newPlot(inner.id, [{ type: 'scatter', x: [], y: [] }], layout2, {
+          responsive: true,
+          displayModeBar: true,
+          displaylogo: false
+        });
+        return;
+      }
+
+      var trace2d = {
+        type: 'scatter',
+        mode: xs.length === 1 ? 'markers' : 'lines+markers',
+        x: xs,
+        y: ys,
+        line: { color: '#1565c0', width: 2 },
+        marker: { size: xs.length === 1 ? 14 : 8, color: '#1976d2' },
+        hovertemplate: (dim === 'slice-k' ? 'n=%{x}<br>' : dim === 'slice-n' ? 'k=%{x}<br>' : 'n=%{x}<br>') + 'value=%{y}<extra></extra>'
+      };
+      if (dim === 'point') {
+        trace2d.hovertemplate = 'n=' + nMin + ', k=' + kMin + '<br>value=%{y}<extra></extra>';
+      }
+
+      Plotly.newPlot(inner.id, [trace2d], layout2, {
+        responsive: true,
+        displayModeBar: true,
+        displaylogo: false
+      });
+    });
+  }
+
+  function renderTable(kMin, kMax, nMin, nMax) {
+    var el = document.getElementById('tableWrap');
+    var rows = [];
+    for (var k = kMin; k <= kMax; k++) {
+      for (var n = nMin; n <= nMax; n++) {
+        if (k > n) continue;
+        var v = absV(n, k);
+        var e = absE(n, k);
+        var d = diameter(n, k);
+        rows.push({ k: k, n: n, v: v, e: e, d: d });
+      }
+    }
+    var html = '<table class="data"><thead><tr><th>(k, n)</th><th>|V|</th><th>|E|</th><th>D</th></tr></thead><tbody>';
+    rows.forEach(function (r) {
+      var eStr = r.e === null ? '—' : r.e.toString();
+      html += '<tr><td class="kn">(' + r.k + ', ' + r.n + ')</td><td>' + r.v.toString() + '</td><td>' + eStr + '</td><td>' + r.d.toString() + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    if (rows.length === 0) html = '<p>No valid pairs in range.</p>';
+    el.innerHTML = html;
+  }
+
+  function readBounds() {
+    return {
+      kMin: parseInt(document.getElementById('kMin').value, 10),
+      kMax: parseInt(document.getElementById('kMax').value, 10),
+      nMin: parseInt(document.getElementById('nMin').value, 10),
+      nMax: parseInt(document.getElementById('nMax').value, 10)
+    };
+  }
+
+  function update() {
+    var b = readBounds();
+    var err = validateInputs(b.kMin, b.kMax, b.nMin, b.nMax);
+    var errEl = document.getElementById('validationErr');
+    errEl.textContent = err;
+    if (err) {
+      document.getElementById('plotSection').classList.add('is-hidden');
+      return;
+    }
+
+    var showV = document.getElementById('chkV').checked;
+    var showE = document.getElementById('chkE').checked;
+    var showD = document.getElementById('chkD').checked;
+
+    renderPlots(b.kMin, b.kMax, b.nMin, b.nMax, showV, showE, showD);
+
+    var tablePanel = document.getElementById('tablePanel');
+    if (document.getElementById('chkTable').checked) {
+      tablePanel.classList.remove('is-hidden');
+      renderTable(b.kMin, b.kMax, b.nMin, b.nMax);
+    } else {
+      document.getElementById('tableWrap').innerHTML = '';
+      tablePanel.classList.add('is-hidden');
+    }
+  }
+
+  function resetDefaults() {
+    document.getElementById('kMin').value = '2';
+    document.getElementById('kMax').value = '2';
+    document.getElementById('nMin').value = '4';
+    document.getElementById('nMax').value = '14';
+    document.getElementById('chkV').checked = false;
+    document.getElementById('chkE').checked = false;
+    document.getElementById('chkD').checked = false;
+    document.getElementById('chkTable').checked = false;
+    document.getElementById('validationErr').textContent = '';
+    update();
+  }
+
+  document.getElementById('btnUpdate').addEventListener('click', update);
+  document.getElementById('btnReset').addEventListener('click', resetDefaults);
+  document.getElementById('chkTable').addEventListener('change', update);
+  ['chkV', 'chkE', 'chkD'].forEach(function (id) {
+    document.getElementById(id).addEventListener('change', update);
+  });
+
+  document.getElementById('btnHelp').addEventListener('click', function () {
+    document.getElementById('helpModal').classList.add('open');
+  });
+  document.getElementById('btnHelpClose').addEventListener('click', function () {
+    document.getElementById('helpModal').classList.remove('open');
+  });
+  document.getElementById('helpModal').addEventListener('click', function (e) {
+    if (e.target.id === 'helpModal') document.getElementById('helpModal').classList.remove('open');
+  });
+
+  // Initial draw
+  update();
+})();
+  </script>
+</body>
+</html>
