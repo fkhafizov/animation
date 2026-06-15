@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Holographic Distance — Interactive Proof v5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#fffde8;--bg2:#fffbcc;--panel:#fffff5;
+  --ink:#1c1810;--ink2:#4a4228;--muted:#8a7d55;
+  --accent:#b5860a;--accent2:#e6a800;
+  --teal:#1a7a6e;--teal2:#d0f0eb;
+  --red:#c03030;--red2:#fce8e8;
+  --green:#2d7a1f;--green2:#e4f5df;
+  --purple:#5c3ab0;--purple2:#ede8fa;
+  --border:#d4c87a;
+  --serif:'Lora',Georgia,serif;--mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--ink);font-family:var(--serif);min-height:100vh;}
+header{padding:16px 22px 12px;border-bottom:1.5px solid var(--border);background:var(--bg2);
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
+  position:sticky;top:0;z-index:30;}
+h1{font-size:clamp(14px,1.8vw,20px);font-style:italic;color:var(--accent);}
+h1 span{font-style:normal;font-weight:400;font-size:11px;color:var(--muted);margin-left:7px;}
+.btns{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+button{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:0.04em;
+  border:1.5px solid;border-radius:6px;padding:6px 12px;cursor:pointer;transition:all 0.13s;}
+button:active{transform:translateY(1px);}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+.btn-primary:hover{background:#9a720a;}
+.btn-nav{background:var(--panel);color:var(--ink2);border-color:var(--border);}
+.btn-nav:hover{background:var(--bg2);}
+.btn-nav:disabled{opacity:0.32;cursor:default;pointer-events:none;}
+.btn-help{background:var(--purple2);color:var(--purple);border-color:var(--purple);}
+.btn-help:hover{background:#ddd4f8;}
+.btn-reset{background:var(--red2);color:var(--red);border-color:var(--red);}
+.btn-reset:hover{background:#fad4d4;}
+.btn-ex{background:var(--teal2);color:var(--teal);border-color:var(--teal);font-size:11px;padding:5px 10px;}
+.btn-ex.active{background:var(--teal);color:#fff;}
+.btn-ex:hover{background:#b0e8df;}
+.score-badge{font-family:var(--mono);font-size:11px;color:var(--muted);padding:4px 10px;
+  border:1px solid var(--border);border-radius:20px;background:var(--bg2);}
+.theorem-banner{position:sticky;top:57px;z-index:28;background:var(--purple2);
+  border-bottom:1.5px solid #c0b0e8;padding:6px 18px;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.theorem-banner .tb-label{font-family:var(--mono);font-size:9px;font-weight:700;
+  letter-spacing:0.12em;text-transform:uppercase;color:var(--purple);white-space:nowrap;}
+.theorem-banner .tb-formula{font-family:var(--mono);font-size:13px;color:var(--purple);font-weight:600;}
+.theorem-banner .tb-note{font-size:11px;color:#5a4090;font-style:italic;}
+.progress-bar{height:4px;background:var(--border);position:sticky;top:88px;z-index:29;}
+.progress-fill{height:100%;background:var(--accent2);transition:width 0.35s ease;}
+.layout{display:grid;grid-template-columns:1fr 360px;gap:12px;padding:12px;min-height:calc(100vh - 105px);}
+@media(max-width:920px){.layout{grid-template-columns:1fr;}}
+.canvas-wrap{background:var(--panel);border:1.5px solid var(--border);border-radius:12px;
+  overflow:hidden;position:relative;min-height:480px;}
+#mainCanvas{display:block;width:100%;height:100%;}
+.step-panel{display:flex;flex-direction:column;gap:9px;min-width:0;overflow-y:auto;max-height:calc(100vh - 135px);}
+.step-card{background:var(--panel);border:1.5px solid var(--border);border-radius:12px;padding:14px;flex-shrink:0;}
+.step-badge{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:600;
+  letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;border-radius:4px;margin-bottom:6px;}
+.badge-theorem{background:var(--purple2);color:var(--purple);}
+.badge-lemma{background:var(--teal2);color:var(--teal);}
+.badge-lower{background:var(--green2);color:var(--green);}
+.badge-upper{background:#fff0d0;color:#8a5a00;}
+.badge-done{background:var(--green2);color:var(--green);}
+.step-title{font-size:13.5px;font-weight:600;color:var(--ink);margin-bottom:5px;}
+.step-body{font-size:12px;line-height:1.6;color:var(--ink2);}
+.step-body code{font-family:var(--mono);font-size:11px;background:var(--bg2);border-radius:3px;padding:1px 4px;color:var(--accent);}
+.step-body .math{font-family:var(--mono);font-size:12px;color:var(--purple);display:block;margin:5px 0 5px 8px;}
+.step-body .hl{background:var(--accent2);color:#fff;font-family:var(--mono);font-size:11px;border-radius:3px;padding:1px 5px;}
+.step-nav{display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--mono);font-size:10px;color:var(--muted);
+  margin-top:8px;padding-top:7px;border-top:1px solid var(--border);}
+
+/* ── QUIZ ── */
+.quiz-card{background:#fffef0;border:1.5px solid var(--accent);border-radius:12px;padding:13px;flex-shrink:0;}
+.quiz-num{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:0.08em;
+  text-transform:uppercase;color:var(--accent);margin-bottom:5px;}
+.quiz-q{font-size:12.5px;font-weight:600;color:var(--ink);margin-bottom:8px;line-height:1.5;}
+.quiz-options{display:flex;flex-direction:column;gap:5px;margin-bottom:8px;}
+.quiz-opt{display:flex;align-items:center;gap:7px;padding:6px 10px;border-radius:7px;
+  border:1.5px solid var(--border);background:var(--panel);cursor:pointer;
+  font-size:12px;font-family:var(--mono);transition:all 0.11s;
+  -webkit-user-select:none;user-select:none;}
+.quiz-opt:hover{border-color:var(--accent);background:var(--bg2);}
+.quiz-opt.selected{border-color:var(--accent);background:#fff8dc;}
+.quiz-opt.correct{border-color:var(--green);background:var(--green2);color:var(--green);}
+.quiz-opt.wrong{border-color:var(--red);background:var(--red2);color:var(--red);}
+.quiz-opt input[type=radio]{accent-color:var(--accent);}
+.quiz-input-row{display:flex;gap:7px;align-items:center;margin-bottom:8px;font-size:12px;color:var(--ink2);}
+.quiz-input{font-family:var(--mono);font-size:13px;border:1.5px solid var(--border);
+  background:var(--panel);color:var(--ink);border-radius:6px;padding:5px 9px;width:76px;outline:none;}
+.quiz-input:focus{border-color:var(--accent);}
+.quiz-input.correct{border-color:var(--green);background:var(--green2);}
+.quiz-input.wrong{border-color:var(--red);background:var(--red2);}
+.quiz-btns{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.btn-check{background:var(--accent);color:#fff;border-color:var(--accent);font-size:11px;padding:5px 12px;}
+.btn-check:hover{background:#9a720a;}
+.btn-check:disabled{opacity:0.35;pointer-events:none;}
+.btn-hint{background:var(--purple2);color:var(--purple);border-color:var(--purple);font-size:11px;padding:5px 10px;}
+.btn-hint:hover{background:#ddd4f8;}
+.btn-hint:disabled{opacity:0.4;pointer-events:none;}
+.quiz-feedback{margin-top:7px;font-size:12px;line-height:1.5;border-radius:6px;padding:7px 10px;display:none;}
+.quiz-feedback.show{display:block;}
+.quiz-feedback.ok{background:var(--green2);color:var(--green);border:1px solid #a8d8a0;}
+.quiz-feedback.bad{background:var(--red2);color:var(--red);border:1px solid #f0b0b0;}
+.hint-box{margin-top:7px;font-size:11.5px;line-height:1.5;background:var(--purple2);
+  color:#3a2080;border:1px solid #c0b0e8;border-radius:6px;padding:7px 10px;display:none;}
+.hint-box.show{display:block;}
+.hint-label{font-weight:700;font-family:var(--mono);font-size:9px;letter-spacing:0.08em;
+  text-transform:uppercase;margin-bottom:3px;color:var(--purple);}
+.quiz-divider{border:none;border-top:1.5px dashed var(--border);margin:10px 0;}
+
+/* ── H-TABLE ── */
+.htable{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11.5px;margin-top:5px;}
+.htable th{text-align:center;padding:3px 5px;background:var(--bg2);color:var(--muted);font-weight:600;border:1px solid var(--border);}
+.htable td{text-align:center;padding:3px 5px;border:1px solid var(--border);}
+.htable .changed{background:var(--accent2);color:#fff;font-weight:700;}
+.htable .nonzero{background:var(--teal2);color:var(--teal);}
+
+/* ── MODAL ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(20,16,5,0.52);z-index:100;align-items:center;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--panel);border:1.5px solid var(--border);border-radius:14px;
+  padding:22px 24px;max-width:500px;width:92vw;max-height:84vh;overflow-y:auto;
+  font-size:13px;line-height:1.7;color:var(--ink2);position:relative;}
+.modal h2{font-family:var(--serif);font-size:18px;font-style:italic;color:var(--accent);margin-bottom:10px;}
+.modal h3{font-size:13px;font-weight:600;color:var(--ink);margin:9px 0 3px;}
+.modal p{margin-bottom:7px;}
+.modal code{font-family:var(--mono);font-size:11px;background:var(--bg2);border-radius:3px;padding:1px 5px;color:var(--accent);}
+.modal-close{position:absolute;top:11px;right:13px;background:none;border:none;font-size:18px;cursor:pointer;color:var(--muted);}
+</style>
+</head>
+<body>
+<header>
+  <h1>Holographic Distance Theorem <span>interactive proof v5</span></h1>
+  <div class="btns">
+    <span class="score-badge" id="scoreBadge">score: 0 / 0</span>
+    <button class="btn-ex active" id="exBtn1" onclick="switchEx(1)">Ex 1: D₆ path</button>
+    <button class="btn-ex" id="exBtn2" onclick="switchEx(2)">Ex 2: star</button>
+    <button class="btn-ex" id="exBtn3" onclick="switchEx(3)">Ex 3: D₆ k=3</button>
+    <button class="btn-primary" id="startBtn">▶ START</button>
+    <button class="btn-nav" id="backBtn" disabled>← BACK</button>
+    <button class="btn-nav" id="fwdBtn" disabled>FWD →</button>
+    <button class="btn-reset" id="resetBtn">↺ RESET</button>
+    <button class="btn-help" id="helpBtn">? HELP</button>
+  </div>
+</header>
+<div class="theorem-banner">
+  <span class="tb-label">Theorem</span>
+  <span class="tb-formula">d(x, y) = Σ_e |h_e(x) − h_e(y)|</span>
+  <span class="tb-note">where h_e(x) = #tokens in subtree T_e beyond edge e</span>
+</div>
+<div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+<div class="layout">
+  <div class="canvas-wrap"><canvas id="mainCanvas"></canvas></div>
+  <div class="step-panel" id="stepPanel">
+    <div class="step-card" id="stepCard">
+      <div class="step-badge badge-theorem" id="stepBadge">Theorem</div>
+      <div class="step-title" id="stepTitle">Ready</div>
+      <div class="step-body" id="stepBody">Choose an example above, then press <strong>START</strong>.</div>
+      <div class="step-nav">
+        <span id="stepCounter">Step 0 / 6</span>
+        <span id="stepHint" style="color:var(--muted);font-family:var(--mono);font-size:10px"></span>
+      </div>
+    </div>
+    <div id="quiz1Card" class="quiz-card" style="display:none"></div>
+    <div id="quiz2Card" class="quiz-card" style="display:none"></div>
+    <div class="step-card" id="hvecCard" style="display:none">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:4px;">Height vectors — click edge label to highlight</div>
+      <table class="htable" id="hvecTable"></table>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="helpModal">
+  <div class="modal">
+    <button class="modal-close" id="closeHelp">✕</button>
+    <h2>Holographic Distance — Help</h2>
+
+    <h3>What are we proving?</h3>
+    <p>The <strong>Holographic Distance Theorem</strong> gives an exact formula for the distance between two token configurations on a tree:</p>
+    <p style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#5c3ab0;background:#ede8fa;border-radius:6px;padding:8px 12px;margin:6px 0;">
+      d(x, y) = Σ_e |h_e(x) − h_e(y)|
+    </p>
+    <p>Here <strong>x</strong> and <strong>y</strong> are two placements of k tokens on the nodes of a tree T, and <strong>d(x, y)</strong> is the minimum number of single-edge token moves needed to rearrange x into y.</p>
+    <p>The key quantity is the <strong>height</strong> h_e(x): for each edge e, cut the tree at e — the subtree on the far side from the root is T_e, and h_e(x) counts how many of x's tokens lie inside T_e.</p>
+    <p>The insight is that the height vector h(x) = (h_{e₁}(x), h_{e₂}(x), …) is a <em>hologram</em> of the configuration: it encodes all distances without any graph search, because it captures exactly how many tokens must cross each edge in any optimal path.</p>
+
+    <h3>Proof structure (6 steps)</h3>
+    <p>The proof is a <strong>sandwich argument</strong> — we show both a lower and upper bound equal to Σ|δ_e|, forcing equality with d(x, y).</p>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;margin:6px 0;">
+      <tr style="background:#ede8fa;">
+        <th style="text-align:left;padding:5px 8px;border:1px solid #c0b0e8;font-family:'JetBrains Mono',monospace;color:#5c3ab0;">Step</th>
+        <th style="text-align:left;padding:5px 8px;border:1px solid #c0b0e8;color:#5c3ab0;">What it does</th>
+      </tr>
+      <tr>
+        <td style="padding:5px 8px;border:1px solid #d4c87a;font-family:'JetBrains Mono',monospace;white-space:nowrap;">1 · Setup</td>
+        <td style="padding:5px 8px;border:1px solid #d4c87a;">Define the two configurations x, y and the tree.</td>
+      </tr>
+      <tr style="background:#fffbcc;">
+        <td style="padding:5px 8px;border:1px solid #d4c87a;font-family:'JetBrains Mono',monospace;white-space:nowrap;">2 · Heights</td>
+        <td style="padding:5px 8px;border:1px solid #d4c87a;">Compute h_e(x) and h_e(y) for every edge; form δ_e = h_e(x) − h_e(y).</td>
+      </tr>
+      <tr>
+        <td style="padding:5px 8px;border:1px solid #d4c87a;font-family:'JetBrains Mono',monospace;white-space:nowrap;">3 · Lemma</td>
+        <td style="padding:5px 8px;border:1px solid #d4c87a;">One token move along edge f changes exactly one h_e (namely h_f) by ±1. This uses the fact that tree subtrees are nested or disjoint — the property fails with cycles.</td>
+      </tr>
+      <tr style="background:#fffbcc;">
+        <td style="padding:5px 8px;border:1px solid #d4c87a;font-family:'JetBrains Mono',monospace;white-space:nowrap;">4 · Lower bound</td>
+        <td style="padding:5px 8px;border:1px solid #d4c87a;">Lemma + triangle inequality: any walk of length ℓ changes Σ|h_e| by at most ℓ, so Σ|δ_e| ≤ d(x, y).</td>
+      </tr>
+      <tr>
+        <td style="padding:5px 8px;border:1px solid #d4c87a;font-family:'JetBrains Mono',monospace;white-space:nowrap;">5 · Upper bound</td>
+        <td style="padding:5px 8px;border:1px solid #d4c87a;">Post-order algorithm: process edges leaves→root, moving |δ_e| tokens at each edge. Total moves = Σ|δ_e|, so d(x, y) ≤ Σ|δ_e|. The algorithm terminates at y (not some other config) by <em>h-injectivity</em>: on a tree, h(z) = h(y) implies z = y, proved by leaf-induction.</td>
+      </tr>
+      <tr style="background:#fffbcc;">
+        <td style="padding:5px 8px;border:1px solid #d4c87a;font-family:'JetBrains Mono',monospace;white-space:nowrap;">6 · QED</td>
+        <td style="padding:5px 8px;border:1px solid #d4c87a;">Sandwich: Σ|δ_e| ≤ d(x,y) ≤ Σ|δ_e|, so d(x, y) = Σ|h_e(x) − h_e(y)|. ∎</td>
+      </tr>
+    </table>
+
+    <h3>Examples</h3>
+    <p><strong>Ex 1 (D₆ path, k=2):</strong> 6-node path tree with branch at node 4. x=010010 (nodes 2,5), y=100001 (nodes 1,6), d=3.</p>
+    <p><strong>Ex 2 (star, k=2):</strong> 5-node star, center=1, leaves=2,3,4,5. x=01010 (nodes 2,4), y=00101 (nodes 3,5), d=2.</p>
+    <p><strong>Ex 3 (D₆ path, k=3):</strong> Same D₆ tree with three tokens. x=111000 (nodes 1,2,3), y=001101 (nodes 3,4,6), d=6. In step 5 the canvas animates the full 6-move geodesic with actual token movements.</p>
+
+    <h3>Navigation</h3>
+    <p>START → FWD/BACK through 6 steps. RESET clears everything including score.</p>
+
+    <h3>Quizzes</h3>
+    <p>Each step has <strong>two questions</strong>. The second unlocks after you answer the first. Wrong answers reveal a <strong>Show Hint</strong> button — hints get more specific each press (up to 3 levels). You can advance regardless of quiz result.</p>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ═══════════════════ EXAMPLES ═══════════════════ */
+const EXAMPLES = {
+  1: {
+    label:'Ex 1: D₆ path',
+    edges:[
+      {u:1,v:2,label:'e₁',subtree:[2,3,4,5,6]},
+      {u:2,v:3,label:'e₂',subtree:[3,4,5,6]},
+      {u:3,v:4,label:'e₃',subtree:[4,5,6]},
+      {u:4,v:5,label:'e₄',subtree:[5]},
+      {u:4,v:6,label:'e₅',subtree:[6]},
+    ],
+    X:[0,1,0,0,1,0], Y:[1,0,0,0,0,1],
+    xLabel:'010010', yLabel:'100001',
+    xDesc:'tokens at nodes 2, 5',
+    yDesc:'tokens at nodes 1, 6',
+    lemmaMove:{from:2,to:3,edgeIdx:1},
+    upperOrder:[3,4,2,1,0],
+    yHighlight:{1:'#fce8a0',6:'#fce8a0'},
+    getNodePos(W,H){
+      const cx=W/2,cy=H/2-20,gx=Math.min(86,W/7.5),gy=Math.min(78,H/6.5);
+      return{1:{x:cx-2*gx,y:cy},2:{x:cx-gx,y:cy},3:{x:cx,y:cy},
+             4:{x:cx+gx,y:cy},5:{x:cx+2*gx,y:cy-gy},6:{x:cx+2*gx,y:cy+gy}};
+    }
+  },
+  2: {
+    label:'Ex 2: star tree',
+    // Star: center=1, leaves 2,3,4,5. Edges e1:1-2, e2:1-3, e3:1-4, e4:1-5
+    edges:[
+      {u:1,v:2,label:'e₁',subtree:[2]},
+      {u:1,v:3,label:'e₂',subtree:[3]},
+      {u:1,v:4,label:'e₃',subtree:[4]},
+      {u:1,v:5,label:'e₄',subtree:[5]},
+    ],
+    X:[0,1,0,1,0], Y:[0,0,1,0,1],
+    xLabel:'01010', yLabel:'00101',
+    xDesc:'tokens at nodes 2, 4',
+    yDesc:'tokens at nodes 3, 5',
+    lemmaMove:{from:2,to:1,edgeIdx:0},
+    upperOrder:[0,1,2,3],
+    yHighlight:{3:'#fce8a0',5:'#fce8a0'},
+    getNodePos(W,H){
+      const cx=W/2,cy=H/2,r=Math.min(140,W/4.5,H/3.5);
+      return{
+        1:{x:cx,y:cy},
+        2:{x:cx-r,y:cy-r*0.6},
+        3:{x:cx+r,y:cy-r*0.6},
+        4:{x:cx-r,y:cy+r*0.6},
+        5:{x:cx+r,y:cy+r*0.6},
+      };
+    }
+  },
+  3: {
+    label:'Ex 3: D₆ k=3',
+    // D6 tree: trunk 1-2-3-4, branches 4->5 and 4->6, k=3
+    // X=111000 (tokens at 1,2,3), Y=001101 (tokens at 3,4,6)
+    // d=6, geodesic: 111000→110100→101100→011100→011001→010101→001101
+    edges:[
+      {u:1,v:2,label:'e₁',subtree:[2,3,4,5,6]},
+      {u:2,v:3,label:'e₂',subtree:[3,4,5,6]},
+      {u:3,v:4,label:'e₃',subtree:[4,5,6]},
+      {u:4,v:5,label:'e₄',subtree:[5]},
+      {u:4,v:6,label:'e₅',subtree:[6]},
+    ],
+    X:[1,1,1,0,0,0], Y:[0,0,1,1,0,1],
+    xLabel:'111000', yLabel:'001101',
+    xDesc:'tokens at nodes 1, 2, 3',
+    yDesc:'tokens at nodes 3, 4, 6',
+    // lemma: move token from node 1 to node 2 across e1
+    lemmaMove:{from:1,to:2,edgeIdx:0},
+    // post-order: leaves first (e4,e5), then trunk right-to-left (e3,e2,e1)
+    upperOrder:[3,4,2,1,0],
+    // geodesic steps for acyclic scheduling animation (verified by BFS)
+    // moves: 3→4, 2→3, 1→2, 4→6, 3→4, 2→3
+    geodesic:[
+      [1,1,1,0,0,0], // 111000  X (start)
+      [1,1,0,1,0,0], // 110100  move 3→4 (cross e₃)
+      [1,0,1,1,0,0], // 101100  move 2→3 (cross e₂)
+      [0,1,1,1,0,0], // 011100  move 1→2 (cross e₁)
+      [0,1,1,0,0,1], // 011001  move 4→6 (cross e₅)
+      [0,1,0,1,0,1], // 010101  move 3→4 (cross e₃)
+      [0,0,1,1,0,1], // 001101  move 2→3 (cross e₂) → Y
+    ],
+    yHighlight:{3:'#fce8a0',4:'#fce8a0',6:'#fce8a0'},
+    getNodePos(W,H){
+      const cx=W/2,cy=H/2-20,gx=Math.min(86,W/7.5),gy=Math.min(78,H/6.5);
+      return{1:{x:cx-2*gx,y:cy},2:{x:cx-gx,y:cy},3:{x:cx,y:cy},
+             4:{x:cx+gx,y:cy},5:{x:cx+2*gx,y:cy-gy},6:{x:cx+2*gx,y:cy+gy}};
+    }
+  }
+};
+
+let exId=1;
+let EX=EXAMPLES[1];
+
+function getHVec(edges,cfg){return edges.map(e=>e.subtree.reduce((s,i)=>s+cfg[i-1],0));}
+
+function switchEx(id){
+  exId=id;EX=EXAMPLES[id];
+  document.getElementById('exBtn1').classList.toggle('active',id===1);
+  document.getElementById('exBtn2').classList.toggle('active',id===2);
+  document.getElementById('exBtn3').classList.toggle('active',id===3);
+  if(started) applyStep(step);
+  else { setPos(); draw(); }
+}
+window.switchEx=switchEx;
+
+/* ═══════════════════ CANVAS ═══════════════════ */
+const canvas=document.getElementById('mainCanvas');
+const ctx=canvas.getContext('2d');
+let W=0,H=0,nodePos={};
+
+function resize(){
+  const wrap=canvas.parentElement,dpr=window.devicePixelRatio||1;
+  W=wrap.clientWidth;H=Math.max(wrap.clientHeight,460);
+  canvas.width=W*dpr;canvas.height=H*dpr;
+  canvas.style.width=W+'px';canvas.style.height=H+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  setPos();
+}
+function setPos(){ nodePos=EX.getNodePos(W,H); }
+
+let tokenCfg,activeEdge=-1,activeSubtree=[],highlightNodes={};
+let showDelta=false,walkHL=[],animating=false,arrowMove=null,animT=0;
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  // grid
+  ctx.strokeStyle='rgba(180,160,40,0.055)';ctx.lineWidth=1;
+  for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+  if(!tokenCfg) tokenCfg=[...EX.X];
+  const HX=getHVec(EX.edges,EX.X);
+  const HY=getHVec(EX.edges,EX.Y);
+  const DELTA=HX.map((v,i)=>v-HY[i]);
+
+  // subtree glow
+  activeSubtree.forEach(id=>{
+    const p=nodePos[id];if(!p)return;
+    ctx.save();ctx.globalAlpha=0.14;ctx.fillStyle='#b5860a';
+    ctx.beginPath();ctx.arc(p.x,p.y,34,0,Math.PI*2);ctx.fill();ctx.restore();
+  });
+
+  // delta overlays
+  if(showDelta){
+    EX.edges.forEach((e,i)=>{
+      if(!Math.abs(DELTA[i]))return;
+      const p1=nodePos[e.u],p2=nodePos[e.v];
+      ctx.save();ctx.globalAlpha=0.22;ctx.strokeStyle='#5c3ab0';
+      ctx.lineWidth=18;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();ctx.restore();
+    });
+  }
+
+  // edges
+  EX.edges.forEach((e,i)=>{
+    const p1=nodePos[e.u],p2=nodePos[e.v];
+    const isHL=(i===activeEdge),isWalk=walkHL.includes(i);
+    ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);
+    ctx.strokeStyle=isWalk?'#1a7a6e':isHL?'#b5860a':'#c4b04a';
+    ctx.lineWidth=(isHL||isWalk)?3.5:2;
+    ctx.globalAlpha=isHL?1:0.75;ctx.stroke();ctx.globalAlpha=1;
+    const mx=(p1.x+p2.x)/2,my=(p1.y+p2.y)/2;
+    // perpendicular offset — always toward the "above" side of the edge
+    const dx=p2.x-p1.x, dy=p2.y-p1.y, len=Math.sqrt(dx*dx+dy*dy)||1;
+    let px=-dy/len, py=dx/len; // perpendicular unit vector
+    // flip so it always points upward (py < 0) for horizontal edges,
+    // and away from center for diagonal branches
+    if(py>0){px=-px;py=-py;}
+    const labelOff=13; // edge label perpendicular offset
+    const deltaOff=26; // delta label perpendicular offset
+    ctx.font=`600 12px 'JetBrains Mono',monospace`;
+    ctx.fillStyle=isHL?'#b5860a':'#a0900a';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(e.label, mx+px*labelOff, my+py*labelOff);
+    if(showDelta&&DELTA[i]!==0){
+      const sign=DELTA[i]>0?'+':'';
+      ctx.font=`700 11px 'JetBrains Mono',monospace`;
+      // white knockout behind delta text for readability
+      ctx.save();ctx.globalAlpha=0.75;ctx.fillStyle='#fffff5';
+      ctx.fillRect(mx+px*deltaOff-18, my+py*deltaOff-8, 36, 16);
+      ctx.restore();
+      ctx.fillStyle='#5c3ab0';
+      ctx.fillText(`δ=${sign}${DELTA[i]}`, mx+px*deltaOff, my+py*deltaOff);
+    }
+  });
+
+  // nodes
+  Object.entries(nodePos).forEach(([id,p])=>{
+    const n=parseInt(id),inSub=activeSubtree.includes(n),hlc=highlightNodes[n];
+    ctx.beginPath();ctx.arc(p.x,p.y,22,0,Math.PI*2);
+    ctx.fillStyle=hlc||(inSub?'#f5e080':'#d4c87a');ctx.fill();
+    ctx.strokeStyle=n===1?'#8a3000':'#8a6e00';
+    ctx.lineWidth=n===1?2.5:1.5;ctx.stroke();
+    ctx.font=`700 13px 'JetBrains Mono',monospace`;
+    ctx.fillStyle='#2c2010';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(String(n),p.x,p.y);
+  });
+  {const p=nodePos[1];ctx.font=`400 11px 'JetBrains Mono',monospace`;
+   ctx.fillStyle='#8a6e00';ctx.textAlign='center';ctx.textBaseline='top';
+   ctx.fillText('root',p.x,p.y+26);}
+
+  // x tokens — drawn as a ring so the node number stays visible
+  tokenCfg.forEach((v,i)=>{
+    if(!v)return;const p=nodePos[i+1];if(!p)return;
+    ctx.beginPath();ctx.arc(p.x,p.y,18,0,Math.PI*2);
+    ctx.strokeStyle='#1a7a6e';ctx.lineWidth=4;ctx.stroke();
+  });
+
+  // y ghost tokens — small ring offset
+  if(step>=2){
+    EX.Y.forEach((v,i)=>{
+      if(!v)return;const p=nodePos[i+1];
+      ctx.beginPath();ctx.arc(p.x+13,p.y-13,7,0,Math.PI*2);
+      ctx.strokeStyle='rgba(192,48,48,0.75)';ctx.lineWidth=2.5;ctx.stroke();
+    });
+  }
+
+  // redraw node numbers on top of everything
+  Object.entries(nodePos).forEach(([id,p])=>{
+    const n=parseInt(id);
+    ctx.font=`700 13px 'JetBrains Mono',monospace`;
+    ctx.fillStyle='#2c2010';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(String(n),p.x,p.y);
+  });
+
+  // animated token
+  if(arrowMove&&animating){
+    const p1=nodePos[arrowMove.from],p2=nodePos[arrowMove.to];
+    const t=Math.min(animT,1);
+    const ax=p1.x+(p2.x-p1.x)*t, ay=p1.y+(p2.y-p1.y)*t;
+    ctx.beginPath();ctx.arc(ax,ay,18,0,Math.PI*2);
+    ctx.strokeStyle='#1a7a6e';ctx.lineWidth=4;ctx.stroke();
+  }
+
+  // legend
+  const ly=H-20;
+  ctx.font=`400 11px 'JetBrains Mono',monospace`;
+  ctx.fillStyle='#1a7a6e';ctx.beginPath();ctx.arc(18,ly,5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#2c2010';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText('x tokens',27,ly);
+  ctx.fillStyle='rgba(192,48,48,0.65)';ctx.beginPath();ctx.arc(108,ly,5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#2c2010';ctx.fillText('y tokens',117,ly);
+
+  // example label top-right
+  ctx.font=`600 12px 'JetBrains Mono',monospace`;
+  ctx.fillStyle='#b5860a';ctx.textAlign='right';ctx.textBaseline='top';
+  ctx.fillText(EX.label,W-14,14);
+
+  // ── mini config diagrams: two small trees top-left ──
+  (function drawConfigBox(){
+    // Ex1 & Ex3: D6 trunk 1-2-3-4, branches 4→5 up-right, 4→6 down-right
+    // Ex2: star with center 1
+    const S=(exId===2)?28:30; // grid unit
+    const miniNodes1={
+      1:{x:0,y:1},2:{x:1,y:1},3:{x:2,y:1},4:{x:3,y:1},5:{x:4,y:0},6:{x:4,y:2}
+    };
+    const miniEdges1=[[1,2],[2,3],[3,4],[4,5],[4,6]];
+    const miniNodes2={
+      1:{x:1,y:1},2:{x:0,y:0},3:{x:2,y:0},4:{x:0,y:2},5:{x:2,y:2}
+    };
+    const miniEdges2=[[1,2],[1,3],[1,4],[1,5]];
+
+    const mNodes=exId===2?miniNodes2:miniNodes1;
+    const mEdges=exId===2?miniEdges2:miniEdges1;
+
+    // bounding box of mini layout
+    const xs=Object.values(mNodes).map(p=>p.x);
+    const ys=Object.values(mNodes).map(p=>p.y);
+    const mnX=Math.min(...xs),mxX=Math.max(...xs);
+    const mnY=Math.min(...ys),mxY=Math.max(...ys);
+    const tW=(mxX-mnX)*S, tH=(mxY-mnY)*S;
+
+    const NR=8;      // node circle radius in mini diagram
+    const pad=14;    // padding inside panel
+    const gap=18;    // gap between x and y panels
+    const lblH=16;   // label row height
+    const panelW=tW+pad*2+NR*2;
+    const panelH=tH+pad*2+NR*2+lblH;
+    const totalW=panelW*2+gap+6;
+    const ox=10, oy=6; // panel top-left on canvas
+
+    // semi-transparent background
+    ctx.save();ctx.globalAlpha=0.82;ctx.fillStyle='#fffff5';
+    ctx.beginPath();ctx.roundRect(ox,oy,totalW,panelH+2,7);ctx.fill();
+    ctx.restore();
+
+    function toMini(nodeId,offsetX){
+      const p=mNodes[nodeId];
+      return{
+        x: ox+offsetX+pad+NR+(p.x-mnX)*S,
+        y: oy+lblH+pad+NR+(p.y-mnY)*S
+      };
+    }
+
+    function drawMiniTree(cfg,color,offsetX,label){
+      // label
+      ctx.font=`700 11px 'JetBrains Mono',monospace`;
+      ctx.fillStyle=color;ctx.textAlign='left';ctx.textBaseline='top';
+      ctx.fillText(label,ox+offsetX+pad,oy+3);
+
+      // edges
+      ctx.strokeStyle='#c4b04a';ctx.lineWidth=1.5;
+      mEdges.forEach(([u,v])=>{
+        const p1=toMini(u,offsetX),p2=toMini(v,offsetX);
+        ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();
+      });
+
+      // nodes
+      Object.keys(mNodes).forEach(idStr=>{
+        const id=parseInt(idStr);
+        const p=toMini(id,offsetX);
+        const hasToken=cfg[id-1]===1;
+        ctx.beginPath();ctx.arc(p.x,p.y,NR,0,Math.PI*2);
+        ctx.fillStyle=hasToken?color:'#e8e0b0';
+        ctx.fill();
+        ctx.strokeStyle=hasToken?color:'#b0a060';
+        ctx.lineWidth=1.5;ctx.stroke();
+        // node number
+        ctx.font=`700 10px 'JetBrains Mono',monospace`;
+        ctx.fillStyle=hasToken?'#fff':'#5a4a10';
+        ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillText(String(id),p.x,p.y);
+      });
+    }
+
+    drawMiniTree(EX.X,'#1a7a6e',0,'x:');
+    drawMiniTree(EX.Y,'#c03030',panelW+gap,'y:');
+  })();
+}
+
+/* ═══════════════════ QUIZ ENGINE ═══════════════════ */
+let scoreCorrect=0,scoreTotal=0;
+
+// per step: two quizzes, each with own state
+let qState=[
+  {answered:false,correct:false,hintLevel:0},
+  {answered:false,correct:false,hintLevel:0},
+];
+
+function updateScore(){document.getElementById('scoreBadge').textContent=`score: ${scoreCorrect} / ${scoreTotal}`;}
+
+function renderQuizCard(cardId,numLabel,q,stateIdx){
+  const card=document.getElementById(cardId);
+  if(!q){card.style.display='none';return;}
+  // Q2 locked until Q1 answered
+  if(stateIdx===1&&!qState[0].answered){card.style.display='none';return;}
+  card.style.display='block';
+
+  const s=qState[stateIdx];
+  let html=`<div class="quiz-num">${numLabel}</div><div class="quiz-q">${q.q}</div>`;
+
+  if(q.type==='mc'){
+    html+=`<div class="quiz-options">`;
+    q.opts.forEach((o,i)=>{
+      let cls='quiz-opt';
+      if(s.answered){
+        if(i===q.ans) cls+=' correct';
+        else if(!q.type||true) cls+='';
+      }
+      html+=`<label class="${cls}" id="${cardId}opt${i}">
+        <input type="radio" name="${cardId}radio" value="${i}" ${s.answered?'disabled':''}>
+        ${o}
+      </label>`;
+    });
+    html+=`</div>`;
+  } else if(q.type==='numeric'){
+    html+=`<div class="quiz-input-row">
+      <span>${q.prefix||'Answer:'}</span>
+      <input class="quiz-input${s.answered?(s.correct?' correct':' wrong'):''}" type="number"
+        id="${cardId}numinput" placeholder="?" ${s.answered?'disabled':''} value="${s.answered&&!s.correct?'':s.userVal||''}"/>
+    </div>`;
+  } else if(q.type==='truefalse'){
+    html+=`<div class="quiz-options">`;
+    ['True','False'].forEach((o,i)=>{
+      let cls='quiz-opt';
+      if(s.answered){
+        if(i===q.ans) cls+=' correct';
+      }
+      html+=`<label class="${cls}" id="${cardId}opt${i}">
+        <input type="radio" name="${cardId}radio" value="${i}" ${s.answered?'disabled':''}>
+        ${o}
+      </label>`;
+    });
+    html+=`</div>`;
+  }
+
+  html+=`<div class="quiz-btns">
+    <button class="btn-check" id="${cardId}check" onclick="checkQ('${cardId}',${stateIdx})" ${s.answered?'disabled':''}>Check</button>
+    <button class="btn-hint" id="${cardId}hint" onclick="showHintQ('${cardId}',${stateIdx})"
+      style="${(!s.answered||s.correct)?'display:none':''}"
+      ${s.hintLevel>=q.hints.length?'disabled':''}>
+      ${s.hintLevel>=q.hints.length?'No more hints':'Show hint'}
+    </button>
+  </div>`;
+
+  if(s.answered){
+    html+=`<div class="quiz-feedback show ${s.correct?'ok':'bad'}">${s.correct?q.ok:q.bad}</div>`;
+  } else {
+    html+=`<div class="quiz-feedback" id="${cardId}fb"></div>`;
+  }
+
+  if(s.hintLevel>0){
+    html+=`<div class="hint-box show"><div class="hint-label">Hint ${s.hintLevel}</div><span>${q.hints[s.hintLevel-1]}</span></div>`;
+  } else {
+    html+=`<div class="hint-box" id="${cardId}hb"><div class="hint-label">Hint</div><span id="${cardId}ht"></span></div>`;
+  }
+
+  card.innerHTML=html;
+
+  // radio highlight
+  if(!s.answered&&(q.type==='mc'||q.type==='truefalse')){
+    const count=q.type==='truefalse'?2:q.opts.length;
+    for(let i=0;i<count;i++){
+      const el=document.getElementById(`${cardId}opt${i}`);
+      if(el){
+        const inp=el.querySelector('input');
+        inp.addEventListener('change',()=>{
+          for(let j=0;j<count;j++) document.getElementById(`${cardId}opt${j}`)?.classList.remove('selected');
+          el.classList.add('selected');
+        });
+      }
+    }
+  }
+}
+
+window.checkQ=function(cardId,stateIdx){
+  const stepIdx=step;
+  const qs=QUIZZES[stepIdx];
+  if(!qs)return;
+  const q=stateIdx===0?qs[0]:qs[1];
+  if(!q)return;
+  const s=qState[stateIdx];
+  if(s.answered)return;
+
+  let userAns;
+  if(q.type==='mc'||q.type==='truefalse'){
+    const sel=document.querySelector(`input[name="${cardId}radio"]:checked`);
+    if(!sel)return;
+    userAns=parseInt(sel.value);
+  } else {
+    const inp=document.getElementById(`${cardId}numinput`);
+    userAns=parseFloat(inp.value);
+    if(isNaN(userAns))return;
+    s.userVal=inp.value;
+  }
+
+  s.answered=true;
+  s.correct=(userAns===q.ans);
+  scoreTotal++;
+  if(s.correct)scoreCorrect++;
+  updateScore();
+
+  // Re-render both quiz cards
+  renderQuizCard('quiz1Card','Question 1',qs[0],0);
+  renderQuizCard('quiz2Card','Question 2',qs[1],1);
+};
+
+window.showHintQ=function(cardId,stateIdx){
+  const qs=QUIZZES[step];if(!qs)return;
+  const q=stateIdx===0?qs[0]:qs[1];if(!q)return;
+  const s=qState[stateIdx];
+  if(s.hintLevel>=q.hints.length)return;
+  s.hintLevel++;
+  renderQuizCard('quiz1Card','Question 1',qs[0],0);
+  renderQuizCard('quiz2Card','Question 2',qs[1],1);
+};
+
+function renderAllQuizzes(){
+  const qs=QUIZZES[step];
+  if(!qs){
+    document.getElementById('quiz1Card').style.display='none';
+    document.getElementById('quiz2Card').style.display='none';
+    return;
+  }
+  renderQuizCard('quiz1Card','Question 1',qs[0],0);
+  renderQuizCard('quiz2Card','Question 2',qs[1],1);
+}
+
+/* ═══════════════════ QUIZZES ═══════════════════ */
+// Each step has [q1, q2]. Questions reference EX dynamically via functions.
+// We define them as functions so they pick up current EX.
+
+function makeQuizzes(){
+  const HX=getHVec(EX.edges,EX.X);
+  const HY=getHVec(EX.edges,EX.Y);
+  const DELTA=HX.map((v,i)=>v-HY[i]);
+  const SUM=DELTA.reduce((s,d)=>s+Math.abs(d),0);
+  const nEdges=EX.edges.length;
+  const e1=EX.edges[0];
+
+  return [
+  null, // step 0
+  // step 1: setup
+  [
+    {type:'mc',
+     q:`x = <code>${EX.xLabel}</code> has tokens at which nodes?`,
+     opts: exId===1
+       ? ['Nodes 1 and 2','Nodes 2 and 5','Nodes 3 and 6','Nodes 1 and 6']
+       : exId===2
+       ? ['Nodes 1 and 3','Nodes 2 and 4','Nodes 1 and 5','Nodes 3 and 5']
+       : ['Nodes 1, 2 and 3','Nodes 1, 2 and 4','Nodes 2, 3 and 4','Nodes 1, 3 and 5'],
+     ans:1,
+     hints:[
+       'Read left to right: position i has a token when bit i = 1.',
+       `In "${EX.xLabel}", find all positions where the digit is 1.`,
+       `Answer: ${EX.xDesc}.`,
+     ],
+     ok:`Correct! ${EX.xDesc}.`,
+     bad:`Count the 1-bits in "${EX.xLabel}" from left to right, starting at position 1.`,
+    },
+    {type:'mc',
+     q:`y = <code>${EX.yLabel}</code> has tokens at which nodes?`,
+     opts: exId===1
+       ? ['Nodes 2 and 6','Nodes 1 and 4','Nodes 1 and 6','Nodes 3 and 5']
+       : exId===2
+       ? ['Nodes 2 and 4','Nodes 3 and 5','Nodes 1 and 5','Nodes 2 and 3']
+       : ['Nodes 3, 4 and 6','Nodes 2, 4 and 5','Nodes 1, 3 and 6','Nodes 3, 5 and 6'],
+     ans: exId===2?1:0,
+     hints:[
+       `Same rule: position i has a token when bit i = 1.`,
+       `In "${EX.yLabel}", find the positions with digit 1.`,
+       `Answer: ${EX.yDesc}.`,
+     ],
+     ok:`Correct! ${EX.yDesc}.`,
+     bad:`Count the 1-bits in "${EX.yLabel}" from left to right.`,
+    },
+  ],
+  // step 2: heights
+  [
+    {type:'numeric',
+     prefix:'h_{e₁}(x) =',
+     q:`What is h_{e₁}(x)? (T_{e₁} = {${e1.subtree.join(',')}})`,
+     ans:HX[0],
+     hints:[
+       `h_e(x) = number of tokens from x inside the subtree T_e.`,
+       `x has tokens at: ${EX.xDesc}. Which of those nodes are in {${e1.subtree.join(',')}}?`,
+       `Answer: ${HX[0]}.`,
+     ],
+     ok:`Correct! h_{e₁}(x) = ${HX[0]}.`,
+     bad:`Count how many of x's token positions lie inside {${e1.subtree.join(',')}}.`,
+    },
+    {type:'numeric',
+     prefix:'∑_e h_e(x) =',
+     q:`What is the sum of all heights: h_{e₁}(x)+…+h_{e${nEdges}}(x)?`,
+     ans:HX.reduce((s,v)=>s+v,0),
+     hints:[
+       `Add up h_e(x) for all ${nEdges} edges.`,
+       `The values are: ${HX.join(', ')}.`,
+       `Sum = ${HX.reduce((s,v)=>s+v,0)}.`,
+     ],
+     ok:`Correct! ∑h_e(x) = ${HX.reduce((s,v)=>s+v,0)}.`,
+     bad:`Compute h_e(x) for each edge and add them up.`,
+    },
+  ],
+  // step 3: lemma
+  [
+    {type:'mc',
+     q:`A token moves along edge ${EX.edges[EX.lemmaMove.edgeIdx].label}. How many h_e values change?`,
+     opts:['None — h is unchanged','Exactly one (only h_{'+EX.edges[EX.lemmaMove.edgeIdx].label+'})','All '+nEdges+' heights change','Exactly two heights change'],
+     ans:1,
+     hints:[
+       'Think about what happens to each subtree T_e when the token crosses one edge.',
+       'For any edge e ≠ the moved edge, the token stays on the same side of T_e — so h_e is unchanged.',
+       `Only h_{${EX.edges[EX.lemmaMove.edgeIdx].label}} changes, by exactly 1.`,
+     ],
+     ok:`Exactly! Only h_{${EX.edges[EX.lemmaMove.edgeIdx].label}} changes — it increases or decreases by 1.`,
+     bad:'Tree subtrees are nested or disjoint, so crossing one edge only affects one subtree cut.',
+    },
+    {type:'truefalse',
+     q:`True or false: this "one move = one unit" property would still hold if the graph had a cycle.`,
+     ans:1,
+     hints:[
+       'In a graph with a cycle, a single edge can be part of more than one "cut".',
+       'Moving a token along an edge in a cycle graph can simultaneously change multiple subtree counts.',
+       'False: cycles break the nested/disjoint property, so one move can change multiple h_e values.',
+     ],
+     ok:'Correct — false! Cycles allow one move to cross multiple cuts at once. The lemma requires a tree.',
+     bad:'Think about what happens if the graph has a loop: can one token hop affect multiple "sides"?',
+    },
+  ],
+  // step 4: lower bound
+  [
+    {type:'mc',
+     q:`The lower bound says ∑|δ_e| ≤ d(x,y). In our example, ∑|δ_e| = ${SUM}. What does this tell us?`,
+     opts:[
+       `d(x,y) could be any value`,
+       `d(x,y) ≥ ${SUM} — we need at least ${SUM} moves`,
+       `d(x,y) = ${SUM} — we need exactly ${SUM} moves`,
+       `d(x,y) ≤ ${SUM}`,
+     ],
+     ans:1,
+     hints:[
+       '∑|δ_e| ≤ d means the sum is a lower bound — a floor on the distance.',
+       `If ∑|δ_e| = ${SUM} and ∑|δ_e| ≤ d(x,y), then d(x,y) must be at least ${SUM}.`,
+       `Answer: d(x,y) ≥ ${SUM}. We need at least ${SUM} moves.`,
+     ],
+     ok:`Correct! The lower bound guarantees d(x,y) ≥ ${SUM}.`,
+     bad:'A lower bound sets a minimum. If ∑|δ_e| ≤ d, then d cannot be smaller than ∑|δ_e|.',
+    },
+    {type:'mc',
+     q:`Why can't any walk of length ℓ change ∑|h_e| by more than ℓ?`,
+     opts:[
+       'Because the tree has no cycles',
+       'By the triangle inequality: each step changes the sum by at most 1 (the lemma), so ℓ steps change it by at most ℓ',
+       'Because ∑|h_e| is always 0',
+       'Because token moves are reversible',
+     ],
+     ans:1,
+     hints:[
+       'The lemma tells you the change per step. What does summing over all steps give?',
+       '|∑a_i| ≤ ∑|a_i| — the triangle inequality. Here each |a_i| = 1 from the lemma.',
+       'So ∑|h_e(x)−h_e(y)| ≤ ∑_{steps} 1 = ℓ.',
+     ],
+     ok:'Correct! The triangle inequality chains the per-step bound across all ℓ steps.',
+     bad:'Use the lemma (each step = 1 unit of change) and the triangle inequality.',
+    },
+  ],
+  // step 5: upper bound
+  [
+    {type:'numeric',
+     prefix:'∑|δ_e| =',
+     q:`Compute ∑|δ_e| = ∑_e |h_e(x)−h_e(y)| for this example.`,
+     ans:SUM,
+     hints:[
+       `h(x) = [${HX.join(', ')}], h(y) = [${HY.join(', ')}].`,
+       `δ values: ${DELTA.map((d,i)=>EX.edges[i].label+'='+(d>0?'+':'')+d).join(', ')}.`,
+       `|δ| values: ${DELTA.map(d=>Math.abs(d)).join('+')} = ${SUM}.`,
+     ],
+     ok:`Correct! ∑|δ_e| = ${SUM}. The algorithm constructs a walk of exactly ${SUM} steps.`,
+     bad:`Compute |h_e(x)−h_e(y)| for each of the ${nEdges} edges and sum.`,
+    },
+    {type:'mc',
+     q: exId===3
+       ? `Watch the geodesic animation: which tree edge is crossed in the 4th move (step 3→4)?`
+       : `In the post-order algorithm, why do we process leaves before parents?`,
+     opts: exId===3
+       ? ['e₁ (edge 1–2)','e₂ (edge 2–3)','e₃ (edge 3–4)','e₅ (edge 4–6)']
+       : [
+           'To make the algorithm faster',
+           'So that when we move tokens across edge e, all deeper subtrees are already correct — no token is blocked',
+           'Because leaf edges always have δ = 0',
+           'To minimize the number of steps',
+         ],
+     ans: exId===3 ? 3 : 1,
+     hints: exId===3
+       ? [
+           'The 4th move goes from config 011100 to 011001. Which nodes change?',
+           'Node 4 loses a token, node 6 gains one. Which edge connects 4 and 6?',
+           'e₅ = {4,6} is the branch edge from node 4 to leaf 6.',
+         ]
+       : [
+           'Think about what "processed" means: h_e(current) = h_e(y) for that edge.',
+           'If a deeper subtree is not yet corrected, tokens there might block the move we need at edge e.',
+           'Processing leaves first ensures the tokens we need to move are free to move.',
+         ],
+     ok: exId===3
+       ? 'Correct! Move 4 crosses e₅ = {4,6}: a token hops from node 4 to branch leaf 6.'
+       : 'Exactly! Post-order processing ensures no deadlock — deeper edges are fixed before we touch their ancestors.',
+     bad: exId===3
+       ? 'Track which node loses a token and which gains one between steps 3 and 4 of the geodesic.'
+       : 'Think about what happens if you try to move a token across edge e while a descendant edge still has surplus tokens blocking the way.',
+    },
+  ],
+  // step 6: QED
+  [
+    {type:'numeric',
+     prefix:'d(x,y) =',
+     q:`Using the formula d(x,y) = ∑|δ_e|, what is d(x,y) for this example?`,
+     ans:SUM,
+     hints:[
+       'Both bounds give the same value.',
+       `∑|δ_e| = ${SUM} from both the lower and upper bound.`,
+       `Answer: ${SUM}.`,
+     ],
+     ok:`Correct! d(x,y) = ${SUM}.`,
+     bad:`You computed ∑|δ_e| = ${SUM} in step 5. What does the sandwich argument force d to be?`,
+    },
+    {type:'mc',
+     q:`The proof used "h-injectivity": h(x) uniquely determines x. Why is this needed?`,
+     opts:[
+       'To compute the height vector faster',
+       'To guarantee the upper-bound algorithm terminates at y and not some other configuration',
+       'To prove the lower bound',
+       'It is not needed — the proof works without it',
+     ],
+     ans:1,
+     hints:[
+       'The algorithm makes h_e(current) = h_e(y) for all e. What if two different configurations shared the same h-vector?',
+       'If h were not injective, the algorithm could terminate at a wrong configuration that happens to have h = h(y).',
+       'h-injectivity (provable by leaf-induction on the tree) guarantees current configuration = y.',
+     ],
+     ok:'Correct! Without h-injectivity, the algorithm might stop at some x′ ≠ y with h(x′) = h(y).',
+     bad:'The algorithm fixes h_e(current) = h_e(y) for all e. Think about what you need to conclude current = y.',
+    },
+  ],
+  ];
+}
+
+let QUIZZES=makeQuizzes();
+
+/* ═══════════════════ H-VEC TABLE ═══════════════════ */
+function updateHvecTable(show){
+  const card=document.getElementById('hvecCard');
+  if(!show){card.style.display='none';return;}
+  card.style.display='block';
+  const HX=getHVec(EX.edges,EX.X);
+  const HY=getHVec(EX.edges,EX.Y);
+  const DELTA=HX.map((v,i)=>v-HY[i]);
+  let html='<tr><th>edge</th><th>T_e</th><th>h(x)</th><th>h(y)</th><th>|δ|</th></tr>';
+  EX.edges.forEach((e,i)=>{
+    const d=Math.abs(DELTA[i]);
+    html+=`<tr>
+      <td style="cursor:pointer;color:#8a6e00;text-decoration:underline dotted" onclick="hlEdge(${i})">${e.label}</td>
+      <td style="font-size:11px">{${e.subtree.join(',')}}</td>
+      <td class="${HX[i]>0?'nonzero':''}">${HX[i]}</td>
+      <td class="${HY[i]>0?'nonzero':''}">${HY[i]}</td>
+      <td class="${d>0?'changed':''}">${d}</td>
+    </tr>`;
+  });
+  document.getElementById('hvecTable').innerHTML=html;
+}
+window.hlEdge=function(i){activeEdge=i;activeSubtree=EX.edges[i].subtree;draw();};
+window.replayLemma=function(){
+  tokenCfg=[...EX.X];
+  const mv=EX.lemmaMove;
+  activeEdge=mv.edgeIdx;activeSubtree=EX.edges[mv.edgeIdx].subtree;
+  startLemmaAnim();
+};
+
+/* ═══════════════════ ANIMATIONS ═══════════════════ */
+let lemmaTimer=null,upperTimer=null;
+
+function startLemmaAnim(){
+  tokenCfg=[...EX.X];
+  if(lemmaTimer)clearTimeout(lemmaTimer);
+  lemmaTimer=setTimeout(()=>{
+    const mv=EX.lemmaMove;
+    arrowMove={from:mv.from,to:mv.to};animT=0;animating=true;
+    activeEdge=mv.edgeIdx;activeSubtree=EX.edges[mv.edgeIdx].subtree;
+    (function anim(){
+      if(!animating)return;
+      animT+=0.028;
+      if(animT>=1){
+        animT=1;animating=false;
+        tokenCfg=[...EX.X];
+        tokenCfg[mv.from-1]=0;tokenCfg[mv.to-1]=1;
+        setTimeout(()=>{arrowMove=null;draw();},400);
+        return;
+      }
+      draw();requestAnimationFrame(anim);
+    })();
+  },700);
+}
+
+function startUpperAnim(){
+  if(upperTimer)clearTimeout(upperTimer);
+  walkHL=[];activeEdge=-1;activeSubtree=[];
+
+  // If example has a geodesic, animate actual token moves step by step
+  if(EX.geodesic){
+    const geo=EX.geodesic;
+    tokenCfg=[...geo[0]];
+    let gi=0;
+    function nextGeoStep(){
+      if(gi>=geo.length-1){draw();return;}
+      const from_cfg=geo[gi], to_cfg=geo[gi+1];
+      // find which node loses a token (from) and which gains (to)
+      let fromNode=-1,toNode=-1;
+      for(let i=0;i<from_cfg.length;i++){
+        if(from_cfg[i]===1&&to_cfg[i]===0) fromNode=i+1;
+        if(from_cfg[i]===0&&to_cfg[i]===1) toNode=i+1;
+      }
+      gi++;
+      // find which edge is crossed
+      const crossedEdge=EX.edges.findIndex(e=>{
+        const a=e.u,b=e.v;
+        return (a===fromNode&&b===toNode)||(b===fromNode&&a===toNode)||
+               (e.subtree.includes(fromNode)!==e.subtree.includes(toNode));
+      });
+      // pick the unique edge separating fromNode and toNode
+      const edgeIdx=EX.edges.findIndex(e=>
+        (e.subtree.includes(fromNode) && !e.subtree.includes(toNode)) ||
+        (!e.subtree.includes(fromNode) && e.subtree.includes(toNode))
+      );
+      walkHL=[...walkHL, edgeIdx>=0?edgeIdx:crossedEdge];
+      activeEdge=edgeIdx>=0?edgeIdx:crossedEdge;
+      if(activeEdge>=0) activeSubtree=EX.edges[activeEdge].subtree;
+
+      // animate the token move
+      tokenCfg=[...from_cfg];
+      arrowMove={from:fromNode,to:toNode};animT=0;animating=true;
+      (function anim(){
+        if(!animating)return;
+        animT+=0.04;
+        if(animT>=1){
+          animT=1;animating=false;
+          tokenCfg=[...to_cfg];
+          arrowMove=null;draw();
+          upperTimer=setTimeout(nextGeoStep,600);
+          return;
+        }
+        draw();requestAnimationFrame(anim);
+      })();
+    }
+    upperTimer=setTimeout(nextGeoStep,400);
+
+  } else {
+    // fallback: just highlight edges in post-order (no geodesic defined)
+    const order=EX.upperOrder;
+    let k=0;tokenCfg=[...EX.X];highlightNodes={};
+    function next(){
+      if(k>=order.length)return;
+      const i=order[k++];
+      activeEdge=i;activeSubtree=EX.edges[i].subtree;
+      walkHL=[...walkHL,i];draw();
+      upperTimer=setTimeout(next,850);
+    }
+    upperTimer=setTimeout(next,350);
+  }
+}
+
+/* ═══════════════════ STEP DEFINITIONS ═══════════════════ */
+let step=0;
+const TOTAL_STEPS=6;
+
+function makeSteps(){
+  const HX=getHVec(EX.edges,EX.X);
+  const HY=getHVec(EX.edges,EX.Y);
+  const DELTA=HX.map((v,i)=>v-HY[i]);
+  const SUM=DELTA.reduce((s,d)=>s+Math.abs(d),0);
+  const mv=EX.lemmaMove;
+
+  return [
+  {badge:'badge-theorem',badgeText:'Theorem',hint:'→ setup',
+   title:'The holographic distance formula',
+   body:`<p>For any two k-token configurations x, y on a tree T:</p>
+     <span class="math">d(x, y) = Σ_e |h_e(x) − h_e(y)|</span>
+     <p>where <code>h_e(x)</code> = tokens inside the subtree T_e beyond edge e.</p>
+     <p>Select an example above, then press <strong>FWD</strong>.</p>`,
+   init:()=>{tokenCfg=[...EX.X];activeEdge=-1;activeSubtree=[];highlightNodes={};showDelta=false;walkHL=[];}
+  },
+  {badge:'badge-theorem',badgeText:'Setup',hint:'→ heights',
+   title:'Two configurations: x and y',
+   body:`<p>${exId===1?'Tree: 1–2–3–4, branch at 4→5 and 4→6. Rooted at 1.':'Tree: star with center 1, leaves 2,3,4,5. Rooted at 1.'}</p>
+     <p><code>x = ${EX.xLabel}</code> — ${EX.xDesc} (teal).</p>
+     <p><code>y = ${EX.yLabel}</code> — ${EX.yDesc} (red ghost).</p>
+     <p>Goal: find d(x, y) = minimum single-edge token moves.</p>`,
+   init:()=>{tokenCfg=[...EX.X];activeEdge=-1;activeSubtree=[];highlightNodes={};showDelta=false;walkHL=[];}
+  },
+  {badge:'badge-theorem',badgeText:'Heights',hint:'→ lemma',
+   title:'Compute the height vectors',
+   body:`<p>For each edge e, T_e = subtree on the far side from root 1.</p>
+     <p><code>h_e(x)</code> = tokens in T_e. Click an edge label below to highlight its subtree.</p>
+     <p>h(x) = [${HX.join(', ')}] &nbsp; h(y) = [${HY.join(', ')}]</p>`,
+   init:()=>{tokenCfg=[...EX.X];activeEdge=-1;activeSubtree=[];showDelta=false;walkHL=[];updateHvecTable(true);}
+  },
+  {badge:'badge-lemma',badgeText:'Lemma',hint:'→ lower bound',
+   title:'One move changes exactly one h_e',
+   body:`<p><strong>Lemma:</strong> moving one token along edge f changes Σ|h_e| by exactly 1.</p>
+     <p><strong>Why:</strong> tree subtrees are nested or disjoint — no cycles. So only T_f is crossed.</p>
+     <p>Watching: token moves ${mv.from} → ${mv.to} (crossing ${EX.edges[mv.edgeIdx].label}). Only h_{${EX.edges[mv.edgeIdx].label}} changes.</p>
+     <button class="btn-ex" style="margin-top:6px" onclick="replayLemma()">↺ Replay animation</button>`,
+   init:()=>{tokenCfg=[...EX.X];activeEdge=mv.edgeIdx;activeSubtree=EX.edges[mv.edgeIdx].subtree;
+     showDelta=false;walkHL=[];updateHvecTable(true);startLemmaAnim();}
+  },
+  {badge:'badge-lower',badgeText:'Lower Bound',hint:'→ upper bound',
+   title:'∑|δ_e| ≤ d(x, y)',
+   body:`<p>Lemma + triangle inequality: any walk of length ℓ changes Σ|h_e| by at most ℓ.</p>
+     <span class="math">∑|h_e(x)−h_e(y)| ≤ ℓ &nbsp; → &nbsp; ∑|δ_e| ≤ d(x,y)</span>
+     <p>Purple edges: non-zero δ — these are the <em>forced</em> crossings. ∑|δ_e| = <span class="hl">${SUM}</span>.</p>`,
+   init:()=>{tokenCfg=[...EX.X];showDelta=true;activeEdge=-1;activeSubtree=[];
+     walkHL=DELTA.map((d,i)=>Math.abs(d)>0?i:-1).filter(i=>i>=0);updateHvecTable(true);}
+  },
+  {badge:'badge-upper',badgeText:'Upper Bound',hint:'→ conclusion',
+   title:'d(x, y) ≤ ∑|δ_e|',
+   body:`<p><strong>Post-order algorithm:</strong> process edges leaves→root. At each edge e, move |δ_e| tokens in the forced direction.</p>
+     <table class="htable" style="margin-top:4px">
+       <tr><th>edge</th><th>δ_e</th><th>direction</th></tr>
+       ${EX.edges.map((e,i)=>`<tr><td>${e.label}</td>
+         <td class="${DELTA[i]!==0?'changed':''}">${DELTA[i]>0?'+':''}${DELTA[i]}</td>
+         <td style="font-size:11px">${DELTA[i]>0?'→ root':DELTA[i]<0?'→ subtree':'—'}</td></tr>`).join('')}
+     </table>
+     <p style="margin-top:6px">Total: <span class="hl">∑|δ_e| = ${SUM}</span> steps.${EX.geodesic?` Watch the <strong>${EX.geodesic.length-1}-move geodesic</strong> play out on the canvas.`:''}</p>
+     <p style="margin-top:5px"><strong>Key:</strong> the algorithm terminates at y because <em>h-injectivity</em> holds: if h(z) = h(y) for all edges then z = y (proved by leaf-induction). So the scheduled moves land exactly at y.</p>`,
+   init:()=>{tokenCfg=[...EX.X];showDelta=true;activeEdge=-1;activeSubtree=[];walkHL=[];startUpperAnim();}
+  },
+  {badge:'badge-done',badgeText:'QED',hint:'done',
+   title:'d(x, y) = ∑|h_e(x) − h_e(y)|',
+   body:`<p>Sandwich:</p>
+     <span class="math">∑|δ_e| ≤ d(x,y) ≤ ∑|δ_e|</span>
+     <p>Equality forced:</p>
+     <span class="math">d(x, y) = ∑|h_e(x) − h_e(y)| = <span class="hl">${SUM}</span></span>
+     <p>The height vector is the hologram — encodes all distances without graph search.</p>`,
+   init:()=>{tokenCfg=[...EX.Y];showDelta=true;activeEdge=-1;activeSubtree=[];
+     walkHL=EX.edges.map((_,i)=>i);highlightNodes=EX.yHighlight;updateHvecTable(true);}
+  },
+  ];
+}
+
+let STEPS=makeSteps();
+
+/* ═══════════════════ STEP CONTROLLER ═══════════════════ */
+function applyStep(s){
+  step=s;
+  // Rebuild steps and quizzes for current example
+  STEPS=makeSteps();QUIZZES=makeQuizzes();
+  setPos();
+
+  const info=STEPS[s];
+  document.getElementById('stepBadge').className='step-badge '+info.badge;
+  document.getElementById('stepBadge').textContent=info.badgeText;
+  document.getElementById('stepTitle').textContent=info.title;
+  document.getElementById('stepBody').innerHTML=info.body;
+  document.getElementById('stepCounter').textContent=`Step ${s} / ${TOTAL_STEPS}`;
+  document.getElementById('stepHint').textContent=info.hint||'';
+  document.getElementById('progressFill').style.width=(s/TOTAL_STEPS*100)+'%';
+  document.getElementById('backBtn').disabled=(s<=0);
+  document.getElementById('fwdBtn').disabled=(s>=TOTAL_STEPS);
+
+  animating=false;arrowMove=null;animT=0;highlightNodes={};
+  if(lemmaTimer){clearTimeout(lemmaTimer);lemmaTimer=null;}
+  if(upperTimer){clearTimeout(upperTimer);upperTimer=null;}
+
+  // Reset quiz state for this step
+  qState=[
+    {answered:false,correct:false,hintLevel:0,userVal:''},
+    {answered:false,correct:false,hintLevel:0,userVal:''},
+  ];
+
+  if(s<2)updateHvecTable(false);
+  info.init();
+  renderAllQuizzes();
+  draw();
+}
+
+let started=false;
+
+document.getElementById('startBtn').addEventListener('click',()=>{
+  started=true;document.getElementById('fwdBtn').disabled=false;applyStep(1);});
+document.getElementById('fwdBtn').addEventListener('click',()=>{
+  if(!started){started=true;applyStep(1);return;}if(step<TOTAL_STEPS)applyStep(step+1);});
+document.getElementById('backBtn').addEventListener('click',()=>{if(step>0)applyStep(step-1);});
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  started=false;scoreCorrect=0;scoreTotal=0;updateScore();
+  applyStep(0);document.getElementById('fwdBtn').disabled=true;});
+document.getElementById('helpBtn').addEventListener('click',()=>document.getElementById('helpModal').classList.add('open'));
+document.getElementById('closeHelp').addEventListener('click',()=>document.getElementById('helpModal').classList.remove('open'));
+document.getElementById('helpModal').addEventListener('click',e=>{
+  if(e.target===document.getElementById('helpModal'))document.getElementById('helpModal').classList.remove('open');});
+
+window.addEventListener('resize',()=>{resize();draw();});
+resize();applyStep(0);
+})();
+</script>
+</body>
+</html>
