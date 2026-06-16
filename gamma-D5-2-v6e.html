@@ -1,0 +1,1957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Γ(D₅, 2) — Token Graph Explorer v6e</title>
+<style>
+:root{
+  --ink:#1c1810;--muted:#8a7a50;--bg:#fdfaf2;--bg2:#f5f0e0;
+  --gold:#b5860a;--gold2:#e8d88a;--gold3:#fffbcc;
+  --teal:#1a7a6e;--teal2:#d0eeea;
+  --red:#c03030;--red2:#fce8e8;
+  --purple:#5c3ab0;--purple2:#ede8fa;
+  --border:#d4c87a;
+  --serif:'Georgia',serif;
+  --mono:'JetBrains Mono','Fira Mono','Courier New',monospace;
+  --sans:'Lora','Georgia',serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* ── header ── */
+header{background:var(--bg2);border-bottom:2px solid var(--border);padding:8px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0;}
+header h1{font-family:var(--serif);font-size:16px;font-style:italic;color:var(--ink);white-space:nowrap;}
+header h1 span{font-size:11px;font-style:normal;color:var(--muted);margin-left:6px;}
+.hdr-btns{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-left:auto;}
+.btn{border:none;cursor:pointer;border-radius:4px;font-family:var(--mono);font-size:11px;font-weight:600;padding:5px 10px;transition:background 0.15s;}
+.btn-mode{background:var(--bg2);border:1.5px solid var(--border);color:var(--muted);}
+.btn-mode.active{background:var(--gold2);border-color:var(--gold);color:var(--ink);}
+.btn-reset{background:var(--bg2);border:1.5px solid var(--border);color:var(--muted);}
+.btn-reset:hover{background:var(--gold3);}
+.btn-holo{background:var(--teal2);border:1.5px solid var(--teal);color:var(--teal);font-weight:700;}
+.btn-holo.active{background:var(--teal);color:#fff;border-color:var(--teal);}
+.btn-holo:hover{filter:brightness(1.08);}
+.btn-help{background:var(--purple2);border:1.5px solid #c0b0e8;color:var(--purple);}
+.mode-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;}
+
+/* ── theorem banner ── */
+.thm-banner{background:var(--purple2);border-bottom:1.5px solid #c0b0e8;padding:5px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0;}
+.thm-banner .tb-label{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--purple);white-space:nowrap;}
+.thm-banner .tb-formula{font-family:var(--mono);font-size:12px;color:var(--purple);font-weight:600;}
+.thm-banner .tb-note{font-size:11px;color:#5a4090;font-style:italic;}
+
+/* ── layout ── */
+.layout{display:flex;flex-direction:row;flex:1;min-height:0;height:100%;}
+.canvas-wrap{position:relative;overflow:hidden;background:var(--bg);flex:0 0 auto;width:45%;min-width:200px;height:100%;}
+canvas{display:block;}
+.holo-wrap{border-left:1.5px solid var(--border);background:var(--bg);display:flex;flex-direction:column;flex:0 0 auto;width:28%;min-width:160px;height:100%;overflow:hidden;}
+.holo-title{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);padding:7px 12px 4px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.holo-title span{color:var(--purple);font-style:italic;}
+#holoSvg{flex:1;width:100%;height:100%;overflow:visible;}
+.side-panel{border-left:1.5px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;padding:10px;gap:8px;flex:1 1 auto;min-width:200px;}
+.side-panel > div{display:flex;flex-direction:column;}
+.side-panel > div > .info-card:last-child{flex:1;min-height:0;}
+
+/* ── drag handles ── */
+.drag-handle{width:5px;background:var(--border);cursor:col-resize;flex-shrink:0;transition:background 0.15s;position:relative;z-index:10;}
+.drag-handle:hover,.drag-handle.dragging{background:var(--gold);}
+.drag-handle::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:1px;height:40px;background:var(--muted);border-radius:1px;}
+
+/* ── hologram SVG styles ── */
+.hCell{fill:#ddd8c0;stroke:#b8b090;stroke-width:1;}
+.hCellA{fill:rgba(26,122,110,0.40);stroke:#1a7a6e;stroke-width:1.5;}
+.hCellB{fill:rgba(192,48,48,0.38);stroke:#c03030;stroke-width:1.5;}
+.hCellBoth{fill:rgba(92,58,176,0.45);stroke:#7c5ad0;stroke-width:1.5;}
+.hCellDiff{fill:rgba(181,134,10,0.38);stroke:var(--border);stroke-width:1;}
+.hGrid{stroke:var(--border);stroke-width:0.7;}
+.hCurveA{fill:none;stroke:var(--teal);stroke-width:2;stroke-linejoin:round;}
+.hCurveB{fill:none;stroke:var(--red);stroke-width:2;stroke-linejoin:round;}
+.hDotA{fill:var(--teal);}
+.hDotB{fill:var(--red);}
+.hText{font-family:var(--mono);font-size:11px;fill:var(--ink);}
+.hTextMuted{font-family:var(--mono);font-size:10px;fill:var(--muted);}
+.hTextSmall{font-family:var(--mono);font-size:9px;fill:var(--muted);}
+.hTreeEdge{stroke:var(--muted);stroke-width:1.5;}
+.hTreeNode{fill:var(--bg2);stroke:var(--muted);stroke-width:1.5;}
+.hTreeRoot{fill:var(--gold2);stroke:var(--gold);stroke-width:1.5;}
+.hBranchCell{stroke:var(--border);stroke-width:1;}
+.hArrow{stroke:var(--muted);stroke-width:1.5;stroke-dasharray:5 3;fill:none;}
+
+/* ── info cards ── */
+.info-card{background:var(--bg);border:1.5px solid var(--border);border-radius:6px;padding:10px 12px;min-width:0;overflow:visible;}
+.info-card h3{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.state-label{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--ink);letter-spacing:0.08em;}
+.state-label .tok{color:var(--teal);}
+.eta-row{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap;}
+.eta-chip{font-family:var(--mono);font-size:11px;background:var(--purple2);color:var(--purple);border-radius:3px;padding:2px 6px;}
+.dist-val{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--purple);margin:2px 0;}
+.dist-formula{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px;}
+.area-breakdown{font-family:var(--mono);font-size:11px;color:var(--ink);margin-top:4px;line-height:1.7;}
+.hint-text{font-size:11px;color:var(--muted);font-style:italic;margin-top:4px;}
+
+/* ── dist table ── */
+.dtable{border-collapse:collapse;font-family:var(--mono);font-size:10px;width:auto;}
+.dtable th{background:var(--gold3);padding:2px 3px;border:1px solid var(--border);text-align:center;font-weight:600;color:var(--muted);white-space:nowrap;}
+.dtable td{padding:2px 4px;border:1px solid var(--border);text-align:center;cursor:pointer;transition:background 0.1s;min-width:18px;}
+.dtable td:hover{background:var(--gold2);}
+.dtable td.self{color:var(--muted);background:var(--bg2);}
+.dtable td.selected{background:var(--teal2);color:var(--teal);font-weight:700;}
+.dtable td.d1{color:#1a7a6e;}
+.dtable td.d2{color:#5c7a00;}
+.dtable td.d3{color:#b5860a;}
+.dtable td.d4{color:#c05010;}
+.dtable td.d5{color:var(--red);font-weight:700;}
+
+/* ── geodesic panel ── */
+.geo-steps{display:flex;flex-direction:column;gap:3px;margin-top:4px;}
+.geo-step{display:flex;align-items:center;gap:6px;padding:3px 5px;border-radius:3px;cursor:pointer;transition:background 0.1s;}
+.geo-step:hover{background:var(--gold3);}
+.geo-step.active{background:var(--teal2);}
+.geo-step .step-bits{font-family:var(--mono);font-size:12px;font-weight:600;}
+.geo-step .step-move{font-family:var(--mono);font-size:10px;color:var(--muted);}
+.geo-step .step-idx{font-family:var(--mono);font-size:10px;color:var(--muted);width:14px;}
+
+/* ── legend ── */
+.legend{display:flex;flex-wrap:wrap;gap:8px;padding:6px 0;}
+.leg-item{display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:10px;color:var(--muted);}
+.leg-dot{width:10px;height:10px;border-radius:50%;}
+.leg-line{width:20px;height:3px;border-radius:2px;}
+
+/* ── modal ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100;align-items:center;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:20px 22px;max-width:480px;width:90%;max-height:80vh;overflow-y:auto;position:relative;}
+.modal h2{font-family:var(--serif);font-size:17px;font-style:italic;color:var(--gold);margin-bottom:10px;}
+.modal h3{font-size:12px;font-weight:700;color:var(--ink);margin:10px 0 3px;text-transform:uppercase;letter-spacing:0.06em;font-family:var(--mono);}
+.modal p{font-size:12px;margin-bottom:6px;line-height:1.6;}
+.modal code{font-family:var(--mono);font-size:11px;background:var(--bg2);border-radius:3px;padding:1px 4px;}
+.modal-close{position:absolute;top:10px;right:12px;background:none;border:none;font-size:17px;cursor:pointer;color:var(--muted);}
+.modal table{width:100%;border-collapse:collapse;font-size:11px;margin:5px 0;}
+.modal table th{background:var(--gold3);padding:4px 7px;border:1px solid var(--border);text-align:left;font-family:var(--mono);}
+.modal table td{padding:4px 7px;border:1px solid var(--border);}
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="pageTitle">Γ(D₅, 2) <span>token graph explorer v6</span></h1>
+  <span id="graphStats" style="font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;">|V|=10 &nbsp;|E|=12</span>
+  <div class="hdr-btns">
+    <span class="mode-label">example:</span>
+    <button class="btn btn-mode active" id="exBtn5" onclick="switchEx(5)">Γ(D₅,2)</button>
+    <button class="btn btn-mode" id="exBtn6" onclick="switchEx(6)">Γ(D₆,2)</button>
+    <button class="btn btn-mode" id="exBtnStar" onclick="switchEx('star')">Γ(S₄,2)</button>
+    <span class="mode-label" style="margin-left:6px">mode:</span>
+    <button class="btn btn-mode active" id="modeInspect" onclick="setMode('inspect')">Inspect</button>
+    <button class="btn btn-mode" id="modeDistance" onclick="setMode('distance')">Distance</button>
+    <button class="btn btn-mode" id="modeGeodesic" onclick="setMode('geodesic')">Geodesic</button>
+    <button class="btn btn-reset" onclick="resetAll()">↺ Reset</button>
+    <button class="btn btn-holo" id="btnHolo" onclick="toggleHolo()">⬡ Holo</button>
+    <button class="btn btn-help" onclick="openHelp()">? Help</button>
+  </div>
+</header>
+
+<div class="thm-banner">
+  <span class="tb-label">Formula</span>
+  <span class="tb-formula">d(X,Y) = Σ_e |η_e(X) − η_e(Y)|</span>
+  <span class="tb-note" id="bannerNote">— verified for all 45 pairs in Γ(D₅,2)</span>
+  <span style="margin-left:auto;font-family:var(--mono);font-size:10px;color:#5a4090;white-space:nowrap;" id="bannerEdges">e₁={1,2} e₂={2,3} e₃={3,4} e₄={3,5}</span>
+</div>
+
+<div class="layout" id="mainLayout">
+  <div class="canvas-wrap" id="canvasWrap"><canvas id="mainCanvas"></canvas></div>
+  <div class="drag-handle" id="drag1"></div>
+  <div class="holo-wrap" id="holoWrap">
+    <div class="holo-title">D<sub>n</sub> Holographic Strip <span id="holoSubtitle">— select X and Y</span></div>
+    <svg id="holoSvg"></svg>
+  </div>
+  <div class="drag-handle" id="drag2"></div>
+  <div class="side-panel" id="sidePanel">
+
+    <!-- Inspect mode -->
+    <div id="panelInspect">
+      <div class="info-card">
+        <h3>Selected state</h3>
+        <div id="inspectBits" class="state-label" style="color:var(--muted);font-size:13px;">Click a node</div>
+        <div class="eta-row" id="inspectEta"></div>
+        <div class="hint-text" id="inspectDesc"></div>
+      </div>
+      <div class="info-card">
+        <h3>D₅ tree</h3>
+        <div style="font-family:var(--mono);font-size:11px;line-height:2;color:var(--ink);">
+          Trunk: 1 – 2 – 3<br>
+          Branches: 3 → 4, 3 → 5<br>
+          Root: node 1<br>
+          <span style="color:var(--muted);">e₁={1,2} e₂={2,3} e₃={3,4} e₄={3,5}</span>
+        </div>
+      </div>
+      <div class="info-card">
+        <h3>All distances from selected</h3>
+        <div id="inspectDistRow" style="font-family:var(--mono);font-size:11px;color:var(--muted);">Select a state above</div>
+      </div>
+      <div class="info-card">
+        <h3>Legend</h3>
+        <div id="treeInfo" style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:6px;line-height:1.7;"></div>
+        <div class="legend">
+          <div class="leg-item"><div class="leg-line" style="background:#1a7a6e;"></div>trunk move</div>
+          <div class="leg-item"><div class="leg-line" style="background:#c03030;border-top:2px dashed #c03030;background:none;height:0;"></div>branch move</div>
+          <div class="leg-item"><div class="leg-dot" style="background:#1a7a6e;"></div>selected</div>
+          <div class="leg-item"><div class="leg-dot" style="background:#d4c87a;"></div>unselected</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Distance mode -->
+    <div id="panelDistance" style="display:none;flex-direction:column;flex:1;min-height:0;gap:8px;">
+      <div class="info-card">
+        <h3>Click two states to measure distance</h3>
+        <div id="distStateX" class="state-label" style="color:var(--teal);font-size:13px;">X: —</div>
+        <div id="distStateY" class="state-label" style="color:var(--red);font-size:13px;margin-top:3px;">Y: —</div>
+        <div class="dist-val" id="distVal">—</div>
+        <div class="dist-formula" id="distFormula"></div>
+        <div class="area-breakdown" id="distBreakdown"></div>
+        <hr style="border:none;border-top:1px solid var(--border);margin:8px 0;">
+        <div style="font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Area<sub>D<sub>n</sub></sub> explicit form</div>
+        <div class="area-breakdown" id="areaFormula"></div>
+        <div class="area-breakdown" id="areaBreakdown"></div>
+      </div>
+      <div class="info-card" style="flex:1;display:flex;flex-direction:column;min-height:0;">
+        <h3>Full distance matrix</h3>
+        <div style="overflow:auto;flex:1;min-height:0;width:100%;">
+          <table class="dtable" id="distMatrix" style="min-width:max-content;width:auto;"></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Geodesic mode -->
+    <div id="panelGeodesic" style="display:none;">
+      <div class="info-card">
+        <h3>Pick X → Y</h3>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Click a state for source (teal), then another for target (red).</div>
+        <div id="geoStateX" class="state-label" style="color:var(--teal);font-size:13px;">X: —</div>
+        <div id="geoStateY" class="state-label" style="color:var(--red);font-size:13px;margin-top:3px;">Y: —</div>
+        <div id="geoLength" style="font-family:var(--mono);font-size:12px;color:var(--purple);margin-top:4px;"></div>
+      </div>
+      <div class="info-card" id="geoStepsCard" style="display:none;">
+        <h3>Geodesic steps</h3>
+        <div class="geo-steps" id="geoStepsList"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Help modal -->
+<div class="modal-bg" id="helpModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeHelp()">✕</button>
+    <h2>Γ(D₅, 2) — Token Graph Explorer</h2>
+
+    <h3>What is this?</h3>
+    <p>This app shows the complete token graph Γ(D₅,2): all ways to place 2 tokens on the 5-node D₅ tree, connected by single-step token moves. There are <strong>10 states</strong> and <strong>12 edges</strong>.</p>
+
+    <h3>The D₅ tree</h3>
+    <p>Trunk 1–2–3 with branch leaves 4 and 5 attached to node 3. Rooted at 1.</p>
+    <p>Edges: e₁={1,2}, e₂={2,3}, e₃={3,4}, e₄={3,5}.<br>
+    Subtrees: T_{e₁}={2,3,4,5}, T_{e₂}={3,4,5}, T_{e₃}={4}, T_{e₄}={5}.</p>
+
+    <h3>State layout</h3>
+    <p>Each state {i,j} (tokens at nodes i and j, i&lt;j) is drawn at grid position (i,j). Trunk-edge moves (e₁,e₂) are solid teal lines — unit steps on the grid. Branch-edge moves (e₃,e₄) are dashed red lines — they leave the grid.</p>
+
+    <h3>Three modes</h3>
+    <table>
+      <tr><th>Inspect</th><td>Click any state to see its bit-string, height vector η, and distances to all other states.</td></tr>
+      <tr><th>Distance</th><td>Click two states X and Y to compute d(X,Y) = Σ|η_e(X)−η_e(Y)| with full breakdown, and see the full 10×10 distance matrix.</td></tr>
+      <tr><th>Geodesic</th><td>Click source then target to highlight a shortest path and step through it move by move.</td></tr>
+    </table>
+
+    <h3>Key facts</h3>
+    <p>Diameter = 5, attained by A=11000 and B=00011 (tokens at {1,2} vs {4,5}).<br>
+    η(X)=(1,0,0,0), η(Y)=(2,2,1,1), d(X,Y)=|1−2|+|0−2|+|0−1|+|0−1|=5.</p>
+    <p>The formula d(X,Y)=Area_{D₅}(X,Y)=Σ_e|η_e(X)−η_e(Y)| is verified for all 45 pairs by BFS.</p>
+
+    <h3>Graph size formulas</h3>
+    <p>For the token graph Γ(D_n, k) with k=2:</p>
+    <table>
+      <tr><th>Quantity</th><th>Formula</th><th>D₅</th><th>D₆</th></tr>
+      <tr><td>|V|</td><td>C(n, k) = C(n, 2) = n(n−1)/2</td><td>10</td><td>15</td></tr>
+      <tr><td>|E|</td><td>|E(D_n)| · C(n−2, k−1) = (n−1) · (n−2)</td><td>12</td><td>20</td></tr>
+      <tr><td>diam</td><td>verified by BFS</td><td>5</td><td>7</td></tr>
+    </table>
+    <p>The edge count formula follows because each of the n−1 tree edges can be crossed by moving either of the k=2 tokens, and the other token can be at any of the n−2 remaining nodes — giving |E(T)| · (n−2) = (n−1)(n−2) edges.</p>
+
+    <h3>Area<sub>D_n</sub> explicit form</h3>
+    <p>The Distance mode panel shows two equivalent breakdowns of d(A,B):</p>
+    <p><strong>General (η-based):</strong> d(A,B) = Σ_e |η_e(A) − η_e(B)|, one term per tree edge.</p>
+    <p><strong>Explicit (Area<sub>D_n</sub>):</strong></p>
+    <h3>Color coding</h3>
+    <p>Distance matrix cells are colored by value: <span style="color:#1a7a6e">d=1</span>, <span style="color:#5c7a00">d=2</span>, <span style="color:#b5860a">d=3</span>, <span style="color:#c05010">d=4</span>, <span style="color:var(--red);font-weight:700">d=5+</span>. Each cell also shows the number of shortest paths in parentheses.</p>
+
+    <h3>Holographic strip — visual components</h3>
+    <p>The middle panel shows the <strong>D<sub>n</sub> holographic strip</strong>: a 2D visual encoding of the height vectors η(X) and η(Y).</p>
+    <p><strong>Trunk rectangle</strong> (left block): each column corresponds to a trunk tree edge e<sub>i</sub> for i = 1, …, n−3. The height of the filled region in column i equals η<sub>e<sub>i</sub></sub>(X) = Σ<sub>j=i+1</sub><sup>n</sup> x<sub>j</sub> — the number of tokens on the far side of the cut defined by e<sub>i</sub>. These are suffix sums along the trunk. The area between the two step-function curves (teal for A, red for B) equals the trunk contribution to d(A,B).</p>
+    <p><strong>Branch block</strong> (right, detached): two separate cells for the branch edges e<sub>n−2</sub> and e<sub>n−1</sub>. Their values are simply x<sub>n−1</sub> and x<sub>n</sub> ∈ {0,1} — the raw token bits on the two branch leaves — because the branch subtrees are singletons (each contains exactly one node). A thick purple border marks a branch cell when it contributes to the area.</p>
+    <p><strong>Cell colors:</strong> teal = X only (counts toward area); red/pink = Y only (counts toward area); purple/lavender = both A and B (cancels, not in area); beige = neither.</p>
+    <p>The total distance d(A,B) = trunk Σ + branch Σ is shown explicitly below the grid, split into the two contributions.</p>
+    <p>Distance coloring in the matrix: <span style="color:#1a7a6e">d=1</span>, <span style="color:#5c7a00">d=2</span>, <span style="color:#b5860a">d=3</span>, <span style="color:#c05010">d=4</span>, <span style="color:var(--red);font-weight:700">d=5</span>.</p>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ═══════════ EXAMPLE DEFINITIONS ═══════════ */
+const EXAMPLES={
+  5:{
+    n:5, k:2,
+    title:'Γ(D₅, 2)',
+    nodes:[1,2,3,4,5],
+    treeEdges:[[1,2],[2,3],[3,4],[3,5]],
+    edgeLabels:['e₁','e₂','e₃','e₄'],
+    subtrees:[[2,3,4,5],[3,4,5],[4],[5]],
+    isBranch:[false,false,true,true],
+    treeDesc:'Trunk 1–2–3, branches 3→4 and 3→5',
+    edgeDesc:'e₁={1,2} e₂={2,3} e₃={3,4} e₄={3,5}',
+    pairsCount:45,
+    diamPair:['11000','00011'],
+    diamEtaA:[1,0,0,0], diamEtaB:[2,2,1,1],
+  },
+  6:{
+    n:6, k:2,
+    title:'Γ(D₆, 2)',
+    nodes:[1,2,3,4,5,6],
+    treeEdges:[[1,2],[2,3],[3,4],[4,5],[4,6]],
+    edgeLabels:['e₁','e₂','e₃','e₄','e₅'],
+    subtrees:[[2,3,4,5,6],[3,4,5,6],[4,5,6],[5],[6]],
+    isBranch:[false,false,false,true,true],
+    treeDesc:'Trunk 1–2–3–4, branches 4→5 and 4→6',
+    edgeDesc:'e₁={1,2} e₂={2,3} e₃={3,4} e₄={4,5} e₅={4,6}',
+    pairsCount:105,
+    diamPair:['110000','000011'],
+    diamEtaA:[1,0,0,0,0], diamEtaB:[2,2,2,1,1],
+  },
+  star:{
+    n:5, k:2,
+    title:'Γ(S₄, 2)',
+    nodes:[1,2,3,4,5],
+    treeEdges:[[1,2],[1,3],[1,4],[1,5]],
+    edgeLabels:['e₁','e₂','e₃','e₄'],
+    subtrees:[[2],[3],[4],[5]],
+    isBranch:[false,false,false,false], // all edges equal — no trunk/branch split
+    treeDesc:'Star: center=1, leaves=2,3,4,5',
+    edgeDesc:'e₁={1,2} e₂={1,3} e₃={1,4} e₄={1,5}',
+    pairsCount:45,
+    diamPair:['01100','00011'],
+    diamEtaA:[1,1,0,0], diamEtaB:[0,0,1,1],
+    isStar:true,
+  }
+};
+
+/* ═══════════ ACTIVE EXAMPLE STATE ═══════════ */
+let EX=EXAMPLES[5];
+let STATES=[], STATE_IDX={}, DIST=[], PATH_COUNT=[], TG_EDGES=[];
+
+function buildExample(ex){
+  EX=ex;
+  // All k=2 states
+  STATES=[];
+  for(let i=1;i<=ex.n;i++) for(let j=i+1;j<=ex.n;j++) STATES.push([i,j]);
+  STATE_IDX={};
+  STATES.forEach(([a,b],i)=>{ STATE_IDX[`${a},${b}`]=i; });
+
+  // BFS distance matrix + shortest path count matrix
+  const n=STATES.length;
+  DIST=Array.from({length:n},()=>Array(n).fill(0));
+  PATH_COUNT=Array.from({length:n},()=>Array(n).fill(0));
+  STATES.forEach((s,si)=>{
+    const vis={[stateKey(s)]:0};
+    const pc={[stateKey(s)]:1};
+    const q=[[s,0]];
+    while(q.length){
+      const [cur,d]=q.shift();
+      const ck=stateKey(cur), ci=STATE_IDX[ck];
+      DIST[si][ci]=d;
+      PATH_COUNT[si][ci]=pc[ck];
+      for(const nb of getNeighbors(cur)){
+        const k=stateKey(nb);
+        if(!(k in vis)){vis[k]=d+1;pc[k]=pc[ck];q.push([nb,d+1]);}
+        else if(vis[k]===d+1){pc[k]+=pc[ck];}
+      }
+    }
+  });
+
+  // Token-graph edges
+  TG_EDGES=[];
+  STATES.forEach((s,si)=>{
+    STATES.forEach((t,ti)=>{
+      if(si<ti&&DIST[si][ti]===1){
+        const lost=s.find(v=>!t.includes(v));
+        const gained=t.find(v=>!s.includes(v));
+        const ei=whichEdge(lost,gained);
+        TG_EDGES.push({s,t,si,ti,edgeIdx:ei,isBranch:EX.isBranch[ei]});
+      }
+    });
+  });
+}
+
+/* ═══════════ HELPERS ═══════════ */
+function stateKey(s){ return `${s[0]},${s[1]}`; }
+function stateBits(s){ return EX.nodes.map(v=>s.includes(v)?'1':'0').join(''); }
+function eta(s){ return EX.subtrees.map(sub=>s.filter(v=>sub.includes(v)).length); }
+
+function getNeighbors(s){
+  const sset=new Set(s); const res=[];
+  for(const tok of s){
+    for(const [u,v] of EX.treeEdges){
+      if(tok===u&&!sset.has(v)) res.push([...new Set([...s.filter(x=>x!==tok),v])].sort((a,b)=>a-b));
+      if(tok===v&&!sset.has(u)) res.push([...new Set([...s.filter(x=>x!==tok),u])].sort((a,b)=>a-b));
+    }
+  }
+  return res;
+}
+
+function whichEdge(lost,gained){
+  for(let i=0;i<EX.subtrees.length;i++){
+    const inL=EX.subtrees[i].includes(lost), inG=EX.subtrees[i].includes(gained);
+    if(inL!==inG) return i;
+  }
+  return -1;
+}
+
+function geodesic(src,tgt){
+  if(stateKey(src)===stateKey(tgt)) return [src];
+  const prev={[stateKey(src)]:null}; const q=[src];
+  while(q.length){
+    const cur=q.shift();
+    if(stateKey(cur)===stateKey(tgt)) break;
+    for(const nb of getNeighbors(cur)){
+      const k=stateKey(nb);
+      if(!(k in prev)){prev[k]=cur;q.push(nb);}
+    }
+  }
+  const path=[]; let cur=tgt;
+  while(cur){path.unshift(cur);cur=prev[stateKey(cur)];}
+  return path;
+}
+
+/* ═══════════ CANVAS ═══════════ */
+const canvas=document.getElementById('mainCanvas');
+const ctx=canvas.getContext('2d');
+let W=0,H=0;
+
+// State {i,j} -> grid col=i-1, row=j-2, origin bottom-left
+function statePos(s,w,h){
+  const [i,j]=s;
+
+  // Star tree: radial layout
+  if(EX.isStar){
+    const n=EX.n;
+    const cx=w/2, cy=h/2;
+    const leafAngle=k => -Math.PI/2+(k-2)*2*Math.PI/(n-1);
+    if(i===1){
+      const ang=leafAngle(j);
+      const r=Math.min(w,h)*0.28;
+      return {x:cx+Math.cos(ang)*r, y:cy+Math.sin(ang)*r};
+    } else {
+      let a1=leafAngle(i), a2=leafAngle(j);
+      let mid=(a1+a2)/2;
+      if(Math.abs(a2-a1)>Math.PI) mid+=Math.PI;
+      const r=Math.min(w,h)*0.44;
+      return {x:cx+Math.cos(mid)*r, y:cy+Math.sin(mid)*r};
+    }
+  }
+
+  const col=i-1; const row=j-2;
+  const maxCol=EX.n-2; const maxRow=EX.n-2;
+  const NR=EX.n===5?22:18;
+  const mx=NR+50, myTop=NR+30, myBot=NR+48;
+  const gx=(w-mx*2)/Math.max(maxCol,1);
+  const gy=(h-myTop-myBot)/Math.max(maxRow,1);
+  return { x: mx+col*gx, y: h-myBot-row*gy };
+}
+
+/* ═══════════ APP STATE ═══════════ */
+let mode='inspect';
+let hoveredIdx=-1, selectedIdx=-1;
+let distA=-1, distB=-1, distPath=[];
+let geoA=-1, geoB=-1, geoPath=[], geoStep=-1;
+let holoAll=false;
+
+function switchEx(n){
+  buildExample(EXAMPLES[n]);
+  document.getElementById('exBtn5').classList.toggle('active',n===5);
+  document.getElementById('exBtn6').classList.toggle('active',n===6);
+  document.getElementById('exBtnStar').classList.toggle('active',n==='star');
+  document.getElementById('pageTitle').innerHTML=
+    `${EX.title} <span>token graph explorer v6e</span>`;
+  document.getElementById('bannerNote').textContent=
+    `— verified for all ${EX.pairsCount} pairs in ${EX.title}`;
+  document.getElementById('bannerEdges').textContent=EX.edgeDesc;
+  document.getElementById('treeInfo').textContent=
+    `${EX.treeDesc} | ${EX.edgeDesc}`;
+  // update |V| and |E|
+  const V=STATES.length, E=TG_EDGES.length;
+  document.getElementById('graphStats').innerHTML=`|V|=${V} &nbsp;|E|=${E}`;
+  resetAll();
+  renderHologram();
+}
+window.switchEx=switchEx;
+
+function setMode(m){
+  mode=m;
+  document.getElementById('modeInspect').classList.toggle('active',m==='inspect');
+  document.getElementById('modeDistance').classList.toggle('active',m==='distance');
+  document.getElementById('modeGeodesic').classList.toggle('active',m==='geodesic');
+  document.getElementById('panelInspect').style.display=m==='inspect'?'':'none';
+  document.getElementById('panelDistance').style.display=m==='distance'?'flex':'none';
+  document.getElementById('panelGeodesic').style.display=m==='geodesic'?'':'none';
+  draw(); renderHologram();
+}
+window.setMode=setMode;
+
+function resetAll(){
+  selectedIdx=-1;distA=-1;distB=-1;distPath=[];geoA=-1;geoB=-1;geoPath=[];geoStep=-1;
+  hoveredIdx=-1;
+  updateInspectPanel(-1);
+  updateDistPanel();
+  updateGeoPanel();
+  draw(); renderHologram();
+}
+window.resetAll=resetAll;
+
+function toggleHolo(){
+  holoAll=!holoAll;
+  document.getElementById('btnHolo').classList.toggle('active',holoAll);
+  draw();
+}
+window.toggleHolo=toggleHolo;
+
+/* ═══════════ DRAW ═══════════ */
+function resize(){
+  const wrap=canvas.parentElement,dpr=window.devicePixelRatio||1;
+  W=wrap.offsetWidth; H=wrap.offsetHeight;
+  if(W<10||H<10){ setTimeout(resize,50); return; } // wait for layout
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  canvas.style.display='block';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  draw();
+}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='rgba(180,160,40,0.04)';ctx.lineWidth=1;
+  for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(0,H);ctx.stroke();}
+
+  // node radius scales with example size
+  const NR=EX.n===5?22:18;
+
+  // geodesic highlight sets
+  let hlStates=new Set(), hlEdgeSet=new Set();
+  if(mode==='geodesic'&&geoPath.length>1){
+    let pathSlice=geoPath;
+    if(geoStep>=0) pathSlice=geoPath.slice(0,geoStep+2);
+    pathSlice.forEach(s=>hlStates.add(stateKey(s)));
+    for(let i=0;i<pathSlice.length-1;i++){
+      const k=`${stateKey(pathSlice[i])}_${stateKey(pathSlice[i+1])}`;
+      hlEdgeSet.add(k); hlEdgeSet.add(`${stateKey(pathSlice[i+1])}_${stateKey(pathSlice[i])}`);
+    }
+  }
+  // distance mode: highlight chosen shortest path
+  if(mode==='distance'&&distPath.length>1){
+    distPath.forEach(s=>hlStates.add(stateKey(s)));
+    for(let i=0;i<distPath.length-1;i++){
+      const k=`${stateKey(distPath[i])}_${stateKey(distPath[i+1])}`;
+      hlEdgeSet.add(k); hlEdgeSet.add(`${stateKey(distPath[i+1])}_${stateKey(distPath[i])}`);
+    }
+  }
+
+  // draw edges
+  TG_EDGES.forEach(({s,t,isBranch,edgeIdx})=>{
+    const p1=statePos(s,W,H), p2=statePos(t,W,H);
+    const ek=`${stateKey(s)}_${stateKey(t)}`;
+    const isHL=hlEdgeSet.has(ek);
+    const isDistEdge=mode==='distance'&&distA>=0&&distB>=0&&
+      ((STATES[distA]===s&&STATES[distB]===t)||(STATES[distB]===s&&STATES[distA]===t));
+
+    ctx.save();
+    if(isHL){ ctx.strokeStyle='#5c3ab0';ctx.lineWidth=3.5;ctx.globalAlpha=0.92; }
+    else if(isDistEdge){ ctx.strokeStyle='#5c3ab0';ctx.lineWidth=2.5;ctx.globalAlpha=0.7; }
+    else if(hlStates.size>0){ ctx.globalAlpha=0.1;ctx.strokeStyle=isBranch?'#c03030':'#1a7a6e';ctx.lineWidth=1.8; }
+    else { ctx.globalAlpha=isBranch?0.65:0.82;ctx.strokeStyle=isBranch?'#c03030':'#1a7a6e';ctx.lineWidth=isBranch?1.8:2.2; }
+    if(isBranch) ctx.setLineDash([6,4]);
+
+    ctx.beginPath();
+    if(isBranch){
+      const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+      const dx=p2.x-p1.x, dy=p2.y-p1.y, len=Math.sqrt(dx*dx+dy*dy)||1;
+      // Two perpendicular options; pick the one that curves TOWARD canvas interior
+      let px=dy/len, py=-dx/len;
+      // ctrl point candidate
+      const arc=Math.min(len*0.42, 120);
+      const cx1=mx+px*arc, cy1=my+py*arc;
+      const cx2=mx-px*arc, cy2=my-py*arc;
+      // prefer the control point closer to canvas center
+      const ccx=W/2, ccy=H/2;
+      const d1=Math.hypot(cx1-ccx,cy1-ccy), d2=Math.hypot(cx2-ccx,cy2-ccy);
+      const cx=d1<d2?cx1:cx2, cy=d1<d2?cy1:cy2;
+      ctx.moveTo(p1.x,p1.y);
+      ctx.quadraticCurveTo(cx,cy,p2.x,p2.y);
+    } else {
+      ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y);
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+
+    // edge label
+    if(!hlStates.size||isHL){
+      let lx,ly;
+      if(isBranch){
+        const mx2=(p1.x+p2.x)/2, my2=(p1.y+p2.y)/2;
+        const dx=p2.x-p1.x, dy=p2.y-p1.y, len=Math.sqrt(dx*dx+dy*dy)||1;
+        const px=dy/len, py=-dx/len;
+        const arc=Math.min(len*0.42,120);
+        const cx1=mx2+px*arc, cy1=my2+py*arc;
+        const cx2=mx2-px*arc, cy2=my2-py*arc;
+        const d1=Math.hypot(cx1-W/2,cy1-H/2), d2=Math.hypot(cx2-W/2,cy2-H/2);
+        const cxF=d1<d2?cx1:cx2, cyF=d1<d2?cy1:cy2;
+        // bezier midpoint at t=0.5
+        lx=0.25*p1.x+0.5*cxF+0.25*p2.x;
+        ly=0.25*p1.y+0.5*cyF+0.25*p2.y;
+        // nudge further toward control point
+        const pxN=d1<d2?px:-px, pyN=d1<d2?py:-py;
+        lx+=pxN*10; ly+=pyN*10;
+      } else {
+        lx=(p1.x+p2.x)/2; ly=(p1.y+p2.y)/2;
+        const dx=p2.x-p1.x, dy=p2.y-p1.y, len=Math.sqrt(dx*dx+dy*dy)||1;
+        let nx=-dy/len, ny=dx/len;
+        if(ny>0){nx=-nx;ny=-ny;} lx+=nx*12; ly+=ny*12;
+      }
+      ctx.globalAlpha=isHL?0.92:0.65;
+      ctx.font=`600 10px 'JetBrains Mono',monospace`;
+      ctx.fillStyle=isBranch?'#c03030':'#1a7a6e';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(EX.edgeLabels[edgeIdx],lx,ly);
+    }
+    ctx.restore();
+  });
+
+  // draw nodes
+  STATES.forEach((s,si)=>{
+    const p=statePos(s,W,H);
+    const isHov=si===hoveredIdx;
+    const isGeoSrc=mode==='geodesic'&&si===geoA;
+    const isGeoTgt=mode==='geodesic'&&si===geoB;
+    const isDistA=mode==='distance'&&si===distA;
+    const isDistB=mode==='distance'&&si===distB;
+    const isSel=(mode==='inspect'&&si===selectedIdx)||(mode==='distance'&&(si===distA||si===distB))||(mode==='geodesic'&&(si===geoA||si===geoB));
+    const isOnPath=hlStates.has(stateKey(s));
+
+    ctx.save();
+    if(hlStates.size>0&&!isOnPath) ctx.globalAlpha=0.18;
+
+    ctx.beginPath(); ctx.arc(p.x,p.y,NR,0,Math.PI*2);
+    let fill='#d4c87a';
+    if(isGeoSrc||isDistA) fill='#1a7a6e';
+    else if(isGeoTgt||isDistB) fill='#c03030';
+    else if(isOnPath) fill='#ede8fa';
+    else if(isSel) fill='#b5e0d8';
+    else if(isHov) fill='#e8d88a';
+    ctx.fillStyle=fill; ctx.fill();
+    ctx.strokeStyle=(isSel||isOnPath)?'#5c3ab0':isHov?'#b5860a':'#8a6e00';
+    ctx.lineWidth=(isSel||isOnPath)?2.5:1.5; ctx.stroke();
+
+    // bit string
+    const bits=stateBits(s);
+    const fontSize=EX.n===5?9.5:8.5;
+    ctx.font=`700 ${fontSize}px 'JetBrains Mono',monospace`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    const bw=(NR*1.7)/bits.length;
+    const startX=p.x-bw*(bits.length-1)/2;
+    bits.split('').forEach((b,bi)=>{
+      ctx.fillStyle=b==='1'
+        ?(isGeoSrc||isDistA||isGeoTgt||isDistB?'#fff':'#1a7a6e')
+        :(isGeoSrc||isDistA||isGeoTgt||isDistB?'rgba(255,255,255,0.45)':'#b0a060');
+      ctx.fillText(b,startX+bi*bw,p.y);
+    });
+
+    // node pair label below
+    ctx.font=`400 8px 'JetBrains Mono',monospace`;
+    ctx.fillStyle=isOnPath?'#5c3ab0':isHov?'#b5860a':'#8a6e00';
+    ctx.globalAlpha=(ctx.globalAlpha<0.4?ctx.globalAlpha:0.7);
+    ctx.fillText(`{${s.join(',')}}`,p.x,p.y+NR+9);
+    ctx.restore();
+  });
+
+  // ── highlighted path overlay (drawn ON TOP of nodes) ──
+  const activePath=mode==='geodesic'&&geoPath.length>1
+    ? (geoStep>=0?geoPath.slice(0,geoStep+2):geoPath)
+    : mode==='distance'&&distPath.length>1?distPath:null;
+
+  if(activePath){
+    for(let i=0;i<activePath.length-1;i++){
+      const s=activePath[i], t=activePath[i+1];
+      // find the TG_EDGE to get isBranch
+      const edge=TG_EDGES.find(e=>
+        (stateKey(e.s)===stateKey(s)&&stateKey(e.t)===stateKey(t))||
+        (stateKey(e.s)===stateKey(t)&&stateKey(e.t)===stateKey(s)));
+      const isBr=edge?edge.isBranch:false;
+      const p1=statePos(s,W,H), p2=statePos(t,W,H);
+      ctx.save();
+      ctx.strokeStyle='#5c3ab0'; ctx.lineWidth=4; ctx.globalAlpha=0.85;
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      if(isBr){
+        const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+        const dx=p2.x-p1.x, dy=p2.y-p1.y, len=Math.sqrt(dx*dx+dy*dy)||1;
+        const px=dy/len, py=-dx/len, arc=Math.min(len*0.42,120);
+        const cx1=mx+px*arc, cy1=my+py*arc, cx2=mx-px*arc, cy2=my-py*arc;
+        const d1=Math.hypot(cx1-W/2,cy1-H/2), d2=Math.hypot(cx2-W/2,cy2-H/2);
+        const cx=d1<d2?cx1:cx2, cy=d1<d2?cy1:cy2;
+        ctx.moveTo(p1.x,p1.y); ctx.quadraticCurveTo(cx,cy,p2.x,p2.y);
+      } else {
+        ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+    // redraw path nodes on top so they're not obscured
+    activePath.forEach((s,i)=>{
+      const si=STATE_IDX[stateKey(s)];
+      const p=statePos(s,W,H);
+      const isFirst=i===0, isLast=i===activePath.length-1;
+      ctx.save();
+      ctx.beginPath(); ctx.arc(p.x,p.y,NR,0,Math.PI*2);
+      ctx.fillStyle=isFirst?'#1a7a6e':isLast?'#c03030':'#ede8fa';
+      ctx.fill();
+      ctx.strokeStyle='#5c3ab0'; ctx.lineWidth=2.5; ctx.stroke();
+      const bits=stateBits(s);
+      const fontSize=EX.n===5?9.5:8.5;
+      ctx.font=`700 ${fontSize}px 'JetBrains Mono',monospace`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      const bw=(NR*1.7)/bits.length;
+      const startX=p.x-bw*(bits.length-1)/2;
+      bits.split('').forEach((b,bi)=>{
+        ctx.fillStyle=b==='1'?(isFirst||isLast?'#fff':'#1a7a6e'):'#b0a060';
+        ctx.fillText(b,startX+bi*bw,p.y);
+      });
+      ctx.font=`400 8px 'JetBrains Mono',monospace`;
+      ctx.fillStyle='#5c3ab0'; ctx.globalAlpha=0.8;
+      ctx.fillText(`{${s.join(',')}}`,p.x,p.y+NR+9);
+      ctx.restore();
+    });
+  }
+  if(mode==='distance'&&distA>=0&&distB>=0){
+    const d=DIST[distA][distB];
+    const pA=statePos(STATES[distA],W,H), pB=statePos(STATES[distB],W,H);
+    const mx=(pA.x+pB.x)/2, my=(pA.y+pB.y)/2;
+    ctx.save(); ctx.globalAlpha=0.92; ctx.fillStyle='#fffff5';
+    ctx.beginPath(); ctx.roundRect(mx-18,my-10,36,20,4); ctx.fill();
+    ctx.fillStyle='#5c3ab0'; ctx.font=`700 13px 'JetBrains Mono',monospace`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(`d=${d}`,mx,my); ctx.restore();
+  }
+
+  // ── mini x/y tree diagrams in bottom-right corner ──
+  drawMiniTrees();
+
+  // ── η(X) height rectangle in inspect mode ──
+  if(mode==='inspect'&&selectedIdx>=0) drawEtaRect(selectedIdx);
+
+  // ── HOLO: all-nodes η rectangles ──
+  if(holoAll) drawAllEtaRects();
+}
+
+/* ═══════════ η(X) HEIGHT RECTANGLE ═══════════
+   Draws an (n-1) columns × k rows grid next to the selected node.
+   Column e (0-indexed) corresponds to tree edge e.
+   The bottom η_e(X) cells of column e are filled teal;
+   the rest are empty (light beige).
+   Edge labels are written below each column.
+   The rectangle is positioned to the right of the node, with a
+   fallback to the left if it would overflow the canvas.
+*/
+function drawEtaRect(idx){
+  const s=STATES[idx];
+  const ev=eta(s);               // η_e(X) for each edge, length = n-1
+  const nEdges=ev.length;        // n-1
+  const kRows=EX.k;              // maximum column height = k
+
+  const p=statePos(s,W,H);
+  const NR=EX.n===5?22:18;
+
+  // cell dimensions
+  const CW=16, CH=14;
+  const gridW=nEdges*CW;
+  const gridH=kRows*CH;
+
+  // header height (for "η(X)" label) and footer height (for edge labels)
+  const HDR=14, FTR=13;
+  const totalH=HDR+gridH+FTR;
+  const totalW=gridW+2;          // +2 for border
+
+  // position: right of node, vertically centred; fall back left if overflow
+  let rx=p.x+NR+10;
+  if(rx+totalW>W-8) rx=p.x-NR-10-totalW;
+  let ry=p.y-totalH/2;
+  if(ry<4) ry=4;
+  if(ry+totalH>H-4) ry=H-4-totalH;
+
+  ctx.save();
+
+  // ── background card ──
+  ctx.globalAlpha=0.93;
+  ctx.fillStyle='#fffff5';
+  ctx.beginPath();
+  ctx.roundRect(rx-4, ry-2, totalW+8, totalH+4, 5);
+  ctx.fill();
+  ctx.strokeStyle='#d4c87a'; ctx.lineWidth=1.2; ctx.stroke();
+
+  // ── "η(X)" header ──
+  ctx.globalAlpha=1;
+  ctx.font=`600 10px 'JetBrains Mono',monospace`;
+  ctx.fillStyle='#5c3ab0';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('η(X)', rx+gridW/2, ry+HDR/2);
+
+  // ── grid cells ──
+  const gx0=rx, gy0=ry+HDR;   // top-left of grid
+
+  for(let e=0;e<nEdges;e++){
+    const filled=ev[e];          // number of filled (teal) cells in column e
+    const isBranchCol=EX.isBranch[e];
+
+    for(let row=0;row<kRows;row++){
+      // row=0 is the TOP cell; filled cells sit at the BOTTOM
+      const isFilled=(row >= kRows-filled);
+      const cx=gx0+e*CW, cy=gy0+row*CH;
+
+      // cell fill
+      ctx.fillStyle=isFilled
+        ? (isBranchCol?'rgba(192,48,48,0.35)':'rgba(26,122,110,0.38)')
+        : '#e8e0c0';
+      ctx.fillRect(cx, cy, CW, CH);
+
+      // cell border
+      ctx.strokeStyle='#c8b870'; ctx.lineWidth=0.6;
+      ctx.strokeRect(cx, cy, CW, CH);
+
+      // value digit in the top filled cell of each column
+      if(isFilled && row===kRows-filled && filled>0){
+        ctx.font=`700 9px 'JetBrains Mono',monospace`;
+        ctx.fillStyle=isBranchCol?'#8b1010':'#0d5045';
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(String(filled), cx+CW/2, cy+CH/2);
+      }
+    }
+
+    // ── edge label below column ──
+    ctx.font=`500 9px 'JetBrains Mono',monospace`;
+    ctx.fillStyle=isBranchCol?'#c03030':'#1a7a6e';
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillText(EX.edgeLabels[e], gx0+e*CW+CW/2, gy0+gridH+2);
+  }
+
+  // ── outer border around full grid ──
+  ctx.strokeStyle='#a09040'; ctx.lineWidth=1.2;
+  ctx.strokeRect(gx0, gy0, gridW, gridH);
+
+  // ── connector line from node to rect ──
+  ctx.globalAlpha=0.35;
+  ctx.strokeStyle='#8a7a50'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+  ctx.beginPath();
+  const lineY=p.y;
+  if(rx>p.x){
+    ctx.moveTo(p.x+NR, lineY);
+    ctx.lineTo(rx-4, lineY);
+  } else {
+    ctx.moveTo(p.x-NR, lineY);
+    ctx.lineTo(rx+totalW+4, lineY);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.restore();
+}
+
+function drawMiniTrees(){
+  // Determine which states to show
+  let sA=null, sB=null;
+  if(mode==='inspect'&&selectedIdx>=0){ sA=STATES[selectedIdx]; }
+  if(mode==='distance'){ if(distA>=0) sA=STATES[distA]; if(distB>=0) sB=STATES[distB]; }
+  if(mode==='geodesic'){ if(geoA>=0) sA=STATES[geoA]; if(geoB>=0) sB=STATES[geoB]; }
+  if(!sA&&!sB) return;
+
+  const n=EX.n;
+  const NR=8;
+  const S=28;
+  const starR=S*1.1; // radius for star radial layout
+  // layout: bottom-right corner
+  const treeBoxW=EX.isStar?(starR*2+NR*2+8):(n-2)*S+S*0.7+NR*2;
+  const treeBoxH=EX.isStar?(starR*2+NR*2+8):S*1.5+NR*2;
+  const panelW=sA&&sB?treeBoxW*2+36:treeBoxW+20;
+  const panelH=treeBoxH+52;
+  const px=Math.max(10,W-panelW-10), py=H-panelH-10;
+  // tree center Y: for star, center of radial layout; for Dn, trunk Y
+  const treeY=EX.isStar?py+28+starR+NR:py+28+S*0.7;
+
+  // semi-transparent background
+  ctx.save();
+  ctx.globalAlpha=0.88; ctx.fillStyle='#fffff5';
+  ctx.beginPath(); ctx.roundRect(px,py,panelW,panelH,6); ctx.fill();
+  ctx.strokeStyle='var(--border,#d4c87a)'; ctx.lineWidth=1; ctx.globalAlpha=0.5;
+  ctx.stroke();
+  ctx.restore();
+
+  // node positions for Dn tree in a mini box
+  // trunk: 1..n-2 horizontal, branches n-1 up-right, n down-right from n-2
+  function miniNodePos(nodeId, ox, oy){
+    if(EX.isStar){
+      // ox,oy is the top-left of the tree box; center is ox+boxW/2, oy (which is already the center Y)
+      const cx=ox+treeBoxW/2;
+      if(nodeId===1) return {x:cx, y:oy};
+      const ang=-Math.PI/2+(nodeId-2)*2*Math.PI/(n-1);
+      return {x:cx+Math.cos(ang)*starR, y:oy+Math.sin(ang)*starR};
+    }
+    const trunkLen=n-2;
+    if(nodeId<=trunkLen){
+      return {x: ox+(nodeId-1)*S, y: oy};
+    } else if(nodeId===n-1){
+      return {x: ox+(trunkLen-1)*S+S*0.7, y: oy-S*0.65};
+    } else {
+      return {x: ox+(trunkLen-1)*S+S*0.7, y: oy+S*0.65};
+    }
+  }
+
+  function drawOneTree(state, color, labelText, ox, oy){
+    // label
+    ctx.save();
+    ctx.font=`700 11px 'JetBrains Mono',monospace`;
+    ctx.fillStyle=color; ctx.textAlign='left'; ctx.textBaseline='top';
+    ctx.fillText(labelText, ox, py+6);
+
+    // edges
+    ctx.strokeStyle='#b0a060'; ctx.lineWidth=1.5;
+    EX.treeEdges.forEach(([u,v])=>{
+      const a=miniNodePos(u,ox,oy), b=miniNodePos(v,ox,oy);
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+    });
+
+    // nodes
+    for(let i=1;i<=n;i++){
+      const p=miniNodePos(i,ox,oy);
+      const hasToken=state.includes(i);
+      ctx.beginPath(); ctx.arc(p.x,p.y,NR,0,Math.PI*2);
+      ctx.fillStyle=hasToken?color:'#e8e0b0';
+      ctx.fill();
+      ctx.strokeStyle=hasToken?color:'#a09050'; ctx.lineWidth=1.2; ctx.stroke();
+      ctx.font=`700 8px 'JetBrains Mono',monospace`;
+      ctx.fillStyle=hasToken?'#fff':'#5a4a10';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(String(i),p.x,p.y);
+    }
+    ctx.restore();
+  }
+
+  const treeW=EX.isStar?(S*2.4):(n-2)*S+S*0.7+NR+4;
+
+  if(sA&&sB){
+    drawOneTree(sA,'#1a7a6e','X:', px+12, treeY);
+    drawOneTree(sB,'#c03030','Y:', px+12+treeW+20, treeY);
+  } else if(sA){
+    drawOneTree(sA,'#1a7a6e','X:', px+12, treeY);
+  } else if(sB){
+    drawOneTree(sB,'#c03030','Y:', px+12, treeY);
+  }
+}
+
+/* ═══════════ INTERACTION ═══════════ */
+function hitTest(x,y){
+  const NR=EX.n===5?26:22;
+  let best=-1,bestD=Infinity;
+  STATES.forEach((s,si)=>{
+    const p=statePos(s,W,H); const d=Math.hypot(x-p.x,y-p.y);
+    if(d<NR&&d<bestD){bestD=d;best=si;}
+  });
+  return best;
+}
+
+canvas.addEventListener('mousemove',e=>{
+  const r=canvas.getBoundingClientRect();
+  hoveredIdx=hitTest(e.clientX-r.left,e.clientY-r.top);
+  canvas.style.cursor=hoveredIdx>=0?'pointer':'default';
+  draw();
+});
+canvas.addEventListener('mouseleave',()=>{hoveredIdx=-1;draw();});
+canvas.addEventListener('click',e=>{
+  const r=canvas.getBoundingClientRect();
+  const idx=hitTest(e.clientX-r.left,e.clientY-r.top);
+  if(idx<0) return;
+  if(mode==='inspect'){ selectedIdx=idx; updateInspectPanel(idx); }
+  else if(mode==='distance'){
+    if(distA<0||(distA>=0&&distB>=0)){ distA=idx;distB=-1;distPath=[]; }
+    else { distB=idx; distPath=geodesic(STATES[distA],STATES[distB]); }
+    updateDistPanel();
+  } else if(mode==='geodesic'){
+    if(geoA<0||(geoA>=0&&geoB>=0)){ geoA=idx;geoB=-1;geoPath=[];geoStep=-1; }
+    else if(idx!==geoA){ geoB=idx;geoPath=geodesic(STATES[geoA],STATES[geoB]);geoStep=-1; }
+    updateGeoPanel();
+  }
+  draw(); renderHologram();
+});
+
+/* ═══════════ PANELS ═══════════ */
+function updateInspectPanel(idx){
+  const bitsEl=document.getElementById('inspectBits');
+  const etaEl=document.getElementById('inspectEta');
+  const distEl=document.getElementById('inspectDistRow');
+  const descEl=document.getElementById('inspectDesc');
+  if(idx<0){
+    bitsEl.innerHTML='<span style="color:var(--muted);font-size:13px;">Click a node</span>';
+    etaEl.innerHTML=''; distEl.innerHTML='<span style="color:var(--muted);">Select a state above</span>';
+    descEl.innerHTML=''; return;
+  }
+  const s=STATES[idx];
+  const bits=stateBits(s);
+  bitsEl.innerHTML=bits.split('').map(b=>`<span class="${b==='1'?'tok':''}">${b}</span>`).join('');
+  bitsEl.style.fontSize='22px';
+  const ev=eta(s);
+  etaEl.innerHTML=ev.map((v,i)=>`<div class="eta-chip">η_{${EX.edgeLabels[i]}}=${v}</div>`).join('');
+  descEl.textContent=`tokens at nodes ${s.join(' and ')}`;
+  const dists=DIST[idx];
+  const colOf=d=>['#999','#1a7a6e','#5c7a00','#b5860a','#c05010','#c03030','#8b0000','#500'][d]||'#300';
+  distEl.innerHTML=STATES.map((t,ti)=>{
+    const d=dists[ti];
+    return `<span style="display:inline-block;margin:2px 3px;font-family:var(--mono);font-size:10px;color:${colOf(d)}">${stateBits(t)}:${d}</span>`;
+  }).join('');
+}
+
+// Area_{D_n}(X,Y) = Σ_{i=1}^{n-3} |Σ_{j=i+1}^n (x_j - y_j)| + |x_{n-1}-y_{n-1}| + |x_n-y_n|
+// Returns {total, trunkTerms:[{i,suffixX,suffixY,val}], branchTerms:[{node,xv,yv,val}]}
+function areaDn(s,t){
+  const n=EX.n;
+  const X=EX.nodes.map(v=>s.includes(v)?1:0);
+  const Y=EX.nodes.map(v=>t.includes(v)?1:0);
+  const diff=X.map((x,i)=>x-Y[i]); // x_i - y_i, 0-indexed
+
+  // trunk terms: i=1..n-3, suffix sum from j=i+1..n (1-indexed → j-1 in 0-indexed)
+  const trunkTerms=[];
+  for(let i=1;i<=n-3;i++){
+    // suffix sum Σ_{j=i+1}^{n} (x_j - y_j) — 1-indexed, so 0-indexed: j=i..n-1
+    let sumX=0,sumY=0;
+    for(let j=i;j<n;j++){sumX+=X[j];sumY+=Y[j];}
+    trunkTerms.push({i, suffixX:sumX, suffixY:sumY, val:Math.abs(sumX-sumY)});
+  }
+  // branch terms: |x_{n-1} - y_{n-1}| and |x_n - y_n| (1-indexed → n-2 and n-1 in 0-indexed)
+  const branchTerms=[
+    {node:n-1, xv:X[n-2], yv:Y[n-2], val:Math.abs(X[n-2]-Y[n-2])},
+    {node:n,   xv:X[n-1], yv:Y[n-1], val:Math.abs(X[n-1]-Y[n-1])},
+  ];
+  const total=trunkTerms.reduce((s,t)=>s+t.val,0)+branchTerms.reduce((s,b)=>s+b.val,0);
+  return {total,trunkTerms,branchTerms};
+}
+
+function updateDistPanel(){
+  const aEl=document.getElementById('distStateX');
+  const bEl=document.getElementById('distStateY');
+  const valEl=document.getElementById('distVal');
+  const fmEl=document.getElementById('distFormula');
+  const bkEl=document.getElementById('distBreakdown');
+  const aFmEl=document.getElementById('areaFormula');
+  const aBkEl=document.getElementById('areaBreakdown');
+  aEl.textContent=distA>=0?`X: ${stateBits(STATES[distA])} {${STATES[distA].join(',')}}`:'X: —';
+  bEl.textContent=distB>=0?`Y: ${stateBits(STATES[distB])} {${STATES[distB].join(',')}}`:'Y: —';
+  if(distA>=0&&distB>=0){
+    const d=DIST[distA][distB];
+    valEl.textContent=`d = ${d}`;
+
+    // η-based breakdown
+    const eA=eta(STATES[distA]), eB=eta(STATES[distB]);
+    const terms=eA.map((v,i)=>`|${v}−${eB[i]}|=${Math.abs(v-eB[i])}`);
+    fmEl.textContent='Σ_e |η_e(X)−η_e(Y)|';
+    bkEl.innerHTML=terms.map((t,i)=>`<span style="color:${Math.abs(eA[i]-eB[i])>0?'var(--purple)':'var(--muted)'}">${t}</span>`).join(' + ')+` <b>= ${d}</b>`;
+
+    // Area_{D_n} explicit form — only for Dn trees, not star
+    if(!EX.isStar){
+      const ar=areaDn(STATES[distA],STATES[distB]);
+      const n2=EX.n;
+      aFmEl.innerHTML=`Σ<sub>i=1</sub><sup>${n2-3}</sup>|Σ<sub>j=i+1</sub><sup>${n2}</sup>(x<sub>j</sub>−y<sub>j</sub>)| + |x<sub>${n2-1}</sub>−y<sub>${n2-1}</sub>| + |x<sub>${n2}</sub>−y<sub>${n2}</sub>|`;
+      const trunkAbsTerms=ar.trunkTerms.map(({suffixX,suffixY,val})=>
+        `<span style="color:${val>0?'var(--purple)':'var(--muted)'}">|${suffixX}−${suffixY}|</span>`
+      ).join(' + ');
+      const trunkVals=ar.trunkTerms.map(({val})=>val).join('+');
+      const trunkSum=ar.trunkTerms.reduce((s,{val})=>s+val,0);
+      const branchAbsTerms=ar.branchTerms.map(({xv,yv,val})=>
+        `<span style="color:${val>0?'var(--red)':'var(--muted)'}">|${xv}−${yv}|</span>`
+      ).join(' + ');
+      const branchVals=ar.branchTerms.map(({val})=>val).join('+');
+      const branchSum=ar.branchTerms.reduce((s,{val})=>s+val,0);
+      aBkEl.innerHTML=
+        `<div><b style="color:var(--muted);font-size:9px">trunk =</b> ${trunkAbsTerms} = <b style="color:var(--purple)">${trunkVals} = ${trunkSum}</b></div>`+
+        `<div style="margin-top:3px"><b style="color:var(--muted);font-size:9px">branch =</b> ${branchAbsTerms} = <b style="color:var(--red)">${branchVals} = ${branchSum}</b></div>`+
+        `<div style="margin-top:4px;border-top:1px solid var(--border);padding-top:3px"><b style="color:var(--purple)">total = trunk + branch = ${trunkSum} + ${branchSum} = ${ar.total}</b></div>`;
+    } else {
+      // Star: all edges are equal singletons
+      const eX=eta(STATES[distA]), eY=eta(STATES[distB]);
+      const terms=eX.map((v,i)=>`<span style="color:${Math.abs(v-eY[i])>0?'var(--purple)':'var(--muted)'}">|${v}−${eY[i]}|</span>`);
+      const d2=eX.reduce((s,v,i)=>s+Math.abs(v-eY[i]),0);
+      aFmEl.innerHTML='Star tree: all edges are singletons, so η_e(X) = x_leaf directly';
+      aBkEl.innerHTML=`<div>${terms.join(' + ')} = <b style="color:var(--purple)">${d2}</b></div>`;
+    }
+  } else {
+    valEl.textContent='—'; fmEl.textContent=''; bkEl.textContent='';
+    aFmEl.innerHTML=''; aBkEl.textContent='';
+  }
+
+  // distance matrix
+  const mat=document.getElementById('distMatrix');
+  const colOf=d=>['#aaa','#1a7a6e','#5c7a00','#b5860a','#c05010','#c03030','#8b0000','#500'][d]||'#300';
+  // For large examples (D6: 15 states) use shorter labels
+  const isD6=EX.n>5;
+  const shortLabel=s=>{ const b=stateBits(s); return isD6
+    ? `<div style="writing-mode:vertical-rl;transform:rotate(180deg);font-size:7px;padding:2px 0;letter-spacing:-0.5px">${b}</div>`
+    : `${b.slice(0,3)}<br>${b.slice(3)}`; };
+  let html='<tr><th></th>'+STATES.map(s=>`<th style="font-size:${isD6?7:8}px">${shortLabel(s)}</th>`).join('')+'</tr>';
+  STATES.forEach((s,si)=>{
+    html+=`<tr><th style="font-size:${isD6?7:8}px">${shortLabel(s)}</th>`;
+    STATES.forEach((t,ti)=>{
+      const d=DIST[si][ti];
+      const pc=PATH_COUNT[si][ti];
+      const isSel=(si===distA&&ti===distB)||(si===distB&&ti===distA);
+      const cellText=d===0?'0':`${d}<span style="font-size:7px;opacity:0.6">(${pc})</span>`;
+      html+=`<td class="${d===0?'self':''} ${isSel?'selected':''}"
+        style="${d>0?`color:${colOf(d)}`:''};font-weight:${d>=5?700:400};font-size:${isD6?9:10}px;white-space:nowrap;"
+        onclick="clickMatrix(${si},${ti})">${cellText}</td>`;
+    });
+    html+='</tr>';
+  });
+  mat.innerHTML=html;
+}
+window.clickMatrix=function(si,ti){
+  distA=si;distB=ti;
+  distPath=si!==ti?geodesic(STATES[si],STATES[ti]):[];
+  updateDistPanel();draw();renderHologram();
+};
+
+function updateGeoPanel(){
+  const aEl=document.getElementById('geoStateX');
+  const bEl=document.getElementById('geoStateY');
+  const lenEl=document.getElementById('geoLength');
+  const stepsCard=document.getElementById('geoStepsCard');
+  const stepsList=document.getElementById('geoStepsList');
+  aEl.textContent=geoA>=0?`X: ${stateBits(STATES[geoA])} {${STATES[geoA].join(',')}}`:'X: —';
+  bEl.textContent=geoB>=0?`Y: ${stateBits(STATES[geoB])} {${STATES[geoB].join(',')}}`:'Y: —';
+  if(geoPath.length>1){
+    const d=geoPath.length-1;
+    lenEl.textContent=`d = ${d} move${d!==1?'s':''}`;
+    stepsCard.style.display='';
+    stepsList.innerHTML=geoPath.map((s,i)=>{
+      let moveLabel='';
+      if(i>0){
+        const prev=geoPath[i-1];
+        const lost=prev.find(v=>!s.includes(v));
+        const gained=s.find(v=>!prev.includes(v));
+        const ei=whichEdge(lost,gained);
+        moveLabel=`← ${EX.edgeLabels[ei]}: ${lost}→${gained}`;
+      }
+      const isActive=geoStep<0||(i<=geoStep+1);
+      return `<div class="geo-step ${geoStep>=0&&i===geoStep+1?'active':''}" onclick="setGeoStep(${i-1})">
+        <span class="step-idx">${i}</span>
+        <span class="step-bits" style="color:${i===0?'var(--teal)':i===geoPath.length-1?'var(--red)':'var(--ink)'};opacity:${isActive?1:0.35}">${stateBits(s)}</span>
+        <span class="step-move">${moveLabel}</span>
+      </div>`;
+    }).join('');
+  } else { lenEl.textContent=''; stepsCard.style.display='none'; }
+}
+window.setGeoStep=function(i){ geoStep=i; updateGeoPanel(); draw(); renderHologram(); };
+
+/* ═══════════ HOLOGRAPHIC STRIP ═══════════ */
+function hVector(s){
+  // For star tree: just use subtree counts directly (each subtree is a singleton)
+  // For Dn tree: trunk = suffix sums, branches = leaf bits
+  if(EX.isStar){
+    return EX.subtrees.map(sub=>s.filter(v=>sub.includes(v)).length);
+  }
+  const n=EX.n;
+  const x=new Array(n+1).fill(0);
+  s.forEach(v=>{ x[v]=1; });
+  const h=[];
+  for(let i=1;i<=n-3;i++){
+    let sum=0; for(let j=i+1;j<=n;j++) sum+=x[j];
+    h.push(sum);
+  }
+  h.push(x[n-1]); // branch 1
+  h.push(x[n]);   // branch 2
+  return h;
+}
+
+function svgEl(tag,attrs={},text){
+  const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  for(const [k,v] of Object.entries(attrs)) el.setAttribute(k,v);
+  if(text!=null) el.textContent=text;
+  return el;
+}
+
+function renderHologram(){
+  const svg=document.getElementById('holoSvg');
+  const sub=document.getElementById('holoSubtitle');
+  while(svg.firstChild) svg.removeChild(svg.firstChild);
+
+  const SW=svg.parentElement.clientWidth||340;
+  const SH=svg.parentElement.clientHeight||500;
+  if(SW<10||SH<10) return;
+
+  svg.setAttribute('viewBox',`0 0 ${SW} ${SH}`);
+
+  const n=EX.n, k=EX.k;
+  // For star: no trunk, all edges are singleton-subtree "branch" cells
+  const trunkCols=EX.isStar?0:n-3;
+  const maxH=EX.isStar?1:k; // star heights are 0 or 1
+
+  // Which states are selected in each mode
+  let sA=null,sB=null;
+  if(mode==='inspect'&&selectedIdx>=0) sA=STATES[selectedIdx];
+  if(mode==='distance'){ if(distA>=0) sA=STATES[distA]; if(distB>=0) sB=STATES[distB]; }
+  if(mode==='geodesic'){ if(geoA>=0) sA=STATES[geoA]; if(geoB>=0) sB=STATES[geoB]; }
+
+  const hA=sA?hVector(sA):null;
+  const hB=sB?hVector(sB):null;
+
+  // Subtitle
+  sub.textContent=sA&&sB?`X vs Y — area = ${hA.reduce((s,v,i)=>s+Math.abs(v-(hB[i]||0)),0)}`
+    :sA?`direct image of X`:`— select X and Y`;
+
+  // Layout geometry
+  const pad={l:38,r:14,t:62,b:200};
+
+  // For star: no trunk grid — lay all edges as a 2×2 block of cells
+  if(EX.isStar){
+    const nLeaves=n-1; // 4 leaves
+    const cellStar=Math.min(52, Math.max(24, Math.floor((SH-pad.t-pad.b-120)/2)));
+    const cols2=2, rows2=Math.ceil(nLeaves/cols2);
+    const blockW=cellStar*cols2, blockH=cellStar*rows2;
+    const bx0=SW/2-blockW/2, by0=pad.t+10;
+
+    // draw cells
+    for(let ei=0;ei<nLeaves;ei++){
+      const col=ei%cols2, row=Math.floor(ei/cols2);
+      const cx2=bx0+col*cellStar, cy2=by0+row*cellStar;
+      const aV=hA?hA[ei]:null, bV=hB?hB[ei]:null;
+      const inA=aV>0, inB=bV>0;
+      let cls='hCell';
+      if(inA&&inB) cls='hCellBoth';
+      else if(inA) cls='hCellA';
+      else if(inB) cls='hCellB';
+      svg.appendChild(svgEl('rect',{x:cx2,y:cy2,width:cellStar,height:cellStar,class:cls}));
+      svg.appendChild(svgEl('rect',{x:cx2,y:cy2,width:cellStar,height:cellStar,fill:'none',
+        stroke:'var(--border)','stroke-width':'1'}));
+      // contributing border
+      if(hA&&hB&&Math.abs((aV||0)-(bV||0))>0)
+        svg.appendChild(svgEl('rect',{x:cx2+1,y:cy2+1,width:cellStar-2,height:cellStar-2,
+          fill:'none',stroke:'var(--purple)','stroke-width':'2.5'}));
+      // value
+      const valTxt=hA&&hB?`${aV??''}/${bV??''}`:hA?String(aV??''):String(bV??'');
+      svg.appendChild(svgEl('text',{x:cx2+cellStar/2,y:cy2+cellStar/2+4,
+        'text-anchor':'middle','font-size':11,class:'hText'},valTxt));
+      // δ label
+      if(hA&&hB){
+        const d2=Math.abs((aV||0)-(bV||0));
+        svg.appendChild(svgEl('text',{x:cx2+cellStar/2,y:cy2+cellStar+12,
+          'text-anchor':'middle','font-size':9,
+          fill:d2>0?'var(--purple)':'var(--muted)','font-weight':d2>0?'700':'400'},
+          d2>0?`|δ|=${d2}`:'0'));
+      }
+      // edge label to the right
+      svg.appendChild(svgEl('text',{x:cx2+cellStar+5,y:cy2+cellStar/2+4,
+        'font-size':10,class:'hTextMuted'},EX.edgeLabels[ei]));
+    }
+
+    // total
+    const L3s=by0+blockH+26;
+    if(hA&&hB){
+      const total=hA.reduce((s,v,i)=>s+Math.abs(v-(hB[i]||0)),0);
+      svg.appendChild(svgEl('text',{x:SW/2,y:L3s,'text-anchor':'middle',
+        'font-size':13,'font-weight':'700',fill:'var(--purple)'},`d = ${total}`));
+    }
+
+    // ν-table below total
+    const tblYs=L3s+18;
+    const showX2=!!hA, showY2=!!hB;
+    const cols2t=['edge','T_e',...(showX2?['η(X)']:[]),...(showY2?['η(Y)']:[]),...(showX2&&showY2?['|δ|']:[])];
+    const nCols2=cols2t.length;
+    const tblW2=Math.min(SW-20,260), tblX2=SW/2-tblW2/2;
+    const colW2=[34,tblW2-34-28*(nCols2-2),...Array(nCols2-2).fill(28)];
+    const rowH2=15, hdrH2=16;
+    svg.appendChild(svgEl('rect',{x:tblX2,y:tblYs,width:tblW2,height:hdrH2,
+      fill:'#fffbcc',stroke:'var(--border)','stroke-width':'0.8'}));
+    let cxT=tblX2;
+    cols2t.forEach((c,ci)=>{
+      const w=colW2[ci]||28;
+      svg.appendChild(svgEl('text',{x:cxT+w/2,y:tblYs+hdrH2-4,'text-anchor':'middle',
+        'font-size':9,'font-weight':'700',fill:'#7a6a30'},c));
+      cxT+=w;
+    });
+    for(let ei=0;ei<nLeaves;ei++){
+      const ry=tblYs+hdrH2+ei*rowH2;
+      const vX=hA?hA[ei]:'—', vY=hB?hB[ei]:'—';
+      const delta=(showX2&&showY2)?Math.abs((hA[ei]||0)-(hB[ei]||0)):null;
+      const rowBg=delta>0?'rgba(92,58,176,0.08)':(ei%2===0?'rgba(0,0,0,0.02)':'');
+      svg.appendChild(svgEl('rect',{x:tblX2,y:ry,width:tblW2,height:rowH2,
+        fill:rowBg,stroke:'var(--border)','stroke-width':'0.5'}));
+      const rowVals=[EX.edgeLabels[ei],`{${EX.subtrees[ei].join(',')}}`,
+        ...(showX2?[String(vX)]:[]),...(showY2?[String(vY)]:[]),
+        ...(delta!==null?[delta>0?String(delta):'0']:[])];
+      let rx=tblX2;
+      rowVals.forEach((val,ci)=>{
+        const w=colW2[ci]||28;
+        const isDelta=ci===nCols2-1&&showX2&&showY2;
+        const isVX=ci===2&&showX2, isVY=(showX2?ci===3:ci===2)&&showY2;
+        let fill='var(--ink,#1c1810)';
+        if(ci===0) fill='var(--gold,#b5860a)';
+        else if(isVX&&vX>0) fill='var(--teal,#1a7a6e)';
+        else if(isVY&&vY>0) fill='var(--red,#c03030)';
+        else if(isDelta&&delta>0) fill='var(--purple,#5c3ab0)';
+        if(isDelta&&delta>0) svg.appendChild(svgEl('rect',{x:rx+1,y:ry+1,width:w-2,height:rowH2-2,
+          fill:'rgba(181,134,10,0.35)',rx:'2'}));
+        if(isVX&&vX>0) svg.appendChild(svgEl('rect',{x:rx+1,y:ry+1,width:w-2,height:rowH2-2,
+          fill:'rgba(26,122,110,0.15)',rx:'2'}));
+        if(isVY&&vY>0) svg.appendChild(svgEl('rect',{x:rx+1,y:ry+1,width:w-2,height:rowH2-2,
+          fill:'rgba(192,48,48,0.12)',rx:'2'}));
+        svg.appendChild(svgEl('text',{x:rx+w/2,y:ry+rowH2-4,'text-anchor':'middle',
+          'font-size':9,'font-weight':isDelta&&delta>0?'700':'400',fill},val));
+        rx+=w;
+      });
+    }
+    const tblTotalH2=hdrH2+nLeaves*rowH2;
+
+    // mini star tree
+    const L5s=tblYs+tblTotalH2+12;
+    const L6s=tblYs+tblTotalH2+44;
+    svg.appendChild(svgEl('text',{x:SW/2,y:L5s,'text-anchor':'middle','font-size':9,class:'hTextSmall'},
+      `base tree S${n-1} (center=1, teal=X, red=Y)`));
+    const tsr=Math.min(32,SW/8);
+    const tcx=SW/2, tcy=L6s;
+    const starCoords=new Map([[1,{x:tcx,y:tcy}]]);
+    for(let i=2;i<=n;i++){
+      const ang=-Math.PI/2+(i-2)*2*Math.PI/(n-1);
+      starCoords.set(i,{x:tcx+Math.cos(ang)*tsr,y:tcy+Math.sin(ang)*tsr});
+    }
+    EX.treeEdges.forEach(([u,v])=>{
+      const a=starCoords.get(u),b=starCoords.get(v);
+      svg.appendChild(svgEl('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,class:'hTreeEdge'}));
+    });
+    for(let i=1;i<=n;i++){
+      const p=starCoords.get(i);
+      const hasA=sA&&sA.includes(i), hasB=sB&&sB.includes(i);
+      let fill,stroke,textFill;
+      if(hasA&&hasB){ fill='#5c3ab0';stroke='#3d2080';textFill='#fff'; }
+      else if(hasA)  { fill='#1a7a6e';stroke='#0f5048';textFill='#fff'; }
+      else if(hasB)  { fill='#c03030';stroke='#8b1a1a';textFill='#fff'; }
+      else if(i===1) { fill='#b5860a';stroke='#8a6000';textFill='#fff'; }
+      else           { fill='#e0d8b8';stroke='#a09050';textFill='#5a4a10'; }
+      svg.appendChild(svgEl('circle',{cx:p.x,cy:p.y,r:9,fill,stroke,'stroke-width':'1.5'}));
+      svg.appendChild(svgEl('text',{x:p.x,y:p.y+4,'text-anchor':'middle','font-size':9,'font-weight':'700',fill:textFill},String(i)));
+    }
+    svg.appendChild(svgEl('text',{x:SW/2,y:L6s+tsr+16,'text-anchor':'middle','font-size':8,class:'hTextSmall'},
+      'all η_e(X) = x_leaf ∈ {0,1} — singleton subtrees'));
+    return; // done for star
+  }
+
+  const branchGap=28;
+  const availW=SW-pad.l-pad.r-branchGap;
+  // cell size — computed jointly so trunk and branch cells are identical
+  const cell=Math.min(52,Math.max(16,
+    Math.min(Math.floor((availW-(availW/(trunkCols+1)))/Math.max(trunkCols,1)),
+             Math.floor((SH-pad.t-pad.b)/Math.max(maxH,1)))
+  ));
+  const branchW=cell; // branch cells same size as trunk cells
+  const gridW=cell*trunkCols;
+  const gridH=cell*maxH;
+  const x0=pad.l+(availW-branchW-branchGap-gridW)/2;
+  const y0=pad.t;
+  const branchX=x0+gridW+branchGap;
+  const branchY0=y0+Math.max(0,Math.round((gridH-2*branchW)/2));
+
+  // Title: area breakdown trunk + branch
+  let titleStr='';
+  if(hA&&hB){
+    const trunkArea=hA.slice(0,trunkCols).reduce((s,v,i)=>s+Math.abs(v-(hB[i]||0)),0);
+    const branchArea=Math.abs((hA[trunkCols]||0)-(hB[trunkCols]||0))+Math.abs((hA[trunkCols+1]||0)-(hB[trunkCols+1]||0));
+    const total=trunkArea+branchArea;
+    titleStr=`η(X) vs η(Y)   trunk=${trunkArea}  branch=${branchArea}  d=${total}`;
+  } else if(hA){
+    titleStr=`η(X) for state ${stateBits(sA)}`;
+  } else {
+    titleStr='select X (and optionally Y) to see hologram';
+  }
+  svg.appendChild(svgEl('text',{x:SW/2,y:18,'text-anchor':'middle','font-size':11,class:'hText'},titleStr));
+
+  // ── color legend (always visible) ──
+  const legY=32, legX=SW/2-110, legS=10, legGap=58;
+  const legItems=[
+    {cls:'hCellA',   label:'X only'},
+    {cls:'hCellB',   label:'Y only'},
+    {cls:'hCellBoth',label:'both'},
+    {cls:'hCell',    label:'neither'},
+  ];
+  legItems.forEach((item,i)=>{
+    const x=legX+i*legGap;
+    svg.appendChild(svgEl('rect',{x,y:legY,width:legS,height:legS,class:item.cls,
+      stroke:'var(--border)','stroke-width':'0.8'}));
+    svg.appendChild(svgEl('text',{x:x+legS+3,y:legY+legS-1,'font-size':8,class:'hTextMuted'},item.label));
+  });
+  // note: area = A-only + B-only cells
+  if(hA&&hB){
+    svg.appendChild(svgEl('text',{x:SW/2,y:legY+legS+10,'text-anchor':'middle','font-size':8,
+      class:'hTextSmall'},'area = (X only) + (Y only) cells counted column by column'));
+  }
+
+  if(!hA&&!hB){
+    svg.appendChild(svgEl('text',{x:SW/2,y:SH/2,'text-anchor':'middle','font-size':11,class:'hTextMuted'},
+      'click a state to select X (and optionally Y)'));
+  }
+
+  // ── trunk rectangle ──
+  for(let j=0;j<trunkCols;j++){
+    for(let r=0;r<maxH;r++){
+      const x=x0+j*cell, y=y0+(maxH-r-1)*cell;
+      const inA=hA&&r<hA[j], inB=hB&&r<hB[j];
+      let cls='hCell';
+      if(inA&&inB) cls='hCellBoth';
+      else if(inA) cls='hCellA';
+      else if(inB) cls='hCellB';
+      svg.appendChild(svgEl('rect',{x,y,width:cell,height:cell,class:cls}));
+    }
+  }
+
+  // ── trunk grid lines ──
+  for(let j=0;j<=trunkCols;j++){
+    const x=x0+j*cell;
+    svg.appendChild(svgEl('line',{x1:x,y1:y0,x2:x,y2:y0+gridH,class:'hGrid'}));
+  }
+  for(let r=0;r<=maxH;r++){
+    const y=y0+r*cell;
+    svg.appendChild(svgEl('line',{x1:x0,y1:y,x2:x0+gridW,y2:y,class:'hGrid'}));
+  }
+
+  // ── y-axis labels ──
+  for(let r=0;r<=maxH;r++){
+    const y=y0+gridH-r*cell+4;
+    svg.appendChild(svgEl('text',{x:x0-8,'y':y,'text-anchor':'end','font-size':10,class:'hTextMuted'},String(r)));
+  }
+
+  // ── δ labels and summary below trunk grid ──
+  const L1=y0+gridH+16;  // edge label row
+  const L2=y0+gridH+30;  // |δ| row
+  const L3=y0+gridH+50;  // d = total (bold)
+
+  if(hA&&hB){
+    for(let j=0;j<trunkCols;j++){
+      const d=Math.abs(hA[j]-hB[j]);
+      const x=x0+j*cell+cell/2;
+      svg.appendChild(svgEl('text',{x,y:L1,'text-anchor':'middle','font-size':10,class:'hTextMuted'},EX.edgeLabels[j]));
+      svg.appendChild(svgEl('text',{x,y:L2,'text-anchor':'middle','font-size':9,
+        fill:d>0?'var(--purple)':'var(--muted)','font-weight':d>0?'700':'400'},d>0?`|δ|=${d}`:'0'));
+    }
+    const trunkArea=hA.slice(0,trunkCols).reduce((s,v,i)=>s+Math.abs(v-hB[i]),0);
+    const branchArea=hA.slice(trunkCols).reduce((s,v,i)=>s+Math.abs(v-(hB[trunkCols+i]||0)),0);
+    const total=trunkArea+branchArea;
+    svg.appendChild(svgEl('text',{x:(x0+branchX+branchW)/2,y:L3,'text-anchor':'middle',
+      'font-size':13,'font-weight':'700',fill:'var(--purple)'},`d = ${trunkArea} + ${branchArea} = ${total}`));
+  } else {
+    for(let j=0;j<trunkCols;j++){
+      const x=x0+j*cell+cell/2;
+      svg.appendChild(svgEl('text',{x,y:L1,'text-anchor':'middle','font-size':10,class:'hTextMuted'},EX.edgeLabels[j]));
+    }
+  }
+
+  // ── ν-table (height vector table) ──
+  // placed below L3, above mini tree
+  const tblY=L3+18;
+  const allEdges=EX.edgeLabels; // all n-1 edges
+  const hAFull=hA||[], hBFull=hB||[];
+  const nEdges=allEdges.length;
+  // table columns: edge | T_e | ν(X) | ν(Y) | |δ|  (last two/three only when hA/hB present)
+  const showX=!!hA, showY=!!hB;
+  const cols=['edge','T_e',...(showX?['η(X)']:[]),...(showY?['η(Y)']:[]),...(showX&&showY?['|δ|']:[])];
+  const nCols=cols.length;
+  const tblW=Math.min(SW-20, 280);
+  const tblX=SW/2-tblW/2;
+  const colW=[38, tblW-38-30*(nCols-2), ...Array(nCols-2).fill(30)]; // edge|T_e|rest
+  const rowH=16, hdrH=17;
+
+  // subtree string for each edge
+  function subtreeStr(edgeIdx){
+    const sub=EX.subtrees[edgeIdx];
+    return `{${sub.join(',')}}`
+  }
+
+  // header row background
+  svg.appendChild(svgEl('rect',{x:tblX,y:tblY,width:tblW,height:hdrH,
+    fill:'var(--gold3,#fffbcc)',stroke:'var(--border)','stroke-width':'0.8'}));
+  // header text
+  let cx=tblX;
+  cols.forEach((c,ci)=>{
+    const w=colW[ci]||30;
+    svg.appendChild(svgEl('text',{x:cx+w/2,y:tblY+hdrH-4,'text-anchor':'middle','font-size':9,
+      'font-weight':'700',fill:'#7a6a30'},c));
+    cx+=w;
+  });
+
+  // data rows
+  for(let ei=0;ei<nEdges;ei++){
+    const ry=tblY+hdrH+ei*rowH;
+    const vX=hAFull[ei]??'—', vY=hBFull[ei]??'—';
+    const delta=(showX&&showY)?Math.abs((hAFull[ei]??0)-(hBFull[ei]??0)):null;
+    const rowBg=delta>0?'rgba(92,58,176,0.08)':(ei%2===0?'rgba(0,0,0,0.02)':'rgba(0,0,0,0)');
+    svg.appendChild(svgEl('rect',{x:tblX,y:ry,width:tblW,height:rowH,
+      fill:rowBg,stroke:'var(--border)','stroke-width':'0.5'}));
+
+    const rowVals=[EX.edgeLabels[ei], subtreeStr(ei),
+      ...(showX?[String(vX)]:[]),
+      ...(showY?[String(vY)]:[]),
+      ...(delta!==null?[delta>0?String(delta):'0']:[])];
+    let rx=tblX;
+    rowVals.forEach((val,ci)=>{
+      const w=colW[ci]||30;
+      const isEdge=ci===0, isDelta=ci===nCols-1&&showX&&showY;
+      const isVX=ci===2&&showX, isVY=(showX?ci===3:ci===2)&&showY;
+      let fill='var(--ink,#1c1810)';
+      if(isEdge) fill='var(--gold,#b5860a)';
+      else if(isVX&&vX>0) fill='var(--teal,#1a7a6e)';
+      else if(isVY&&vY>0) fill='var(--red,#c03030)';
+      else if(isDelta&&delta>0){ fill='var(--purple,#5c3ab0)'; }
+      const fw=isDelta&&delta>0?'700':'400';
+      // delta cell gets orange bg like the screenshot
+      if(isDelta&&delta>0){
+        svg.appendChild(svgEl('rect',{x:rx+1,y:ry+1,width:w-2,height:rowH-2,
+          fill:'rgba(181,134,10,0.35)',rx:'2'}));
+      }
+      // X cell highlight
+      if(isVX&&vX>0){
+        svg.appendChild(svgEl('rect',{x:rx+1,y:ry+1,width:w-2,height:rowH-2,
+          fill:'rgba(26,122,110,0.15)',rx:'2'}));
+      }
+      // Y cell highlight
+      if(isVY&&vY>0){
+        svg.appendChild(svgEl('rect',{x:rx+1,y:ry+1,width:w-2,height:rowH-2,
+          fill:'rgba(192,48,48,0.12)',rx:'2'}));
+      }
+      svg.appendChild(svgEl('text',{x:rx+w/2,y:ry+rowH-4,'text-anchor':'middle',
+        'font-size':9,'font-weight':fw,fill},val));
+      rx+=w;
+    });
+  }
+  const tblTotalH=hdrH+nEdges*rowH;
+
+  // ── mini tree and captions ──
+  const treeR=9;
+  const ts=Math.min(34,Math.max(18,gridW>0?gridW/Math.max(n-2,1):40));
+  const L5=tblY+tblTotalH+18;   // "base tree" caption
+  const L6=tblY+tblTotalH+56;   // mini tree trunk node y
+  const treeBottomY=EX.isStar?L6+ts*1.1+treeR:L6+ts*0.7+treeR;
+  const capY=treeBottomY+18;
+  const cap2Y=capY+13;
+  const rectY=cap2Y+20;
+
+  // ── mini Dn tree ──
+  svg.appendChild(svgEl('text',{x:SW/2,y:L5,'text-anchor':'middle','font-size':9,class:'hTextSmall'},
+    `base tree D${n} (root=1, teal=X, red=Y)`));
+  const tx0=SW/2-(n-3)*ts/2-ts;
+  const tcoords=new Map();
+  if(EX.isStar){
+    const tcx=SW/2, tcy=L6;
+    const tr=ts*1.1;
+    tcoords.set(1,{x:tcx,y:tcy});
+    for(let i=2;i<=n;i++){
+      const ang=-Math.PI/2+(i-2)*2*Math.PI/(n-1);
+      tcoords.set(i,{x:tcx+Math.cos(ang)*tr,y:tcy+Math.sin(ang)*tr});
+    }
+  } else {
+    for(let i=1;i<=n-2;i++) tcoords.set(i,{x:tx0+(i-1)*ts,y:L6});
+    tcoords.set(n-1,{x:tx0+(n-3)*ts+ts*0.85,y:L6-ts*0.7});
+    tcoords.set(n,  {x:tx0+(n-3)*ts+ts*0.85,y:L6+ts*0.7});
+  }
+  EX.treeEdges.forEach(([u,v])=>{
+    const a=tcoords.get(u),b=tcoords.get(v);
+    svg.appendChild(svgEl('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,class:'hTreeEdge'}));
+  });
+  for(let i=1;i<=n;i++){
+    const p=tcoords.get(i);
+    const hasA=sA&&sA.includes(i), hasB=sB&&sB.includes(i);
+    let fill, stroke, textFill;
+    if(hasA&&hasB){ fill='#5c3ab0'; stroke='#3d2080'; textFill='#fff'; }
+    else if(hasA)  { fill='#1a7a6e'; stroke='#0f5048'; textFill='#fff'; }
+    else if(hasB)  { fill='#c03030'; stroke='#8b1a1a'; textFill='#fff'; }
+    else if(i===1) { fill='#b5860a'; stroke='#8a6000'; textFill='#fff'; }
+    else           { fill='#e0d8b8'; stroke='#a09050'; textFill='#5a4a10'; }
+    svg.appendChild(svgEl('circle',{cx:p.x,cy:p.y,r:treeR,fill,stroke,'stroke-width':'1.5'}));
+    svg.appendChild(svgEl('text',{x:p.x,y:p.y+4,'text-anchor':'middle','font-size':9,
+      'font-weight':'700',fill:textFill},String(i)));
+  }
+
+  // captions
+  svg.appendChild(svgEl('text',{x:SW/2,y:capY,'text-anchor':'middle','font-size':9,class:'hTextSmall'},
+    'trunk col eᵢ height = # tokens in subtree beyond eᵢ'));
+  svg.appendChild(svgEl('text',{x:SW/2,y:cap2Y,'text-anchor':'middle','font-size':9,class:'hTextSmall'},
+    'branch cells = leaf token bits (x_{n-1}, x_n ∈ {0,1})'));
+
+  // ── d(X,Y) delta-column rectangle ──
+  if(hA&&hB){
+    const total=hA.reduce((s,v,i)=>s+Math.abs(v-(hB[i]||0)),0);
+    const nEdgesAll=EX.edgeLabels.length;
+
+    // ── delta-column rectangle ──
+    // k rows × (n-1) cols, column e filled to |δ_e| from bottom
+    const deltaY=rectY;
+    const nCols=nEdgesAll;
+    const kRows=EX.k;
+    const dcell=Math.min(24, Math.max(12, Math.floor((SW-60)/Math.max(nCols,1))));
+    const dW=nCols*dcell, dH=kRows*dcell;
+    const dx0=SW/2-dW/2;
+
+    // title
+    svg.appendChild(svgEl('text',{x:SW/2,y:deltaY-4,'text-anchor':'middle','font-size':9,
+      'font-weight':'700',fill:'var(--purple)'},
+      `Hologram: ${kRows}×${nCols} rectangle, col e filled by |δ_e|`));
+
+    // draw cells
+    for(let e=0;e<nCols;e++){
+      const delta=Math.abs((hA[e]||0)-(hB[e]||0));
+      for(let r=0;r<kRows;r++){
+        const rowFromBottom=kRows-1-r;
+        const shade=rowFromBottom<delta;
+        const cx2=dx0+e*dcell, cy2=deltaY+8+r*dcell;
+        svg.appendChild(svgEl('rect',{x:cx2,y:cy2,width:dcell,height:dcell,
+          fill:shade?'rgba(92,58,176,0.45)':'#ddd8c0',
+          stroke:'#9b7de0','stroke-width':shade?'1.5':'0.8'}));
+      }
+      // edge label below column
+      svg.appendChild(svgEl('text',{x:dx0+e*dcell+dcell/2,y:deltaY+8+dH+11,
+        'text-anchor':'middle','font-size':8,class:'hTextSmall'},EX.edgeLabels[e]));
+      // |δ| value above column (if nonzero)
+      const delta2=Math.abs((hA[e]||0)-(hB[e]||0));
+      if(delta2>0){
+        svg.appendChild(svgEl('text',{x:dx0+e*dcell+dcell/2,y:deltaY+4,
+          'text-anchor':'middle','font-size':8,'font-weight':'700',fill:'var(--purple)'},
+          String(delta2)));
+      }
+    }
+    // outer border
+    svg.appendChild(svgEl('rect',{x:dx0,y:deltaY+8,width:dW,height:dH,
+      fill:'none',stroke:'var(--purple)','stroke-width':'2'}));
+    // y-axis ticks
+    for(let r=0;r<=kRows;r++){
+      svg.appendChild(svgEl('text',{x:dx0-4,y:deltaY+8+r*dcell+4,
+        'text-anchor':'end','font-size':8,class:'hTextMuted'},String(kRows-r)));
+    }
+    // sum label
+    svg.appendChild(svgEl('text',{x:SW/2,y:deltaY+8+dH+22,'text-anchor':'middle',
+      'font-size':9,'font-weight':'700',fill:'var(--purple)'},
+      `Area = Σ|δ_e| = d(X,Y) = ${total}`));
+  };
+  function stepPath(h,col){
+    if(!h||!trunkCols) return '';
+    const hh=h.slice(0,trunkCols);
+    const yv=v=>y0+gridH-v*cell;
+    let d=`M ${x0} ${yv(hh[0])}`;
+    for(let j=0;j<hh.length;j++){
+      d+=` L ${x0+(j+1)*cell} ${yv(hh[j])}`;
+      if(j+1<hh.length) d+=` L ${x0+(j+1)*cell} ${yv(hh[j+1])}`;
+    }
+    return d;
+  }
+  if(hA) svg.appendChild(svgEl('path',{d:stepPath(hA),class:'hCurveA'}));
+  if(hB) svg.appendChild(svgEl('path',{d:stepPath(hB),class:'hCurveB'}));
+
+  // dots at top of each column
+  function drawDots(h,cls){
+    for(let j=0;j<trunkCols;j++){
+      svg.appendChild(svgEl('circle',{cx:x0+j*cell+cell/2,cy:y0+gridH-h[j]*cell,r:3.5,class:cls}));
+    }
+  }
+  if(hA) drawDots(hA,'hDotA');
+  if(hB) drawDots(hB,'hDotB');
+
+  // ── A/B legend labels ──
+  if(hA){
+    svg.appendChild(svgEl('text',{x:x0-6,y:y0+gridH-hA[0]*cell-4,'text-anchor':'end','font-size':11,
+      fill:'var(--teal)','font-weight':'700'},'X'));
+  }
+  if(hB){
+    svg.appendChild(svgEl('text',{x:x0-6,y:y0+gridH-hB[0]*cell+12,'text-anchor':'end','font-size':11,
+      fill:'var(--red)','font-weight':'700'},'Y'));
+  }
+
+  // ── detached branch block ──
+  const branchEdgeCount=EX.isStar?EX.edgeLabels.length:2;
+  const branchEdgeLabels=EX.isStar?EX.edgeLabels:EX.edgeLabels.slice(trunkCols);
+  for(let idx=0;idx<branchEdgeCount;idx++){
+    const x=branchX, y=branchY0+idx*branchW;
+    const aVal=hA?hA[trunkCols+idx]:0;
+    const bVal=hB?hB[trunkCols+idx]:0;
+    const inA=!!aVal, inB=!!bVal;
+    let cls='hCell';
+    if(inA&&inB) cls='hCellBoth';
+    else if(inA) cls='hCellA';
+    else if(inB) cls='hCellB';
+    svg.appendChild(svgEl('rect',{x,y,width:branchW,height:branchW,class:cls}));
+    svg.appendChild(svgEl('rect',{x,y,width:branchW,height:branchW,fill:'none',stroke:'var(--border)','stroke-width':'1'}));
+    // value text
+    if(hA||hB){
+      const txt=hA&&hB?`${aVal}/${bVal}`:hA?String(aVal):String(bVal);
+      svg.appendChild(svgEl('text',{x:x+branchW/2,y:y+branchW/2+4,'text-anchor':'middle','font-size':11,
+        class:'hText'},txt));
+    }
+    // edge label
+    svg.appendChild(svgEl('text',{x:x+branchW+7,y:y+branchW/2+4,'font-size':10,class:'hTextMuted'},
+      branchEdgeLabels[idx]));
+    // δ for branch — always show, bold if nonzero
+    if(hA&&hB){
+      const d=Math.abs((hA[trunkCols+idx]||0)-(hB[trunkCols+idx]||0));
+      svg.appendChild(svgEl('text',{x:x+branchW/2,y:y+branchW+13,'text-anchor':'middle',
+        'font-size':9,fill:d>0?'var(--purple)':'var(--muted)','font-weight':d>0?'700':'400'},
+        d>0?`|δ|=${d}`:'0'));
+      // thick border highlight if contributing
+      if(d>0) svg.appendChild(svgEl('rect',{x,y,width:branchW,height:branchW,
+        fill:'none',stroke:'var(--purple)','stroke-width':'2.5'}));
+    }
+  }
+
+  // (connector arrow and "2 branch bits" label removed)
+
+  // ── bottom caption (now in mini tree section above) ──
+}
+
+/* ═══════════ HOLO: ALL-NODE η RECTANGLES ═══════════
+   For every node in the token graph, draws a small (n-1)×k
+   height rectangle showing η(X) for that node.
+
+   Overlap avoidance strategy:
+   1. For each node compute 8 candidate placements (N,NE,E,SE,S,SW,W,NW).
+   2. Score each candidate by: (a) stays inside canvas, (b) does not
+      overlap already-placed rectangles, (c) does not overlap any node.
+   3. Pick the best-scoring candidate; if all overlap, pick the one
+      with least overlap area (graceful degradation).
+   4. Process nodes in a stable order (left-to-right, top-to-bottom)
+      so the layout is deterministic.
+*/
+function drawAllEtaRects(){
+  const NR=EX.n===5?22:18;
+  const CW=13, CH=11;          // smaller cells than single-node view
+  const nEdges=EX.subtrees.length;
+  const kRows=EX.k;
+  const gridW=nEdges*CW;
+  const gridH=kRows*CH;
+  const HDR=12, FTR=11;
+  const rW=gridW+2, rH=HDR+gridH+FTR+2;
+  const GAP=8;                 // gap between node circle edge and rect
+
+  // All node screen positions
+  const positions=STATES.map(s=>statePos(s,W,H));
+
+  // Sort nodes: top-to-bottom, left-to-right (stable placement order)
+  const order=[...STATES.keys()].sort((a,b)=>{
+    const pa=positions[a], pb=positions[b];
+    return (pa.y-pb.y)*3+(pa.x-pb.x);
+  });
+
+  // Placed rectangles accumulator for overlap testing  [{x,y,w,h}]
+  const placed=[];
+
+  // Candidate offsets: 8 directions, distance = NR+GAP from node centre
+  function candidates(px,py){
+    const d=NR+GAP;
+    const diag=d*0.72;
+    return [
+      {dx:0,      dy:-(rH+d),  ax:px-rW/2,        ay:py-rH-d},        // N
+      {dx:d,      dy:-diag,    ax:px+d,             ay:py-diag-rH/2},  // NE
+      {dx:d,      dy:0,        ax:px+d,             ay:py-rH/2},       // E
+      {dx:d,      dy:diag,     ax:px+d,             ay:py+diag-rH/2},  // SE
+      {dx:0,      dy:d,        ax:px-rW/2,          ay:py+d},          // S
+      {dx:-d-rW,  dy:diag,     ax:px-d-rW,          ay:py+diag-rH/2}, // SW
+      {dx:-d-rW,  dy:0,        ax:px-d-rW,          ay:py-rH/2},       // W
+      {dx:-d-rW,  dy:-diag,    ax:px-d-rW,          ay:py-diag-rH/2}, // NW
+    ];
+  }
+
+  function rectOverlap(ax,ay,bx,by,bw,bh){
+    // does rect (ax,ay,rW,rH) overlap rect (bx,by,bw,bh)?
+    return ax<bx+bw && ax+rW>bx && ay<by+bh && ay+rH>by;
+  }
+
+  function overlapArea(ax,ay,bx,by,bw,bh){
+    const ox=Math.max(0,Math.min(ax+rW,bx+bw)-Math.max(ax,bx));
+    const oy=Math.max(0,Math.min(ay+rH,by+bh)-Math.max(ay,by));
+    return ox*oy;
+  }
+
+  function scoreCandidate(ax,ay,nodeIdx){
+    let score=0;
+    // penalty: outside canvas
+    if(ax<2||ay<2||ax+rW>W-2||ay+rH>H-2) score+=10000;
+    // penalty: overlaps a placed rect
+    for(const r of placed){
+      if(rectOverlap(ax,ay,r.x,r.y,r.w,r.h))
+        score+=500+overlapArea(ax,ay,r.x,r.y,r.w,r.h);
+    }
+    // penalty: overlaps any node circle
+    for(let i=0;i<STATES.length;i++){
+      const p=positions[i];
+      // approx: circle as bounding box (2*NR square)
+      const nx=p.x-NR, ny=p.y-NR, nw=NR*2, nh=NR*2;
+      if(rectOverlap(ax,ay,nx,ny,nw,nh))
+        score+=300+overlapArea(ax,ay,nx,ny,nw,nh);
+    }
+    return score;
+  }
+
+  // Compute and draw all rects
+  const rectData=[];  // {idx, ax, ay, ev}
+
+  for(const idx of order){
+    const s=STATES[idx];
+    const {x:px,y:py}=positions[idx];
+    const ev=eta(s);
+    const cands=candidates(px,py);
+
+    let best=null, bestScore=Infinity;
+    for(const c of cands){
+      const sc=scoreCandidate(c.ax,c.ay,idx);
+      if(sc<bestScore){bestScore=sc;best=c;}
+    }
+    // clamp to canvas
+    let ax=Math.max(2,Math.min(W-rW-2, best.ax));
+    let ay=Math.max(2,Math.min(H-rH-2, best.ay));
+    placed.push({x:ax,y:ay,w:rW,h:rH});
+    rectData.push({idx,ax,ay,ev,px,py});
+  }
+
+  // Draw all rects (drawn after all positions settled)
+  ctx.save();
+  for(const {idx,ax,ay,ev,px,py} of rectData){
+    const s=STATES[idx];
+    const bits=stateBits(s);
+
+    // ── connector line ──
+    ctx.globalAlpha=0.28;
+    ctx.strokeStyle='#8a7a50'; ctx.lineWidth=0.8; ctx.setLineDash([2,3]);
+    ctx.beginPath();
+    // connect node centre to nearest rect edge midpoint
+    const rx_mid=ax+rW/2, ry_mid=ay+rH/2;
+    const dx=rx_mid-px, dy=ry_mid-py;
+    const len=Math.hypot(dx,dy)||1;
+    ctx.moveTo(px+dx/len*NR, py+dy/len*NR);
+    ctx.lineTo(ax+rW/2, ay+rH/2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // ── background ──
+    ctx.globalAlpha=0.90;
+    ctx.fillStyle='#fffff5';
+    ctx.beginPath(); ctx.roundRect(ax,ay,rW,rH,3); ctx.fill();
+    ctx.strokeStyle='#c8c060'; ctx.lineWidth=0.9; ctx.stroke();
+
+    // ── bit-string label (header) ──
+    ctx.globalAlpha=1;
+    ctx.font=`600 8px 'JetBrains Mono',monospace`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillStyle='#5c3ab0';
+    ctx.fillText(bits, ax+rW/2, ay+HDR/2);
+
+    // ── grid cells ──
+    const gx0=ax+1, gy0=ay+HDR;
+    for(let e=0;e<nEdges;e++){
+      const filled=ev[e];
+      const isBr=EX.isBranch[e];
+      for(let row=0;row<kRows;row++){
+        const isFilled=(row>=kRows-filled);
+        const cx=gx0+e*CW, cy=gy0+row*CH;
+        ctx.fillStyle=isFilled
+          ?(isBr?'rgba(192,48,48,0.40)':'rgba(26,122,110,0.42)')
+          :'#e8e0c0';
+        ctx.fillRect(cx,cy,CW,CH);
+        ctx.strokeStyle='#c8b870'; ctx.lineWidth=0.5;
+        ctx.strokeRect(cx,cy,CW,CH);
+      }
+    }
+
+    // ── edge labels (footer) ──
+    ctx.font=`500 7px 'JetBrains Mono',monospace`;
+    ctx.textBaseline='top';
+    for(let e=0;e<nEdges;e++){
+      ctx.fillStyle=EX.isBranch[e]?'#c03030':'#1a7a6e';
+      ctx.textAlign='center';
+      ctx.fillText(EX.edgeLabels[e], gx0+e*CW+CW/2, gy0+gridH+2);
+    }
+
+    // ── outer grid border ──
+    ctx.strokeStyle='#a09040'; ctx.lineWidth=0.9;
+    ctx.strokeRect(gx0, gy0, gridW, gridH);
+  }
+  ctx.restore();
+}
+
+/* ═══════════ RESIZABLE PANELS ═══════════ */
+(function(){
+  function makeDraggable(handleId, leftEl, rightEl){
+    const handle=document.getElementById(handleId);
+    let dragging=false, startX=0, startLeft=0, startRight=0;
+    handle.addEventListener('mousedown',e=>{
+      dragging=true;
+      startX=e.clientX;
+      startLeft=leftEl.offsetWidth;
+      startRight=rightEl.offsetWidth;
+      handle.classList.add('dragging');
+      document.body.style.cursor='col-resize';
+      document.body.style.userSelect='none';
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove',e=>{
+      if(!dragging) return;
+      const dx=e.clientX-startX;
+      const newLeft=Math.max(120, startLeft+dx);
+      const newRight=Math.max(120, startRight-dx);
+      leftEl.style.width=newLeft+'px';
+      leftEl.style.flex='0 0 auto';
+      rightEl.style.width=newRight+'px';
+      rightEl.style.flex='0 0 auto';
+      // re-render canvas and hologram after resize
+      resize(); renderHologram();
+    });
+    document.addEventListener('mouseup',()=>{
+      if(!dragging) return;
+      dragging=false;
+      handle.classList.remove('dragging');
+      document.body.style.cursor='';
+      document.body.style.userSelect='';
+    });
+  }
+  makeDraggable('drag1',
+    document.getElementById('canvasWrap'),
+    document.getElementById('holoWrap'));
+  makeDraggable('drag2',
+    document.getElementById('holoWrap'),
+    document.getElementById('sidePanel'));
+})();
+
+/* ═══════════ HELP MODAL ═══════════ */
+function openHelp(){ document.getElementById('helpModal').classList.add('open'); }
+function closeHelp(){ document.getElementById('helpModal').classList.remove('open'); }
+window.openHelp=openHelp; window.closeHelp=closeHelp;
+document.getElementById('helpModal').addEventListener('click',e=>{
+  if(e.target===document.getElementById('helpModal')) closeHelp();
+});
+
+/* ═══════════ INIT ═══════════ */
+window.addEventListener('resize',()=>{ resize(); renderHologram(); });
+switchEx(5); // loads D5 by default
+resize();
+renderHologram();
+
+})();
+</script>
+</body>
+</html>
