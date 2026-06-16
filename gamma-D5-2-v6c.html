@@ -1518,7 +1518,7 @@ function renderHologram(){
     // sum label
     svg.appendChild(svgEl('text',{x:SW/2,y:deltaY+8+dH+22,'text-anchor':'middle',
       'font-size':9,'font-weight':'700',fill:'var(--purple)'},
-      `Σ|δ_e| = d(X,Y) = ${total}`));
+      `Area = Σ|δ_e| = d(X,Y) = ${total}`));
   };
   function stepPath(h,col){
     if(!h||!trunkCols) return '';
@@ -1588,14 +1588,7 @@ function renderHologram(){
     }
   }
 
-  // dashed connector arrow trunk → branch
-  const arrowY=branchY0+branchW;
-  const ax1=x0+gridW+6, ax2=branchX-8;
-  svg.appendChild(svgEl('line',{x1:ax1,y1:arrowY,x2:ax2,y2:arrowY,class:'hArrow'}));
-  svg.appendChild(svgEl('path',{d:`M ${ax2-7} ${arrowY-4} L ${ax2} ${arrowY} L ${ax2-7} ${arrowY+4}`,
-    fill:'none',stroke:'var(--muted)','stroke-width':'1.5'}));
-  svg.appendChild(svgEl('text',{x:(ax1+ax2)/2,y:arrowY-6,'text-anchor':'middle','font-size':9,class:'hTextSmall'},
-    '2 branch bits'));
+  // (connector arrow and "2 branch bits" label removed)
 
   // ── bottom caption (now in mini tree section above) ──
 }
